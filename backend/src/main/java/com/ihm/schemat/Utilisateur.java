@@ -3,6 +3,7 @@ package com.ihm.schemat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 
@@ -27,10 +28,12 @@ public class Utilisateur {
     private String prenoms;
 
     @Column(name = "Sexe", length = 1, nullable = false)
+    @NotNull(message = "Sex is required")
     @Pattern(regexp = "^[MF]$", message = "Sexe must be M or F")
     private String sexe;
 
     @Column(name = "DateDeNaissance", nullable = false)
+    @NotNull(message = "Date of birth is required")
     @Past(message = "Date of birth must be in the past")
     private LocalDate dateDeNaissance;
 
@@ -46,6 +49,9 @@ public class Utilisateur {
     @Column(name = "MotDePasse", length = 255, nullable = false)
     @NotBlank(message = "Password is required")
     private String motDePasse;
+
+    @Column(name = "PremiereConnexion", nullable = false)
+    private boolean premiereConnexion = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CodeAdministrateur", referencedColumnName = "CodeAdministrateur")
@@ -76,6 +82,9 @@ public class Utilisateur {
 
     public String getMotDePasse() { return motDePasse; }
     public void setMotDePasse(String motDePasse) { this.motDePasse = motDePasse; }
+
+    public boolean isPremiereConnexion() { return premiereConnexion; }
+    public void setPremiereConnexion(boolean premiereConnexion) { this.premiereConnexion = premiereConnexion; }
 
     public Administrateur getAdministrateur() { return administrateur; }
     public void setAdministrateur(Administrateur administrateur) { this.administrateur = administrateur; }

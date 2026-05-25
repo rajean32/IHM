@@ -23,15 +23,18 @@ public class ReservationService {
     private final ClientRepository clientRepository;
     private final TicketRepository ticketRepository;
     private final CorrespondARepository correspondARepository;
+    private final PaiementRepository paiementRepository;
 
     public ReservationService(ReservationRepository reservationRepository,
                               ClientRepository clientRepository,
                               TicketRepository ticketRepository,
-                              CorrespondARepository correspondARepository) {
+                              CorrespondARepository correspondARepository,
+                              PaiementRepository paiementRepository) {
         this.reservationRepository = reservationRepository;
         this.clientRepository = clientRepository;
         this.ticketRepository = ticketRepository;
         this.correspondARepository = correspondARepository;
+        this.paiementRepository = paiementRepository;
     }
 
     public List<ReservationDTO> getAll() {
@@ -84,6 +87,55 @@ public class ReservationService {
 
         log.info("Reservation created: id={}", saved.getIdReservation());
         return toDTO(saved);
+    }
+
+    @Transactional
+    public ReservationDTO update(Integer id, ReservationDTO dto) {
+        log.debug("Updating reservation: {}", id);
+        Reservation reservation = reservationRepository.findByIdReservation(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation", "idReservation", id));
+
+        if (paiementRepository.existsByReservation_IdReservation(id)) {
+            throw new BadRequestException("Cannot update a reservation that has been paid");
+        }
+
+        if (dto.getDateReservation() != null) {
+            reservation.setDateReservation(dto.getDateReservation());
+        }
+
+        if (dto.getCodeTickets() != null) {
+            correspondARepository.findByReservation_IdReservation(id).forEach(correspondARepository::delete);
+
+            for (String codeTicket : dto.getCodeTickets()) {
+                Ticket ticket = ticketRepository.findByCodeTicket(codeTicket)
+                        .orElseThrow(() -> new ResourceNotFoundException("Ticket", "codeTicket", codeTicket));
+
+                CorrespondAId corrId = new CorrespondAId(codeTicket, reservation.getIdReservation());
+                CorrespondA corr = new CorrespondA();
+                corr.setId(corrId);
+                corr.setTicket(ticket);
+                corr.setReservation(reservation);
+                correspondARepository.save(corr);
+            }
+        }
+
+        Reservation saved = reservationRepository.save(reservation);
+        log.info("Reservation updated: id={}", id);
+        return toDTO(saved);
+    }
+
+    @Transactional
+    public void cancel(Integer id) {
+        log.debug("Cancelling reservation: {}", id);
+        Reservation reservation = reservationRepository.findByIdReservation(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation", "idReservation", id));
+
+        correspondARepository.findByReservation_IdReservation(id).forEach(correspondARepository::delete);
+
+        paiementRepository.findByReservation_IdReservation(id).ifPresent(paiementRepository::delete);
+
+        reservationRepository.delete(reservation);
+        log.info("Reservation cancelled: id={}", id);
     }
 
     @Transactional

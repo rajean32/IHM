@@ -6,6 +6,7 @@ public class LoginResponse {
     private String codeUtilisateur;
     private String email;
     private String role;
+    private boolean isFirstLogin;
 
     public LoginResponse() {}
 
@@ -14,6 +15,15 @@ public class LoginResponse {
         this.codeUtilisateur = codeUtilisateur;
         this.email = email;
         this.role = role;
+        this.isFirstLogin = false;
+    }
+
+    public LoginResponse(String token, String codeUtilisateur, String email, String role, boolean isFirstLogin) {
+        this.token = token;
+        this.codeUtilisateur = codeUtilisateur;
+        this.email = email;
+        this.role = role;
+        this.isFirstLogin = isFirstLogin;
     }
 
     public String getToken() { return token; }
@@ -27,4 +37,7 @@ public class LoginResponse {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public boolean isFirstLogin() { return isFirstLogin; }
+    public void setFirstLogin(boolean isFirstLogin) { this.isFirstLogin = isFirstLogin; }
 }

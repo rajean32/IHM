@@ -2,6 +2,7 @@ package com.ihm.api;
 
 import com.ihm.model.ApiResponse;
 import com.ihm.model.dto.PaiementDTO;
+import com.ihm.model.dto.PaiementStatusDTO;
 import com.ihm.service.PaiementService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -44,6 +46,32 @@ public class PaiementController {
         PaiementDTO data = paiementService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(201, "Payment created successfully", data));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<PaiementDTO>> update(@PathVariable Integer id,
+                                                            @Valid @RequestBody PaiementDTO dto) {
+        log.info("PUT /api/paiements/{}", id);
+        PaiementDTO data = paiementService.update(id, dto);
+        return ResponseEntity.ok(ApiResponse.success(200, "Payment updated successfully", data));
+    }
+
+    @GetMapping("/reservation/{idReservation}/status")
+    public ResponseEntity<ApiResponse<PaiementStatusDTO>> getPaymentStatus(@PathVariable Integer idReservation) {
+        log.info("GET /api/paiements/reservation/{}/status", idReservation);
+        PaiementStatusDTO data = paiementService.getPaymentStatus(idReservation);
+        return ResponseEntity.ok(ApiResponse.success(200, "Payment status fetched successfully", data));
+    }
+
+    @PostMapping("/webhook")
+    public ResponseEntity<ApiResponse<PaiementStatusDTO>> processWebhook(
+            @RequestParam String reservationId,
+            @RequestParam BigDecimal amount,
+            @RequestParam String modePaiement,
+            @RequestParam String status) {
+        log.info("POST /api/paiements/webhook - reservation: {}, status: {}", reservationId, status);
+        PaiementStatusDTO data = paiementService.processWebhook(reservationId, amount, modePaiement, status);
+        return ResponseEntity.ok(ApiResponse.success(200, "Webhook processed successfully", data));
     }
 
     @DeleteMapping("/{id}")

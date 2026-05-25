@@ -1,6 +1,7 @@
 package com.ihm.api;
 
 import com.ihm.model.ApiResponse;
+import com.ihm.model.dto.FirstLoginUpdateRequest;
 import com.ihm.model.dto.LoginRequest;
 import com.ihm.model.dto.LoginResponse;
 import com.ihm.model.dto.RegisterRequest;
@@ -37,5 +38,12 @@ public class AuthController {
         LoginResponse data = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(201, "Registration successful", data));
+    }
+
+    @PostMapping("/first-login-update")
+    public ResponseEntity<ApiResponse<LoginResponse>> firstLoginUpdate(@Valid @RequestBody FirstLoginUpdateRequest request) {
+        log.info("POST /api/auth/first-login-update - user: {}", request.getCodeUtilisateur());
+        LoginResponse data = authService.firstLoginUpdate(request);
+        return ResponseEntity.ok(ApiResponse.success(200, "First login update successful", data));
     }
 }

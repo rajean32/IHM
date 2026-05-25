@@ -2,6 +2,7 @@ package com.ihm.model.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 
@@ -18,9 +19,11 @@ public class RegisterRequest {
     @NotBlank(message = "First names are required")
     private String prenoms;
 
+    @NotNull(message = "Sex is required")
     @Pattern(regexp = "^[MF]$", message = "Sex must be M or F")
     private String sexe;
 
+    @NotNull(message = "Date of birth is required")
     @Past(message = "Date of birth must be in the past")
     private LocalDate dateDeNaissance;
 

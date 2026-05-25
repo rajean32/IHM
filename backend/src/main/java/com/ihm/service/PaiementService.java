@@ -3,6 +3,7 @@ package com.ihm.service;
 import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
 import com.ihm.model.dto.PaiementDTO;
+import com.ihm.model.dto.PaiementStatusDTO;
 import com.ihm.repository.PaiementRepository;
 import com.ihm.repository.ReservationRepository;
 import com.ihm.schemat.Paiement;
@@ -12,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,6 +63,79 @@ public class PaiementService {
         Paiement saved = paiementRepository.save(paiement);
         log.info("Payment created: id={}", saved.getIdPaiement());
         return toDTO(saved);
+    }
+
+    @Transactional
+    public PaiementDTO update(Integer id, PaiementDTO dto) {
+        log.debug("Updating payment: {}", id);
+        Paiement paiement = paiementRepository.findByIdPaiement(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Paiement", "idPaiement", id));
+
+        if (dto.getMontant() != null) paiement.setMontant(dto.getMontant());
+        if (dto.getModePaiement() != null) paiement.setModePaiement(dto.getModePaiement());
+        if (dto.getDatePaiement() != null) paiement.setDatePaiement(dto.getDatePaiement());
+
+        Paiement saved = paiementRepository.save(paiement);
+        log.info("Payment updated: id={}", id);
+        return toDTO(saved);
+    }
+
+    @Transactional
+    public PaiementStatusDTO processWebhook(String reservationId, BigDecimal amount, String modePaiement, String status) {
+        log.debug("Processing payment webhook for reservation: {}", reservationId);
+        Integer idReservation = Integer.parseInt(reservationId);
+
+        if ("SUCCESS".equalsIgnoreCase(status)) {
+            if (!paiementRepository.existsByReservation_IdReservation(idReservation)) {
+                Reservation reservation = reservationRepository.findByIdReservation(idReservation)
+                        .orElseThrow(() -> new ResourceNotFoundException("Reservation", "idReservation", idReservation));
+
+                Paiement paiement = new Paiement();
+                paiement.setMontant(amount);
+                paiement.setDatePaiement(LocalDateTime.now());
+                paiement.setModePaiement(modePaiement);
+                paiement.setReservation(reservation);
+                paiementRepository.save(paiement);
+                log.info("Payment created via webhook for reservation: {}", idReservation);
+            }
+
+            Paiement paiement = paiementRepository.findByReservation_IdReservation(idReservation).orElse(null);
+            PaiementStatusDTO response = new PaiementStatusDTO();
+            response.setIdPaiement(paiement != null ? paiement.getIdPaiement() : null);
+            response.setIdReservation(idReservation);
+            response.setMontant(amount);
+            response.setModePaiement(modePaiement);
+            response.setDatePaiement(paiement != null ? paiement.getDatePaiement() : LocalDateTime.now());
+            response.setStatus("CONFIRMED");
+            return response;
+        } else {
+            PaiementStatusDTO response = new PaiementStatusDTO();
+            response.setIdReservation(idReservation);
+            response.setMontant(amount);
+            response.setModePaiement(modePaiement);
+            response.setStatus("FAILED");
+            return response;
+        }
+    }
+
+    public PaiementStatusDTO getPaymentStatus(Integer idReservation) {
+        log.debug("Fetching payment status for reservation: {}", idReservation);
+        Paiement paiement = paiementRepository.findByReservation_IdReservation(idReservation)
+                .orElse(null);
+
+        PaiementStatusDTO response = new PaiementStatusDTO();
+        if (paiement != null) {
+            response.setIdPaiement(paiement.getIdPaiement());
+            response.setIdReservation(idReservation);
+            response.setMontant(paiement.getMontant());
+            response.setModePaiement(paiement.getModePaiement());
+            response.setDatePaiement(paiement.getDatePaiement());
+            response.setStatus("PAID");
+        } else {
+            response.setIdReservation(idReservation);
+            response.setStatus("PENDING");
+        }
+        return response;
     }
 
     @Transactional

@@ -3,6 +3,7 @@ package com.ihm.service;
 import com.ihm.exception.BadRequestException;
 import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
+import com.ihm.model.dto.FirstLoginUpdateRequest;
 import com.ihm.model.dto.LoginRequest;
 import com.ihm.model.dto.LoginResponse;
 import com.ihm.model.dto.RegisterRequest;
@@ -60,8 +61,8 @@ public class AuthService {
         String role = determineRole(user);
         String token = jwtUtil.generateToken(user.getCodeUtilisateur(), role);
 
-        log.info("User logged in: {}", user.getCodeUtilisateur());
-        return new LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), role);
+        log.info("User logged in: {} (firstLogin: {})", user.getCodeUtilisateur(), user.isPremiereConnexion());
+        return new LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), role, user.isPremiereConnexion());
     }
 
     @Transactional
@@ -96,7 +97,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getCodeUtilisateur(), role);
 
         log.info("User registered: {} as {}", user.getCodeUtilisateur(), role);
-        return new LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), role);
+        return new LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), role, user.isPremiereConnexion());
     }
 
     private void populateFields(Utilisateur user, RegisterRequest request) {
@@ -108,6 +109,39 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setTel(request.getTel());
         user.setMotDePasse(passwordEncoder.encode(request.getMotDePasse()));
+        user.setPremiereConnexion(true);
+    }
+
+    @Transactional
+    public LoginResponse firstLoginUpdate(FirstLoginUpdateRequest request) {
+        log.debug("First login update for user: {}", request.getCodeUtilisateur());
+
+        Utilisateur user = utilisateurRepository.findByCodeUtilisateur(request.getCodeUtilisateur())
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "code", request.getCodeUtilisateur()));
+
+        if (!user.isPremiereConnexion()) {
+            throw new BadRequestException("First login already completed");
+        }
+
+        if (request.getNewEmail() != null && !request.getNewEmail().equals(user.getEmail())) {
+            if (utilisateurRepository.existsByEmail(request.getNewEmail())) {
+                throw new DuplicateResourceException("Utilisateur", "email", request.getNewEmail());
+            }
+            user.setEmail(request.getNewEmail());
+        }
+
+        if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+            user.setMotDePasse(passwordEncoder.encode(request.getNewPassword()));
+        }
+
+        user.setPremiereConnexion(false);
+        utilisateurRepository.save(user);
+
+        String role = determineRole(user);
+        String token = jwtUtil.generateToken(user.getCodeUtilisateur(), role);
+
+        log.info("First login update completed for: {}", user.getCodeUtilisateur());
+        return new LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), role, false);
     }
 
     private String determineRole(Utilisateur user) {
