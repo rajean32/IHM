@@ -1,0 +1,204 @@
+{
+  "database_name": "Gestion_Evenements_Tickets",
+  "tables": [
+    {
+      "name": "ADMINISTRATEUR",
+      "columns": [
+        { "name": "CodeAdministrateur", "type": "VARCHAR(50)", "is_primary": true },
+        { "name": "MotdepasseAdministrateur", "type": "VARCHAR(255)", "is_primary": false }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "name": "UTILISATEUR",
+      "columns": [
+        { "name": "CodeUtilisateur", "type": "VARCHAR(50)", "is_primary": true },
+        { "name": "Nom", "type": "VARCHAR(100)", "is_primary": false },
+        { "name": "Prenoms", "type": "VARCHAR(150)", "is_primary": false },
+        { "name": "Sexe", "type": "CHAR(1)", "is_primary": false },
+        { "name": "DateDeNaissance", "type": "DATE", "is_primary": false },
+        { "name": "E_mail", "type": "VARCHAR(100)", "is_primary": false, "is_unique": true },
+        { "name": "Tel", "type": "VARCHAR(20)", "is_primary": false },
+        { "name": "MotDePasse", "type": "VARCHAR(255)", "is_primary": false },
+        { "name": "CodeAdministrateur", "type": "VARCHAR(50)", "is_primary": false }
+      ],
+      "foreign_keys": [
+        { 
+          "column": "CodeAdministrateur", 
+          "references_table": "ADMINISTRATEUR", 
+          "references_column": "CodeAdministrateur", 
+          "on_delete": "SET NULL" 
+        }
+      ]
+    },
+    {
+      "name": "ORGANISATEUR",
+      "columns": [
+        { "name": "CodeOrganisateur", "type": "VARCHAR(50)", "is_primary": true }
+      ],
+      "foreign_keys": [
+        { 
+          "column": "CodeOrganisateur", 
+          "references_table": "UTILISATEUR", 
+          "references_column": "CodeUtilisateur", 
+          "on_delete": "CASCADE" 
+        }
+      ]
+    },
+    {
+      "name": "CLIENT",
+      "columns": [
+        { "name": "CodeClient", "type": "VARCHAR(50)", "is_primary": true }
+      ],
+      "foreign_keys": [
+        { 
+          "column": "CodeClient", 
+          "references_table": "UTILISATEUR", 
+          "references_column": "CodeUtilisateur", 
+          "on_delete": "CASCADE" 
+        }
+      ]
+    },
+    {
+      "name": "CATEGORIE",
+      "columns": [
+        { "name": "CodeCategorie", "type": "VARCHAR(50)", "is_primary": true },
+        { "name": "NomCategorie", "type": "VARCHAR(100)", "is_primary": false }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "name": "LIEU",
+      "columns": [
+        { "name": "idLieu", "type": "INT", "is_primary": true, "auto_increment": true },
+        { "name": "NomLieu", "type": "VARCHAR(150)", "is_primary": false },
+        { "name": "adresse", "type": "VARCHAR(255)", "is_primary": false },
+        { "name": "ville", "type": "VARCHAR(100)", "is_primary": false }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "name": "SALLE",
+      "columns": [
+        { "name": "NumeroSalle", "type": "VARCHAR(50)", "is_primary": true },
+        { "name": "NomSalle", "type": "VARCHAR(100)", "is_primary": false },
+        { "name": "idLieu", "type": "INT", "is_primary": false }
+      ],
+      "foreign_keys": [
+        { 
+          "column": "idLieu", 
+          "references_table": "LIEU", 
+          "references_column": "idLieu", 
+          "on_delete": "CASCADE" 
+        }
+      ]
+    },
+    {
+      "name": "PLACE",
+      "columns": [
+        { "name": "NumeroPlace", "type": "VARCHAR(50)", "is_primary": true },
+        { "name": "range", "type": "VARCHAR(10)", "is_primary": false },
+        { "name": "typePlace", "type": "VARCHAR(50)", "is_primary": false },
+        { "name": "NumeroSalle", "type": "VARCHAR(50)", "is_primary": false }
+      ],
+      "foreign_keys": [
+        { 
+          "column": "NumeroSalle", 
+          "references_table": "SALLE", 
+          "references_column": "NumeroSalle", 
+          "on_delete": "CASCADE" 
+        }
+      ]
+    },
+    {
+      "name": "EVENEMENT",
+      "columns": [
+        { "name": "idEvenement", "type": "INT", "is_primary": true, "auto_increment": true },
+        { "name": "titre", "type": "VARCHAR(150)", "is_primary": false },
+        { "name": "description", "type": "TEXT", "is_primary": false },
+        { "name": "dateEvenement", "type": "DATE", "is_primary": false },
+        { "name": "heureEvenement", "type": "TIME", "is_primary": false },
+        { "name": "image", "type": "VARCHAR(255)", "is_primary": false },
+        { "name": "statut", "type": "VARCHAR(50)", "is_primary": false },
+        { "name": "CodeCategorie", "type": "VARCHAR(50)", "is_primary": false },
+        { "name": "idLieu", "type": "INT", "is_primary": false },
+        { "name": "CodeOrganisateur", "type": "VARCHAR(50)", "is_primary": false }
+      ],
+      "foreign_keys": [
+        { "column": "CodeCategorie", "references_table": "CATEGORIE", "references_column": "CodeCategorie", "on_delete": "SET NULL" },
+        { "column": "idLieu", "references_table": "LIEU", "references_column": "idLieu", "on_delete": "RESTRICT" },
+        { "column": "CodeOrganisateur", "references_table": "ORGANISATEUR", "references_column": "CodeOrganisateur", "on_delete": "RESTRICT" }
+      ]
+    },
+    {
+      "name": "TICKET",
+      "columns": [
+        { "name": "CodeTicket", "type": "VARCHAR(50)", "is_primary": true },
+        { "name": "prix", "type": "DECIMAL(10,2)", "is_primary": false }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "name": "RESERVATION",
+      "columns": [
+        { "name": "idReservation", "type": "INT", "is_primary": true, "auto_increment": true },
+        { "name": "dateReservation", "type": "DATETIME", "is_primary": false },
+        { "name": "CodeClient", "type": "VARCHAR(50)", "is_primary": false }
+      ],
+      "foreign_keys": [
+        { 
+          "column": "CodeClient", 
+          "references_table": "CLIENT", 
+          "references_column": "CodeClient", 
+          "on_delete": "RESTRICT" 
+        }
+      ]
+    },
+    {
+      "name": "PAIEMENT",
+      "columns": [
+        { "name": "idPaiement", "type": "INT", "is_primary": true, "auto_increment": true },
+        { "name": "montant", "type": "DECIMAL(10,2)", "is_primary": false },
+        { "name": "datePaiement", "type": "DATETIME", "is_primary": false },
+        { "name": "modePaiement", "type": "VARCHAR(50)", "is_primary": false },
+        { "name": "idReservation", "type": "INT", "is_primary": false, "is_unique": true }
+      ],
+      "foreign_keys": [
+        { 
+          "column": "idReservation", 
+          "references_table": "RESERVATION", 
+          "references_column": "idReservation", 
+          "on_delete": "CASCADE" 
+        }
+      ]
+    }
+  ],
+  "junction_tables_many_to_many": [
+    {
+      "name": "CONCERNER",
+      "description": "Table d'association ternaire entre EVENEMENT, TICKET et PLACE",
+      "columns": [
+        { "name": "idEvenement", "type": "INT", "is_primary": true },
+        { "name": "CodeTicket", "type": "VARCHAR(50)", "is_primary": true },
+        { "name": "NumeroPlace", "type": "VARCHAR(50)", "is_primary": true }
+      ],
+      "foreign_keys": [
+        { "column": "idEvenement", "references_table": "EVENEMENT", "references_column": "idEvenement", "on_delete": "CASCADE" },
+        { "column": "CodeTicket", "references_table": "TICKET", "references_column": "CodeTicket", "on_delete": "CASCADE" },
+        { "column": "NumeroPlace", "references_table": "PLACE", "references_column": "NumeroPlace", "on_delete": "CASCADE" }
+      ]
+    },
+    {
+      "name": "CORRESPOND_A",
+      "description": "Table d'association binaire entre TICKET et RESERVATION",
+      "columns": [
+        { "name": "CodeTicket", "type": "VARCHAR(50)", "is_primary": true },
+        { "name": "idReservation", "type": "INT", "is_primary": true }
+      ],
+      "foreign_keys": [
+        { "column": "CodeTicket", "references_table": "TICKET", "references_column": "CodeTicket", "on_delete": "CASCADE" },
+        { "column": "idReservation", "references_table": "RESERVATION", "references_column": "idReservation", "on_delete": "CASCADE" }
+      ]
+    }
+  ]
+}
