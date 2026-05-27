@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 15s # Temps entre chaque récupération de données
+
+scrape_configs:
+  # 1. Métriques du backend Spring Boot
+  - job_name: 'spring-boot-backend'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['backend:8080'] # Utilise le nom du service Docker
+
+  # 2. Métriques des conteneurs Docker (cAdvisor)
+  - job_name: 'docker-containers'
+    static_configs:
+      - targets: ['cadvisor:8080']
