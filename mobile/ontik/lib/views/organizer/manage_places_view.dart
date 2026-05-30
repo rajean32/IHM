@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../repositories/event_repository.dart';
-import '../../repositories/admin_repositories.dart';
+import '../../controllers/event_controller.dart';
+import '../../controllers/providers.dart';
 import '../../models/venue.dart';
-import '../../core/api_client.dart';
 import '../../widgets/error_state.dart';
 
 class ManagePlacesView extends ConsumerStatefulWidget {
@@ -22,6 +21,8 @@ class _ManagePlacesViewState extends ConsumerState<ManagePlacesView> {
 
   final _numeroCtrl = TextEditingController();
   final _rangCtrl = TextEditingController();
+  final _prixCtrl = TextEditingController();
+  final _salleCtrl = TextEditingController(text: 'S1');
   String _typePlace = 'Standard';
 
   @override
@@ -34,17 +35,15 @@ class _ManagePlacesViewState extends ConsumerState<ManagePlacesView> {
   void dispose() {
     _numeroCtrl.dispose();
     _rangCtrl.dispose();
+    _prixCtrl.dispose();
+    _salleCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _loadPlaces() async {
     setState(() => _loading = true);
     try {
-      final eventRepo = ref.read(
-        Provider<EventRepository>(
-          (ref) => EventRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient()))),
-        ),
-      );
+      final eventRepo = ref.read(eventRepositoryProvider);
       final places = await eventRepo.getAvailableSeats(widget.eventId);
       if (!mounted) return;
       setState(() {
@@ -64,18 +63,14 @@ class _ManagePlacesViewState extends ConsumerState<ManagePlacesView> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      final placeRepo = ref.read(
-        Provider<PlaceRepository>(
-          (ref) => PlaceRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient()))),
-        ),
-      );
+      final placeRepo = ref.read(placeRepositoryProvider);
 
-      await placeRepo.create({
-        'numeroPlace': _numeroCtrl.text,
-        'range': _rangCtrl.text,
-        'typePlace': _typePlace,
-        'numeroSalle': 'S1',
-      });
+      await placeRepo.create(Place(
+        numeroPlace: _numeroCtrl.text,
+        rang: _rangCtrl.text,
+        typePlace: _typePlace,
+        numeroSalle: _salleCtrl.text.isNotEmpty ? _salleCtrl.text : 'S1',
+      ));
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

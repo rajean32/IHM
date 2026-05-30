@@ -2,6 +2,7 @@ import 'package:ontik/core/api_client.dart';
 import 'package:ontik/core/api_endpoints.dart';
 import 'package:ontik/models/api_wrapper.dart';
 import 'package:ontik/models/categorie.dart';
+import 'package:ontik/models/venue.dart';
 
 class CategorieRepository {
   final ApiClient _client;
@@ -9,9 +10,7 @@ class CategorieRepository {
 
   Future<List<Categorie>> getAll() async {
     final response = await _client.get(ApiEndpoints.categories.all);
-    return ApiWrapper.fromJson(
-      response,
-    ).getDataList((e) => Categorie.fromJson(e));
+    return ApiWrapper.fromJson(response).getDataList((e) => Categorie.fromJson(e));
   }
 
   Future<Categorie> getById(String code) async {
@@ -32,14 +31,14 @@ class LieuRepository {
   final ApiClient _client;
   LieuRepository(this._client);
 
-  Future<List<dynamic>> getAll() async {
+  Future<List<Lieu>> getAll() async {
     final response = await _client.get(ApiEndpoints.lieux.all);
-    return ApiWrapper.fromJson(response).data as List;
+    return ApiWrapper.fromJson(response).getDataList((e) => Lieu.fromJson(e));
   }
 
-  Future<dynamic> create(Map<String, dynamic> data) async {
-    final response = await _client.post(ApiEndpoints.lieux.all, data: data);
-    return ApiWrapper.fromJson(response).data;
+  Future<Lieu> create(Lieu lieu) async {
+    final response = await _client.post(ApiEndpoints.lieux.all, data: lieu.toJson());
+    return ApiWrapper.fromJson(response).getData((d) => Lieu.fromJson(d));
   }
 }
 
@@ -47,14 +46,14 @@ class SalleRepository {
   final ApiClient _client;
   SalleRepository(this._client);
 
-  Future<List<dynamic>> getAll() async {
+  Future<List<Salle>> getAll() async {
     final response = await _client.get(ApiEndpoints.salles.all);
-    return ApiWrapper.fromJson(response).data as List;
+    return ApiWrapper.fromJson(response).getDataList((e) => Salle.fromJson(e));
   }
 
-  Future<dynamic> create(Map<String, dynamic> data) async {
-    final response = await _client.post(ApiEndpoints.salles.all, data: data);
-    return ApiWrapper.fromJson(response).data;
+  Future<Salle> create(Salle salle) async {
+    final response = await _client.post(ApiEndpoints.salles.all, data: salle.toJson());
+    return ApiWrapper.fromJson(response).getData((d) => Salle.fromJson(d));
   }
 }
 
@@ -62,13 +61,13 @@ class PlaceRepository {
   final ApiClient _client;
   PlaceRepository(this._client);
 
-  Future<List<dynamic>> getAll() async {
+  Future<List<Place>> getAll() async {
     final response = await _client.get(ApiEndpoints.places.all);
-    return ApiWrapper.fromJson(response).data as List;
+    return ApiWrapper.fromJson(response).getDataList((e) => Place.fromJson(e));
   }
 
-  Future<dynamic> create(Map<String, dynamic> data) async {
-    final response = await _client.post(ApiEndpoints.places.all, data: data);
-    return ApiWrapper.fromJson(response).data;
+  Future<Place> create(Place place) async {
+    final response = await _client.post(ApiEndpoints.places.all, data: place.toJson());
+    return ApiWrapper.fromJson(response).getData((d) => Place.fromJson(d));
   }
 }

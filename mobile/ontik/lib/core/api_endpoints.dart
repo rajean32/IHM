@@ -11,6 +11,7 @@ class ApiEndpoints {
   static const lieux = LieuxEndpoints();
   static const salles = SallesEndpoints();
   static const places = PlacesEndpoints();
+  static const organizerVenues = OrganizerVenueEndpoints();
 }
 
 class AuthEndpoints {
@@ -80,6 +81,13 @@ class OrganisateurEndpoints {
 class AdminEndpoints {
   const AdminEndpoints();
   String get dashboard => '/admin/dashboard';
+  String get activity => '/admin/activity';
+  String get users => '/admin/users';
+  String userById(String code) => '/admin/users/$code';
+  String userRole(String code) => '/admin/users/$code/role';
+  String toggleActive(String code) => '/admin/users/$code/toggle-active';
+  String get resetPassword => '/admin/users/reset-password';
+  String get auditLog => '/admin/users/audit-log';
 }
 
 class CategoriesEndpoints {
@@ -104,4 +112,15 @@ class PlacesEndpoints {
   const PlacesEndpoints();
   String get all => '/places';
   String byId(String numero) => '/places/$numero';
+}
+
+class OrganizerVenueEndpoints {
+  const OrganizerVenueEndpoints();
+  String get lieux => '/organisateur/venues/lieux';
+  String lieuById(int id) => '/organisateur/venues/lieux/$id';
+  String get salles => '/organisateur/venues/salles';
+  String salleById(String numero) => '/organisateur/venues/salles/$numero';
+  String get places => '/organisateur/venues/places';
+  String placeById(String numero) => '/organisateur/venues/places/$numero';
+  String get batch => '/organisateur/venues/places/batch';
 }

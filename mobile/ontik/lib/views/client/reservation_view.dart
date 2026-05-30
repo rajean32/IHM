@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/api_client.dart';
+import '../../core/api_endpoints.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/event_controller.dart';
 import '../../widgets/seat_picker.dart';
@@ -16,6 +18,7 @@ class ReservationView extends ConsumerStatefulWidget {
 
 class _ReservationViewState extends ConsumerState<ReservationView> {
   final List<Map<String, dynamic>> _selectedSeats = [];
+  bool _isProcessing = false;
 
   double get _totalAmount {
     return _selectedSeats.fold(0, (sum, s) => sum + (s['prix'] as double? ?? 0));
@@ -25,20 +28,71 @@ class _ReservationViewState extends ConsumerState<ReservationView> {
     setState(() {
       _selectedSeats.clear();
       for (final seat in seats) {
+        final seatData = seat is Map<String, dynamic>
+            ? seat
+            : {'numeroPlace': seat.numeroPlace, 'prix': seat.prix ?? 0, 'typePlace': seat.typePlace};
         _selectedSeats.add({
-          'codeTicket': seat.numeroPlace,
-          'prix': seat.prix ?? 0,
-          'numeroPlace': seat.numeroPlace,
+          'prix': seatData['prix'] ?? 0,
+          'numeroPlace': seatData['numeroPlace'],
+          'typePlace': seatData['typePlace'],
         });
       }
     });
   }
 
+  Future<void> _proceedToPayment() async {
+    if (_selectedSeats.isEmpty) return;
+    setState(() => _isProcessing = true);
+    try {
+      final authState = ref.read(authControllerProvider);
+      final clientCode = authState.user?.codeUtilisateur;
+      final apiClient = ApiClient();
+
+      final List<String> ticketCodes = [];
+
+      for (final seat in _selectedSeats) {
+        final codeTicket = 'TKT-${widget.eventId}-${seat['numeroPlace']}-${DateTime.now().millisecondsSinceEpoch}';
+        final ticketPayload = {
+          'codeTicket': codeTicket,
+          'prix': (seat['prix'] as num).toDouble(),
+          'idEvenement': widget.eventId,
+          'numeroPlace': seat['numeroPlace'],
+        };
+        await apiClient.post(ApiEndpoints.tickets.all, data: ticketPayload);
+        ticketCodes.add(codeTicket);
+      }
+
+      final reservationPayload = {
+        'dateReservation': DateTime.now().toIso8601String().substring(0, 19),
+        'codeClient': clientCode,
+        'codeTickets': ticketCodes,
+      };
+      final resResponse = await apiClient.post(ApiEndpoints.reservations.all, data: reservationPayload);
+      final reservationId = resResponse['data']['idReservation'] as int;
+
+      if (!mounted) return;
+      context.pushReplacement(
+        '/payment/$reservationId',
+        extra: {
+          'eventId': widget.eventId,
+          'clientCode': clientCode,
+          'tickets': _selectedSeats,
+          'amount': _totalAmount,
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Reservation failed: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(eventDetailProvider(widget.eventId));
-    final authState = ref.watch(authControllerProvider);
-    final clientCode = authState.user?.codeUtilisateur ?? '';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Select Seats')),
@@ -103,28 +157,24 @@ class _ReservationViewState extends ConsumerState<ReservationView> {
                             child: SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: _selectedSeats.isEmpty
+                                onPressed: (_selectedSeats.isEmpty || _isProcessing)
                                     ? null
-                                    : () {
-                                        context.push(
-                                          '/payment/0',
-                                          extra: {
-                                            'eventId': widget.eventId,
-                                            'clientCode': clientCode,
-                                            'tickets': _selectedSeats,
-                                            'amount': _totalAmount,
-                                          },
-                                        );
-                                      },
-                                child: Text(
-                                  'Proceed to Payment (\$${_totalAmount.toStringAsFixed(2)})',
-                                ),
+                                    : _proceedToPayment,
+                                child: _isProcessing
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : Text(
+                                        'Proceed to Payment (\$${_totalAmount.toStringAsFixed(2)})',
+                                      ),
                               ),
                             ),
                           ),
                         ),
                       ],
                     ),
-    );
-  }
+  );
+}
 }

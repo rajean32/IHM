@@ -11,22 +11,26 @@ final eventRepositoryProvider = Provider<EventRepository>((ref) {
 class EventListState {
   final List<Evenement> events;
   final bool isLoading;
+  final bool isLoadingMore;
   final String? error;
 
   EventListState({
     this.events = const [],
     this.isLoading = false,
+    this.isLoadingMore = false,
     this.error,
   });
 
   EventListState copyWith({
     List<Evenement>? events,
     bool? isLoading,
+    bool? isLoadingMore,
     String? error,
   }) {
     return EventListState(
       events: events ?? this.events,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       error: error,
     );
   }
@@ -38,40 +42,91 @@ final eventListProvider = StateNotifierProvider<EventListController, EventListSt
 
 class EventListController extends StateNotifier<EventListState> {
   final EventRepository _repository;
+  List<Evenement> _allEvents = [];
+  static const int _pageSize = 20;
+  int _currentPage = 0;
 
   EventListController(this._repository) : super(EventListState()) {
     loadUpcoming();
   }
 
   Future<void> loadUpcoming() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: null, isLoadingMore: false);
     try {
-      final events = await _repository.getUpcoming();
-      state = state.copyWith(isLoading: false, events: events);
+      _allEvents = await _repository.getUpcoming();
+      _currentPage = 0;
+      state = state.copyWith(
+        isLoading: false,
+        events: _paginate(),
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   Future<void> loadPopular() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: null, isLoadingMore: false);
     try {
-      final events = await _repository.getPopular();
-      state = state.copyWith(isLoading: false, events: events);
+      _allEvents = await _repository.getPopular();
+      _currentPage = 0;
+      state = state.copyWith(
+        isLoading: false,
+        events: _paginate(),
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> search({String? q, String? categorie, String? ville, String? statut}) async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> search({
+    String? q,
+    String? categorie,
+    String? ville,
+    int? idLieu,
+    String? dateFrom,
+    String? dateTo,
+    String? statut,
+    double? prixMin,
+    double? prixMax,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null, isLoadingMore: false);
     try {
-      final events = await _repository.search(q: q, categorie: categorie, ville: ville, statut: statut);
-      state = state.copyWith(isLoading: false, events: events);
+      _allEvents = await _repository.search(
+        q: q,
+        categorie: categorie,
+        ville: ville,
+        idLieu: idLieu,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        statut: statut,
+        prixMin: prixMin,
+        prixMax: prixMax,
+      );
+      _currentPage = 0;
+      state = state.copyWith(isLoading: false, events: _paginate());
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  void loadMore() {
+    if (state.isLoadingMore) return;
+    final totalPages = (_allEvents.length / _pageSize).ceil();
+    if (_currentPage >= totalPages) return;
+    state = state.copyWith(isLoadingMore: true);
+    _currentPage++;
+    state = state.copyWith(
+      isLoadingMore: false,
+      events: _paginate(),
+    );
+  }
+
+  List<Evenement> _paginate() {
+    final end = (_currentPage + 1) * _pageSize;
+    return _allEvents.sublist(0, end > _allEvents.length ? _allEvents.length : end);
+  }
+
+  bool get hasMore => (_currentPage + 1) * _pageSize < _allEvents.length;
 }
 
 final eventDetailProvider = StateNotifierProvider.family<EventDetailController, EventDetailState, int>((ref, id) {

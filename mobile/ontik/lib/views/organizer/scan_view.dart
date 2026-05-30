@@ -35,7 +35,7 @@ class _ScanViewState extends ConsumerState<ScanView> {
       final client = ApiClient();
       final response = await client.post(
         ApiEndpoints.tickets.validate,
-        data: {'code': code, 'eventId': widget.eventId},
+        queryParameters: {'codeTicket': code},
       );
       final wrapper = ApiWrapper.fromJson(response);
       final result = wrapper.getData((d) => TicketValidationResponse.fromJson(d));

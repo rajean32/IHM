@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../repositories/ticket_repository.dart';
-import '../../core/api_client.dart';
+import '../../controllers/reservation_controller.dart';
 
 class TicketView extends ConsumerStatefulWidget {
   final String ticketCode;
@@ -26,11 +25,7 @@ class _TicketViewState extends ConsumerState<TicketView> {
   Future<void> _loadTicket() async {
     setState(() => _loading = true);
     try {
-      final ticketRepo = ref.read(
-        Provider<TicketRepository>(
-          (ref) => TicketRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient()))),
-        ),
-      );
+      final ticketRepo = ref.read(ticketRepositoryProvider);
       final qrResponse = await ticketRepo.generateQRCode(widget.ticketCode);
       final validation = await ticketRepo.validateTicket(widget.ticketCode);
 

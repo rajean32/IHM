@@ -38,17 +38,23 @@ class EventRepository {
     String? q,
     String? categorie,
     String? ville,
+    int? idLieu,
     String? dateFrom,
     String? dateTo,
     String? statut,
+    double? prixMin,
+    double? prixMax,
   }) async {
     final params = <String, dynamic>{};
     if (q != null) params['q'] = q;
     if (categorie != null) params['categorie'] = categorie;
     if (ville != null) params['ville'] = ville;
+    if (idLieu != null) params['idLieu'] = idLieu;
     if (dateFrom != null) params['dateFrom'] = dateFrom;
     if (dateTo != null) params['dateTo'] = dateTo;
     if (statut != null) params['statut'] = statut;
+    if (prixMin != null) params['prixMin'] = prixMin;
+    if (prixMax != null) params['prixMax'] = prixMax;
 
     final response = await _client.get(ApiEndpoints.events.search, queryParameters: params);
     return ApiWrapper.fromJson(response).getDataList((e) => Evenement.fromJson(e));

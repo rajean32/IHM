@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../repositories/admin_repositories.dart';
-import '../../core/api_client.dart';
+import '../../controllers/providers.dart';
+import '../../models/venue.dart';
 import '../../widgets/error_state.dart';
 
 class ManageSallesView extends ConsumerStatefulWidget {
@@ -14,8 +14,8 @@ class ManageSallesView extends ConsumerStatefulWidget {
 class _ManageSallesViewState extends ConsumerState<ManageSallesView> {
   bool _loading = true;
   String? _error;
-  List<dynamic> _salles = [];
-  List<dynamic> _lieux = [];
+  List<Salle> _salles = [];
+  List<Lieu> _lieux = [];
   final _formKey = GlobalKey<FormState>();
 
   final _numeroCtrl = TextEditingController();
@@ -38,16 +38,8 @@ class _ManageSallesViewState extends ConsumerState<ManageSallesView> {
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
-      final salleRepo = ref.read(
-        Provider<SalleRepository>(
-          (ref) => SalleRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient()))),
-        ),
-      );
-      final lieuRepo = ref.read(
-        Provider<LieuRepository>(
-          (ref) => LieuRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient()))),
-        ),
-      );
+      final salleRepo = ref.read(salleRepositoryProvider);
+      final lieuRepo = ref.read(lieuRepositoryProvider);
       final salles = await salleRepo.getAll();
       final lieux = await lieuRepo.getAll();
       if (!mounted) return;
@@ -69,16 +61,12 @@ class _ManageSallesViewState extends ConsumerState<ManageSallesView> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      final salleRepo = ref.read(
-        Provider<SalleRepository>(
-          (ref) => SalleRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient()))),
-        ),
-      );
-      await salleRepo.create({
-        'numeroSalle': _numeroCtrl.text,
-        'nomSalle': _nomCtrl.text,
-        'idLieu': _selectedLieu,
-      });
+      final salleRepo = ref.read(salleRepositoryProvider);
+      await salleRepo.create(Salle(
+        numeroSalle: _numeroCtrl.text,
+        nomSalle: _nomCtrl.text,
+        idLieu: _selectedLieu,
+      ));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -127,9 +115,9 @@ class _ManageSallesViewState extends ConsumerState<ManageSallesView> {
                                     leading: const CircleAvatar(
                                       child: Icon(Icons.meeting_room),
                                     ),
-                                    title: Text(salle['nomSalle'] ?? 'N/A'),
+                                    title: Text(salle.nomSalle),
                                     subtitle: Text(
-                                      'Room #: ${ salle['numeroSalle'] ?? 'N/A'}',
+                                      'Room #: ${salle.numeroSalle}',
                                     ),
                                     trailing: IconButton(
                                       icon: const Icon(Icons.delete),
@@ -184,8 +172,8 @@ class _ManageSallesViewState extends ConsumerState<ManageSallesView> {
               ),
               items: _lieux
                   .map((l) => DropdownMenuItem(
-                        value: l['idLieu'] as int,
-                        child: Text(l['nomLieu'] as String),
+                        value: l.idLieu,
+                        child: Text(l.nomLieu),
                       ))
                   .toList(),
               onChanged: (v) => setState(() => _selectedLieu = v),

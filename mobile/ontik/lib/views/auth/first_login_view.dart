@@ -13,12 +13,27 @@ class FirstLoginView extends ConsumerStatefulWidget {
 
 class _FirstLoginViewState extends ConsumerState<FirstLoginView> {
   final _formKey = GlobalKey<FormState>();
-  final _codeCtrl = TextEditingController();
-  final _newPasswordCtrl = TextEditingController();
-  final _confirmPasswordCtrl = TextEditingController();
-  final _newEmailCtrl = TextEditingController();
+  late final TextEditingController _codeCtrl = TextEditingController();
+  late final TextEditingController _newPasswordCtrl = TextEditingController();
+  late final TextEditingController _confirmPasswordCtrl = TextEditingController();
+  late final TextEditingController _newEmailCtrl = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final user = ref.read(authControllerProvider).user;
+      if (user != null) {
+        _codeCtrl.text = user.codeUtilisateur;
+        if (user.email.isNotEmpty) {
+          _newEmailCtrl.text = user.email;
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {

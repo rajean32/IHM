@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../repositories/paiement_repository.dart';
+import '../../controllers/reservation_controller.dart';
 import '../../models/reservation.dart';
-import '../../core/api_client.dart';
 
 class PaymentView extends ConsumerStatefulWidget {
   final int reservationId;
@@ -31,9 +30,7 @@ class _PaymentViewState extends ConsumerState<PaymentView> {
   Future<void> _processPayment() async {
     setState(() => _processing = true);
     try {
-      final paiementRepo = ref.read(
-        Provider<PaiementRepository>((ref) => PaiementRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient())))),
-      );
+      final paiementRepo = ref.read(paiementRepositoryProvider);
 
       final paiement = Paiement(
         montant: widget.amount,
@@ -47,7 +44,7 @@ class _PaymentViewState extends ConsumerState<PaymentView> {
 
       if (!mounted) return;
 
-      if (status.status == 'COMPLETED') {
+      if (status.status == 'PAID' || status.status == 'COMPLETED' || status.status == 'CONFIRMED') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Payment successful!'),

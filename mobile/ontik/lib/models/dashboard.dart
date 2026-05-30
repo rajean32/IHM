@@ -52,10 +52,12 @@ class AdminDashboardStats {
               .toList()
           : [],
       eventsByStatus: json['eventsByStatus'] != null
-          ? Map<String, int>.from(json['eventsByStatus'])
+          ? (json['eventsByStatus'] as Map<String, dynamic>)
+              .map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0))
           : {},
       eventsByCategorie: json['eventsByCategorie'] != null
-          ? Map<String, int>.from(json['eventsByCategorie'])
+          ? (json['eventsByCategorie'] as Map<String, dynamic>)
+              .map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0))
           : {},
     );
   }

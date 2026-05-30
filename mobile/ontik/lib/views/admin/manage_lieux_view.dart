@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../repositories/admin_repositories.dart';
-import '../../core/api_client.dart';
+import '../../controllers/providers.dart';
+import '../../models/venue.dart';
 import '../../widgets/error_state.dart';
 
 class ManageLieuxView extends ConsumerStatefulWidget {
@@ -14,7 +14,7 @@ class ManageLieuxView extends ConsumerStatefulWidget {
 class _ManageLieuxViewState extends ConsumerState<ManageLieuxView> {
   bool _loading = true;
   String? _error;
-  List<dynamic> _lieux = [];
+  List<Lieu> _lieux = [];
   final _formKey = GlobalKey<FormState>();
 
   final _nomCtrl = TextEditingController();
@@ -38,11 +38,7 @@ class _ManageLieuxViewState extends ConsumerState<ManageLieuxView> {
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
-      final lieuRepo = ref.read(
-        Provider<LieuRepository>(
-          (ref) => LieuRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient()))),
-        ),
-      );
+      final lieuRepo = ref.read(lieuRepositoryProvider);
       final lieux = await lieuRepo.getAll();
       if (!mounted) return;
       setState(() {
@@ -62,16 +58,12 @@ class _ManageLieuxViewState extends ConsumerState<ManageLieuxView> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      final lieuRepo = ref.read(
-        Provider<LieuRepository>(
-          (ref) => LieuRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient()))),
-        ),
-      );
-      await lieuRepo.create({
-        'nomLieu': _nomCtrl.text,
-        'adresse': _adresseCtrl.text,
-        'ville': _villeCtrl.text,
-      });
+      final lieuRepo = ref.read(lieuRepositoryProvider);
+      await lieuRepo.create(Lieu(
+        nomLieu: _nomCtrl.text,
+        adresse: _adresseCtrl.text.isEmpty ? null : _adresseCtrl.text,
+        ville: _villeCtrl.text,
+      ));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -120,14 +112,14 @@ class _ManageLieuxViewState extends ConsumerState<ManageLieuxView> {
                                     leading: const CircleAvatar(
                                       child: Icon(Icons.location_city),
                                     ),
-                                    title: Text(lieu['nomLieu'] ?? 'N/A'),
+                                    title: Text(lieu.nomLieu),
                                     subtitle: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        if (lieu['adresse'] != null)
-                                          Text(lieu['adresse']),
-                                        if (lieu['ville'] != null)
-                                          Text(lieu['ville']),
+                                        if (lieu.adresse != null)
+                                          Text(lieu.adresse!),
+                                        if (lieu.ville != null)
+                                          Text(lieu.ville!),
                                       ],
                                     ),
                                     trailing: IconButton(

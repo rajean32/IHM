@@ -55,14 +55,16 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> _checkSession() async {
     final session = await _repository.getUserSession();
     if (session['token'] != null) {
+      final needsFirstLogin = session['needsFirstLogin'] == 'true';
       state = state.copyWith(
         isAuthenticated: true,
-        needsFirstLogin: session['needsFirstLogin'] == 'true',
+        needsFirstLogin: needsFirstLogin,
         user: LoginResponse(
           token: session['token']!,
           codeUtilisateur: session['userCode'] ?? '',
           email: session['userEmail'] ?? '',
           role: session['role'] ?? '',
+          isFirstLogin: needsFirstLogin,
         ),
       );
     }

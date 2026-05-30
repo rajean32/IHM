@@ -14,6 +14,7 @@ import '../views/client/my_reservations_view.dart';
 import '../views/organizer/dashboard_view.dart' as org;
 import '../views/organizer/create_event_view.dart';
 import '../views/organizer/scan_view.dart';
+import '../views/organizer/manage_places_view.dart';
 import '../views/admin/dashboard_view.dart' as admin;
 import '../views/admin/manage_lieux_view.dart';
 import '../views/admin/manage_salles_view.dart';
@@ -57,7 +58,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/payment/:reservationId',
         builder: (context, state) {
           final reservationId = int.parse(state.pathParameters['reservationId']!);
-          final amount = double.tryParse(state.uri.queryParameters['amount'] ?? '0') ?? 0;
+          final extra = state.extra as Map<String, dynamic>?;
+          final amount = extra?['amount'] as double? ??
+              double.tryParse(state.uri.queryParameters['amount'] ?? '0') ?? 0;
           return PaymentView(reservationId: reservationId, amount: amount);
         },
       ),
@@ -89,6 +92,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final eventId = int.tryParse(state.pathParameters['eventId'] ?? '');
           return ScanView(eventId: eventId);
+        },
+      ),
+      GoRoute(
+        path: '/organizer/manage-places/:eventId',
+        builder: (context, state) {
+          final eventId = int.parse(state.pathParameters['eventId']!);
+          return ManagePlacesView(eventId: eventId);
         },
       ),
       GoRoute(

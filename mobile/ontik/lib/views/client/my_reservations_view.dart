@@ -3,11 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/auth_controller.dart';
-import '../../repositories/reservation_repository.dart';
-import '../../repositories/ticket_repository.dart';
+import '../../controllers/reservation_controller.dart';
 import '../../models/reservation.dart';
 import '../../models/ticket.dart';
-import '../../core/api_client.dart';
 import '../../widgets/error_state.dart';
 
 class MyReservationsView extends ConsumerStatefulWidget {
@@ -45,16 +43,8 @@ class _MyReservationsViewState extends ConsumerState<MyReservationsView>
 
     setState(() => _loading = true);
     try {
-      final reservationRepo = ref.read(
-        Provider<ReservationRepository>(
-          (ref) => ReservationRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient()))),
-        ),
-      );
-      final ticketRepo = ref.read(
-        Provider<TicketRepository>(
-          (ref) => TicketRepository(ref.watch(Provider<ApiClient>((ref) => ApiClient()))),
-        ),
-      );
+      final reservationRepo = ref.read(reservationRepositoryProvider);
+      final ticketRepo = ref.read(ticketRepositoryProvider);
 
       final reservations = await reservationRepo.getByClient(clientCode);
       final tickets = await ticketRepo.getByClient(clientCode);
@@ -125,7 +115,7 @@ class _MyReservationsViewState extends ConsumerState<MyReservationsView>
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 if (r.idReservation != null) {
-                  context.push('/payment/${r.idReservation}');
+                  context.push('/payment/${r.idReservation}', extra: {'amount': null});
                 }
               },
             ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/venue.dart';
 
+const _seatAvailableStatuses = {'DISPONIBLE', null};
+
 class SeatPicker extends StatefulWidget {
   final List<SeatingPlace> seats;
   final Function(List<SeatingPlace>) onSeatsSelected;
@@ -30,8 +32,12 @@ class _SeatPickerState extends State<SeatPicker> {
     return widget.seats.where((s) => s.typePlace != null).map((s) => s.typePlace!).toSet();
   }
 
+  bool _isSeatAvailable(SeatingPlace seat) {
+    return seat.disponible && _seatAvailableStatuses.contains(seat.statut);
+  }
+
   void _toggleSeat(SeatingPlace seat) {
-    if (!seat.disponible) return;
+    if (!_isSeatAvailable(seat)) return;
     setState(() {
       if (_selectedSeats.contains(seat.numeroPlace)) {
         _selectedSeats.remove(seat.numeroPlace);
@@ -178,12 +184,13 @@ class _SeatPickerState extends State<SeatPicker> {
 
   Widget _buildSeatTile(SeatingPlace seat) {
     final isSelected = _selectedSeats.contains(seat.numeroPlace);
-    final isAvailable = seat.disponible;
+    final isAvailable = _isSeatAvailable(seat);
+    final isPending = seat.statut == 'EN_ATTENTE';
     return GestureDetector(
       onTap: () => _toggleSeat(seat),
       child: Tooltip(
         message:
-            '${seat.numeroPlace}${seat.prix != null ? ' - \$${seat.prix!.toStringAsFixed(0)}' : ''}${seat.typePlace != null ? ' (${seat.typePlace})' : ''}',
+            '${seat.numeroPlace}${seat.prix != null ? ' - \$${seat.prix!.toStringAsFixed(0)}' : ''}${seat.typePlace != null ? ' (${seat.typePlace})' : ''}${seat.statut != null ? ' [${seat.statut}]' : ''}',
         child: Container(
           width: 36,
           height: 36,
@@ -192,7 +199,9 @@ class _SeatPickerState extends State<SeatPicker> {
                 ? Colors.blue
                 : isAvailable
                     ? Colors.green.shade200
-                    : Colors.red.shade200,
+                    : isPending
+                        ? Colors.orange.shade200
+                        : Colors.red.shade200,
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
               color: isSelected ? Colors.blue.shade700 : Colors.grey,
@@ -218,9 +227,11 @@ class _SeatPickerState extends State<SeatPicker> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _legendItem(Colors.green.shade200, 'Available'),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         _legendItem(Colors.blue, 'Selected'),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
+        _legendItem(Colors.orange.shade200, 'Pending'),
+        const SizedBox(width: 12),
         _legendItem(Colors.red.shade200, 'Taken'),
       ],
     );

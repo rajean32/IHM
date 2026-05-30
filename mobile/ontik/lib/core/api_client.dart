@@ -73,7 +73,15 @@ class ApiClient {
 
   Exception _handleError(DioException e) {
     if (e.response != null) {
-      final message = e.response?.data['message'] ?? 'An error occurred';
+      final data = e.response?.data;
+      String message;
+      if (data is Map) {
+        message = data['message'] ?? 'An error occurred';
+      } else if (data is String) {
+        message = data;
+      } else {
+        message = 'An error occurred';
+      }
       return Exception('API Error ${e.response?.statusCode}: $message');
     }
     return Exception('Network error: ${e.message}');

@@ -88,6 +88,7 @@ class SeatingPlace {
   final bool disponible;
   final double? prix;
   final String? salle;
+  final String? statut;
 
   SeatingPlace({
     required this.numeroPlace,
@@ -96,6 +97,7 @@ class SeatingPlace {
     required this.disponible,
     this.prix,
     this.salle,
+    this.statut,
   });
 
   factory SeatingPlace.fromJson(Map<String, dynamic> json) {
@@ -106,6 +108,7 @@ class SeatingPlace {
       disponible: json['disponible'] ?? true,
       prix: json['prix'] != null ? double.tryParse(json['prix'].toString()) : null,
       salle: json['salle'],
+      statut: json['statut'],
     );
   }
 }
