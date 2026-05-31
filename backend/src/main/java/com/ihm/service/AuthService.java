@@ -18,9 +18,12 @@ import com.ihm.schemat.Utilisateur;
 import com.ihm.security.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -69,12 +72,17 @@ public class AuthService {
     public LoginResponse register(RegisterRequest request) {
         log.debug("Register attempt for email: {}", request.getEmail());
 
-        if (utilisateurRepository.existsByCodeUtilisateur(request.getCodeUtilisateur())) {
-            throw new DuplicateResourceException("Utilisateur", "codeUtilisateur", request.getCodeUtilisateur());
-        }
         if (utilisateurRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("Utilisateur", "email", request.getEmail());
         }
+
+        String code = request.getCodeUtilisateur();
+        if (code == null || code.isBlank()) {
+            code = generateUserCode(request.getType());
+        } else if (utilisateurRepository.existsByCodeUtilisateur(code)) {
+            throw new DuplicateResourceException("Utilisateur", "codeUtilisateur", code);
+        }
+        request.setCodeUtilisateur(code);
 
         String type = (request.getType() != null) ? request.getType().toLowerCase() : "client";
         Utilisateur user;
@@ -116,6 +124,11 @@ public class AuthService {
     public LoginResponse firstLoginUpdate(FirstLoginUpdateRequest request) {
         log.debug("First login update for user: {}", request.getCodeUtilisateur());
 
+        String authenticatedUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!authenticatedUser.equals(request.getCodeUtilisateur())) {
+            throw new BadRequestException("Authenticated user does not match the user code in the request");
+        }
+
         Utilisateur user = utilisateurRepository.findByCodeUtilisateur(request.getCodeUtilisateur())
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "code", request.getCodeUtilisateur()));
 
@@ -142,6 +155,11 @@ public class AuthService {
 
         log.info("First login update completed for: {}", user.getCodeUtilisateur());
         return new LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), role, false);
+    }
+
+    private String generateUserCode(String type) {
+        String prefix = "client".equalsIgnoreCase(type) ? "CLT" : "ORG";
+        return prefix + "_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     private String determineRole(Utilisateur user) {

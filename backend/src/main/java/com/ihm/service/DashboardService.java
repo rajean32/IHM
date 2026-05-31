@@ -1,18 +1,22 @@
 package com.ihm.service;
 
 import com.ihm.exception.ResourceNotFoundException;
+import com.ihm.model.dto.DailySalesDTO;
 import com.ihm.model.dto.DashboardStatsDTO;
 import com.ihm.model.dto.EvenementDTO;
 import com.ihm.model.dto.EventStatsDTO;
 import com.ihm.model.dto.OrganizerDashboardDTO;
 import com.ihm.repository.*;
 import com.ihm.schemat.Concerner;
+import com.ihm.schemat.CorrespondA;
 import com.ihm.schemat.Evenement;
 import com.ihm.schemat.Paiement;
+import com.ihm.schemat.Reservation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -59,6 +63,20 @@ public class DashboardService {
         this.placeRepository = placeRepository;
     }
 
+    @Transactional(readOnly = true)
+    public List<DailySalesDTO> getDailySales(String codeOrg) {
+        List<Object[]> raw = paiementRepository.dailySalesByOrganizer(codeOrg);
+        List<DailySalesDTO> result = new ArrayList<>();
+        for (Object[] row : raw) {
+            result.add(new DailySalesDTO(
+                    ((java.sql.Date) row[0]).toLocalDate(),
+                    row[1] != null ? (Long) row[1] : 0L,
+                    row[2] != null ? ((BigDecimal) row[2]).doubleValue() : 0.0));
+        }
+        return result;
+    }
+
+    @Transactional(readOnly = true)
     public DashboardStatsDTO getAdminStats() {
         log.debug("Fetching admin dashboard stats");
         DashboardStatsDTO stats = new DashboardStatsDTO();
@@ -87,19 +105,24 @@ public class DashboardService {
 
         Map<String, Long> eventsByStatus = new HashMap<>();
         for (Object[] row : evenementRepository.countByStatut()) {
-            eventsByStatus.put((String) row[0], (Long) row[1]);
+            if (row[0] != null) {
+                eventsByStatus.put((String) row[0], row[1] != null ? (Long) row[1] : 0L);
+            }
         }
         stats.setEventsByStatus(eventsByStatus);
 
         Map<String, Long> eventsByCat = new HashMap<>();
         for (Object[] row : evenementRepository.countByCategorie()) {
-            eventsByCat.put((String) row[0], (Long) row[1]);
+            if (row[0] != null) {
+                eventsByCat.put((String) row[0], row[1] != null ? (Long) row[1] : 0L);
+            }
         }
         stats.setEventsByCategorie(eventsByCat);
 
         return stats;
     }
 
+    @Transactional(readOnly = true)
     public OrganizerDashboardDTO getOrganizerStats(String codeOrg) {
         log.debug("Fetching organizer stats for: {}", codeOrg);
         List<Evenement> myEvents = evenementRepository.findByOrganisateur_CodeUtilisateur(codeOrg);
@@ -127,10 +150,21 @@ public class DashboardService {
         }
         stats.setTotalPlaces(totalPlaces);
         stats.setPlacesDisponibles(totalPlaces - totalTickets);
+        stats.setFillRate(totalPlaces > 0 ? (double) totalTickets / totalPlaces * 100 : 0);
+
+        stats.setDailySales(getDailySales(codeOrg));
+        stats.setTopEvents(myEvents.stream()
+                .sorted((a, b) -> Long.compare(
+                        concernerRepository.findByEvenement_IdEvenement(b.getIdEvenement()).size(),
+                        concernerRepository.findByEvenement_IdEvenement(a.getIdEvenement()).size()))
+                .limit(5)
+                .map(this::toDTO)
+                .collect(Collectors.toList()));
 
         return stats;
     }
 
+    @Transactional(readOnly = true)
     public EventStatsDTO getEventStats(Integer idEvent) {
         log.debug("Fetching stats for event: {}", idEvent);
         Evenement event = evenementRepository.findByIdEvenement(idEvent)

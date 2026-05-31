@@ -1,102 +1,98 @@
-import { useState } from 'react'
-import { setAuthToken, setUserInfo } from './api/entityApi'
+import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { setAuthToken, setUserInfo, getAuthToken, getUserInfo } from './api/entityApi'
 
-import LoginForm from './components/LoginForm'
-import RegisterForm from './components/RegisterForm'
-import EvenementForm from './components/EvenementForm'
-import LieuSallePlaceForm from './components/LieuSallePlaceForm'
-import TicketForm from './components/TicketForm'
-import ReservationForm from './components/ReservationForm'
-import PaiementForm from './components/PaiementForm'
-import ConcernerForm from './components/ConcernerForm'
+import LoginPage from './pages/auth/LoginPage'
+import RegisterPage from './pages/auth/RegisterPage'
+import FirstLoginPage from './pages/auth/FirstLoginPage'
+import AdminLayout from './pages/admin/AdminLayout'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminDataTable from './pages/admin/AdminDataTable'
+import UserManagement from './pages/admin/UserManagement'
+import OrganizerLayout from './pages/organizer/OrganizerLayout'
+import OrganizerDashboard from './pages/organizer/OrganizerDashboard'
+import EventCreationWizard from './pages/organizer/EventCreationWizard'
+import OrganizerVenueManagement from './pages/organizer/OrganizerVenueManagement'
+import ClientLayout from './pages/client/ClientLayout'
+import ClientHome from './pages/client/ClientHome'
+import BookingFlow from './pages/client/BookingFlow'
+import MyReservations from './pages/client/MyReservations'
 
-const ROLE_SECTIONS = {
-  ADMINISTRATEUR: [
-    { key: 'moderation', label: 'Modération Événements', comp: EvenementForm },
-    { key: 'lieu-salle-place', label: 'Lieux / Salles / Places', comp: LieuSallePlaceForm },
-  ],
-  ORGANISATEUR: [
-    { key: 'evenements', label: 'Mes Événements', comp: EvenementForm },
-    { key: 'tickets', label: 'Tarification Tickets', comp: TicketForm },
-    { key: 'concerner', label: 'Affectation Places & Tickets', comp: ConcernerForm },
-  ],
-  CLIENT: [
-    { key: 'evenements', label: 'Catalogue Événements', comp: EvenementForm },
-    { key: 'reservations', label: 'Mes Réservations', comp: ReservationForm },
-    { key: 'paiements', label: 'Paiements', comp: PaiementForm },
-  ],
+function RequireAuth({ children, roles }) {
+  const auth = getAuthToken()
+  const user = getUserInfo()
+  const location = useLocation()
+
+  if (!auth) return <Navigate to="/login" state={{ from: location }} replace />
+  if (roles && !roles.includes(user?.role)) return <Navigate to="/" replace />
+  if (user?.isFirstLogin && location.pathname !== '/first-login') return <Navigate to="/first-login" replace />
+
+  return children
+}
+
+function RoleHome() {
+  const user = getUserInfo()
+  if (!user) return <Navigate to="/login" replace />
+  switch (user.role) {
+    case 'ADMINISTRATEUR': return <Navigate to="/admin" replace />
+    case 'ORGANISATEUR': return <Navigate to="/organizer" replace />
+    default: return <Navigate to="/client" replace />
+  }
 }
 
 export default function App() {
-  const [auth, setAuth] = useState(null)
-  const [section, setSection] = useState('login')
+  const [ready, setReady] = useState(false)
 
-  function handleAuth(token, info) {
-    setAuthToken(token)
-    setUserInfo(info)
-    const sections = ROLE_SECTIONS[info.role]
-    setAuth({ token, user: info })
-    setSection(sections?.[0]?.key || 'evenements')
-  }
+  useEffect(() => {
+    const token = getAuthToken()
+    const user = getUserInfo()
+    if (token && user) setReady(true)
+    else setReady(true)
+  }, [])
 
-  function handleLogout() {
-    setAuthToken(null)
-    setUserInfo(null)
-    setAuth(null)
-    setSection('login')
-  }
-
-  if (!auth) {
-    return (
-      <div className="app">
-        <header>
-          <h1>IHM — Gestion Événements & Tickets</h1>
-        </header>
-        <main className="auth-page">
-          <div className="auth-tabs">
-            <button className={section === 'login' ? 'active' : ''} onClick={() => setSection('login')}>Connexion</button>
-            <button className={section === 'register' ? 'active' : ''} onClick={() => setSection('register')}>Inscription</button>
-          </div>
-          {section === 'login' ? <LoginForm onAuth={handleAuth} /> : <RegisterForm onAuth={handleAuth} />}
-        </main>
-      </div>
-    )
-  }
-
-  const user = auth.user
-  const sections = ROLE_SECTIONS[user.role] || []
-  const current = sections.find(s => s.key === section)
-  if (!current && sections.length > 0) {
-    setSection(sections[0].key)
-  }
-  const ActiveComp = current?.comp || sections[0]?.comp
+  if (!ready) return <div className="app-loading">Chargement...</div>
 
   return (
-    <div className="app">
-      <header>
-        <h1>IHM — Gestion Événements & Tickets</h1>
-        <div className="user-info">
-          <span className="user-badge">{user.role}</span>
-          <span>{user.code || user.email}</span>
-          <button className="btn-logout" onClick={handleLogout}>Déconnexion</button>
-        </div>
-      </header>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        <Route path="/first-login" element={<RequireAuth><FirstLoginPage /></RequireAuth>} />
+        <Route path="/" element={<RequireAuth><RoleHome /></RequireAuth>} />
 
-      <nav className="nav-bar">
-        {sections.map(s => (
-          <button
-            key={s.key}
-            className={`nav-btn ${(current?.key || sections[0]?.key) === s.key ? 'active' : ''}`}
-            onClick={() => setSection(s.key)}
-          >
-            {s.label}
-          </button>
-        ))}
-      </nav>
+        <Route path="/admin" element={<RequireAuth roles={['ADMINISTRATEUR']}><AdminLayout /></RequireAuth>}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="data/:entity" element={<AdminDataTable />} />
+        </Route>
 
-      <main>
-        <ActiveComp userRole={user.role} userCode={user.code} />
-      </main>
-    </div>
+        <Route path="/organizer" element={<RequireAuth roles={['ORGANISATEUR']}><OrganizerLayout /></RequireAuth>}>
+          <Route index element={<OrganizerDashboard />} />
+          <Route path="create-event" element={<EventCreationWizard />} />
+          <Route path="edit-event/:id" element={<EventCreationWizard />} />
+          <Route path="venues" element={<OrganizerVenueManagement />} />
+        </Route>
+
+        <Route path="/client" element={<RequireAuth roles={['CLIENT']}><ClientLayout /></RequireAuth>}>
+          <Route index element={<ClientHome />} />
+          <Route path="book/:eventId" element={<BookingFlow />} />
+          <Route path="my-reservations" element={<MyReservations />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
+}
+
+function PublicRoute({ children }) {
+  const auth = getAuthToken()
+  const user = getUserInfo()
+  if (!auth || !user) return children
+  if (user?.isFirstLogin) return <Navigate to="/first-login" replace />
+  switch (user.role) {
+    case 'ADMINISTRATEUR': return <Navigate to="/admin" replace />
+    case 'ORGANISATEUR': return <Navigate to="/organizer" replace />
+    default: return <Navigate to="/client" replace />
+  }
 }

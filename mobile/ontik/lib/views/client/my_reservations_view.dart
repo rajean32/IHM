@@ -113,11 +113,7 @@ class _MyReservationsViewState extends ConsumerState<MyReservationsView>
                   ? Text(DateFormat('MMM d, yyyy').format(r.dateReservation!))
                   : null,
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                if (r.idReservation != null) {
-                  context.push('/payment/${r.idReservation}', extra: {'amount': null});
-                }
-              },
+              onTap: () => _tabController.animateTo(1),
             ),
           );
         },

@@ -10,10 +10,15 @@ export default function LieuSallePlaceForm({ userRole }) {
   const [lieux, setLieux] = useState([])
   const [salles, setSalles] = useState([])
   const [places, setPlaces] = useState([])
+  const [placesBySalle, setPlacesBySalle] = useState([])
 
   const [lieuForm, setLieuForm] = useState({ nomLieu: '', adresse: '', ville: '' })
   const [salleForm, setSalleForm] = useState({ numeroSalle: '', nomSalle: '', idLieu: '' })
-  const [placeForm, setPlaceForm] = useState({ numeroPlace: '', range: '', typePlace: '', numeroSalle: '' })
+  const [placeForm, setPlaceForm] = useState({ numeroPlace: '', range: '', typePlace: '', prix: '', numeroSalle: '' })
+  const [batchForm, setBatchForm] = useState({
+    numeroSalle: '', nombreRangees: 5, placesParRangee: 10,
+    prefixeRangee: '', typePlace: '', prix: '', debutNumero: 1,
+  })
 
   const isAdmin = userRole === 'ADMINISTRATEUR'
   const isReadOnly = !isAdmin
@@ -70,14 +75,38 @@ export default function LieuSallePlaceForm({ userRole }) {
     if (!isAdmin) return
     setLoading(true); setError(''); setSuccess('')
     try {
-      const res = await create('/api/places', {
+      const payload = {
         numeroPlace: placeForm.numeroPlace,
         range: placeForm.range || undefined,
         typePlace: placeForm.typePlace || undefined,
+        prix: placeForm.prix ? parseFloat(placeForm.prix) : undefined,
+        statut: 'DISPONIBLE',
         numeroSalle: placeForm.numeroSalle,
-      })
+      }
+      const res = await create('/api/places', payload)
       setSuccess(`Place "${res.data.numeroPlace}" créée`)
-      setPlaceForm({ numeroPlace: '', range: '', typePlace: '', numeroSalle: '' })
+      setPlaceForm({ numeroPlace: '', range: '', typePlace: '', prix: '', numeroSalle: '' })
+      await loadPlaces()
+    } catch (err) { setError(err.message) } finally { setLoading(false) }
+  }
+
+  async function handleCreateBatch(e) {
+    e.preventDefault()
+    if (!isAdmin) return
+    setLoading(true); setError(''); setSuccess('')
+    try {
+      const payload = {
+        numeroSalle: batchForm.numeroSalle,
+        nombreRangees: parseInt(batchForm.nombreRangees),
+        placesParRangee: parseInt(batchForm.placesParRangee),
+        prefixeRangee: batchForm.prefixeRangee || undefined,
+        typePlace: batchForm.typePlace || undefined,
+        prix: batchForm.prix ? parseFloat(batchForm.prix) : undefined,
+        debutNumero: parseInt(batchForm.debutNumero),
+      }
+      const res = await create('/api/places/batch', payload)
+      setSuccess(`${res.data.length} places créées en lot pour la salle ${batchForm.numeroSalle}`)
+      setBatchForm(prev => ({ ...prev, numeroSalle: '', typePlace: '', prix: '' }))
       await loadPlaces()
     } catch (err) { setError(err.message) } finally { setLoading(false) }
   }
@@ -96,8 +125,6 @@ export default function LieuSallePlaceForm({ userRole }) {
   }
 
   useEffect(() => { loadLieux(); loadSalles(); loadPlaces() }, [])
-
-  const colSpan = { lieu: 5, salle: 4, place: 5 }
 
   function renderTable(entity, items, columns, delFn) {
     if (items.length === 0) return <p className="empty">Aucun(e) {entity}</p>
@@ -131,9 +158,9 @@ export default function LieuSallePlaceForm({ userRole }) {
       )}
 
       <div className="steps-nav">
-        {[1, 2, 3].map(s => (
+        {[1, 2, 3, 4].map(s => (
           <button key={s} className={`step-btn ${step === s ? 'active' : ''}`} onClick={() => setStep(s)}>
-            {s === 1 ? '1. Lieu' : s === 2 ? '2. Salle' : '3. Place'}
+            {s === 1 ? '1. Lieu' : s === 2 ? '2. Salle' : s === 3 ? '3. Place' : '4. Génération'}
           </button>
         ))}
       </div>
@@ -193,11 +220,12 @@ export default function LieuSallePlaceForm({ userRole }) {
         <>
           {isAdmin && (
             <form className="custom-form compact" onSubmit={handleCreatePlace}>
-              <h3>Créer une place</h3>
+              <h3>Créer une place (individuelle)</h3>
               <div className="form-row">
                 <label>Numéro *<input name="numeroPlace" value={placeForm.numeroPlace} onChange={onChange(setPlaceForm)} required /></label>
                 <label>Rangée <input name="range" value={placeForm.range} onChange={onChange(setPlaceForm)} /></label>
                 <label>Type <input name="typePlace" value={placeForm.typePlace} onChange={onChange(setPlaceForm)} /></label>
+                <label>Prix (€)<input name="prix" type="number" step="0.01" value={placeForm.prix} onChange={onChange(setPlaceForm)} /></label>
                 <label>Salle *<select name="numeroSalle" value={placeForm.numeroSalle} onChange={onChange(setPlaceForm)} required>
                   <option value="">-- Sélectionner --</option>
                   {salles.map(s => <option key={s.numeroSalle} value={s.numeroSalle}>{s.numeroSalle} — {s.nomSalle || ''}</option>)}
@@ -211,7 +239,58 @@ export default function LieuSallePlaceForm({ userRole }) {
             { key: 'numeroPlace', label: 'Numéro' },
             { key: 'range', label: 'Rangée' },
             { key: 'typePlace', label: 'Type' },
+            { key: 'prix', label: 'Prix' },
+            { key: 'statut', label: 'Statut' },
             { key: 'numeroSalle', label: 'Salle' },
+          ], handleDeletePlace)}
+        </>
+      )}
+
+      {step === 4 && (
+        <>
+          {isAdmin && (
+            <form className="custom-form compact" onSubmit={handleCreateBatch}>
+              <h3>Génération en lot de places</h3>
+              <p className="form-subtitle">Crée automatiquement N rangées × M places par rangée</p>
+              <div className="form-row">
+                <label>Salle *<select name="numeroSalle" value={batchForm.numeroSalle} onChange={onChange(setBatchForm)} required>
+                  <option value="">-- Sélectionner --</option>
+                  {salles.map(s => <option key={s.numeroSalle} value={s.numeroSalle}>{s.numeroSalle} — {s.nomSalle || ''}</option>)}
+                </select></label>
+                <label>Nb rangées *<input name="nombreRangees" type="number" min="1" value={batchForm.nombreRangees} onChange={onChange(setBatchForm)} required /></label>
+                <label>Places/rangée *<input name="placesParRangee" type="number" min="1" value={batchForm.placesParRangee} onChange={onChange(setBatchForm)} required /></label>
+              </div>
+              <div className="form-row">
+                <label>Préfixe rangée<input name="prefixeRangee" value={batchForm.prefixeRangee} onChange={onChange(setBatchForm)} placeholder="ex: BAL" /></label>
+                <label>Type place<input name="typePlace" value={batchForm.typePlace} onChange={onChange(setBatchForm)} placeholder="ex: Standard" /></label>
+                <label>Prix unitaire (€)<input name="prix" type="number" step="0.01" value={batchForm.prix} onChange={onChange(setBatchForm)} /></label>
+                <label>Début numéro<input name="debutNumero" type="number" min="1" value={batchForm.debutNumero} onChange={onChange(setBatchForm)} /></label>
+              </div>
+              <p className="form-subtitle">
+                Les places seront nommées A1, A2, ... (ou avec préfixe: BALA1, BALA2...)
+              </p>
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? '...' : `Générer ${parseInt(batchForm.nombreRangees) * parseInt(batchForm.placesParRangee)} places`}
+              </button>
+            </form>
+          )}
+          <h4 style={{ marginTop: '1.5rem' }}>Aperçu des places par salle</h4>
+          {salles.length > 0 && (
+            <select onChange={async e => {
+              if (!e.target.value) { setPlacesBySalle([]); return }
+              const r = await getAll('/api/places?salle=' + encodeURIComponent(e.target.value))
+              setPlacesBySalle(Array.isArray(r.data) ? r.data : [])
+            }}>
+              <option value="">-- Choisir une salle --</option>
+              {salles.map(s => <option key={s.numeroSalle} value={s.numeroSalle}>{s.numeroSalle}</option>)}
+            </select>
+          )}
+          {placesBySalle.length > 0 && renderTable('place', placesBySalle, [
+            { key: 'numeroPlace', label: 'Siège' },
+            { key: 'range', label: 'Rang' },
+            { key: 'typePlace', label: 'Type' },
+            { key: 'prix', label: 'Prix' },
+            { key: 'statut', label: 'Statut' },
           ], handleDeletePlace)}
         </>
       )}

@@ -31,4 +31,7 @@ public interface TicketRepository extends JpaRepository<Ticket, String> {
 
     @Query("SELECT COUNT(t) FROM Ticket t JOIN t.concerners c WHERE c.evenement.idEvenement = :idEvent")
     long countByEvent(@Param("idEvent") Integer idEvent);
+
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.codeTicket NOT IN (SELECT c.ticket.codeTicket FROM Concerner c)")
+    long countOrphanTickets();
 }

@@ -2,6 +2,7 @@ package com.ihm.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;
+import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LieuDTO {
@@ -13,6 +14,8 @@ public class LieuDTO {
 
     private String adresse;
     private String ville;
+
+    private List<SalleDTO> salles;
 
     public LieuDTO() {}
 
@@ -27,4 +30,7 @@ public class LieuDTO {
 
     public String getVille() { return ville; }
     public void setVille(String ville) { this.ville = ville; }
+
+    public List<SalleDTO> getSalles() { return salles; }
+    public void setSalles(List<SalleDTO> salles) { this.salles = salles; }
 }

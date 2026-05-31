@@ -36,4 +36,16 @@ public interface PaiementRepository extends JpaRepository<Paiement, Integer> {
 
     @Query("SELECT COUNT(p) FROM Paiement p WHERE p.reservation.client.codeUtilisateur = :codeClient")
     long countByClient(@Param("codeClient") String codeClient);
+
+    @Query("SELECT FUNCTION('DATE', p.datePaiement), COUNT(p), COALESCE(SUM(p.montant), 0) FROM Paiement p " +
+           "WHERE p.reservation.idReservation IN (SELECT ca.reservation.idReservation FROM CorrespondA ca " +
+           "WHERE ca.ticket.codeTicket IN (SELECT c.ticket.codeTicket FROM Concerner c WHERE c.evenement.organisateur.codeUtilisateur = :codeOrg)) " +
+           "GROUP BY FUNCTION('DATE', p.datePaiement) ORDER BY FUNCTION('DATE', p.datePaiement) ASC")
+    List<Object[]> dailySalesByOrganizer(@Param("codeOrg") String codeOrg);
+
+    @Query("SELECT p.reservation.idReservation, COALESCE(SUM(p.montant), 0) FROM Paiement p " +
+           "WHERE p.reservation.idReservation IN (SELECT ca.reservation.idReservation FROM CorrespondA ca " +
+           "WHERE ca.ticket.codeTicket IN (SELECT c.ticket.codeTicket FROM Concerner c WHERE c.evenement.organisateur.codeUtilisateur = :codeOrg)) " +
+           "GROUP BY p.reservation.idReservation ORDER BY COALESCE(SUM(p.montant), 0) DESC")
+    List<Object[]> topReservationsByOrganizer(@Param("codeOrg") String codeOrg, org.springframework.data.domain.Pageable pageable);
 }

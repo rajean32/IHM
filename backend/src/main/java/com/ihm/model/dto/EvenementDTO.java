@@ -29,6 +29,13 @@ public class EvenementDTO {
     @NotBlank(message = "Organizer code is required")
     private String codeOrganisateur;
 
+    private String motifAnnulation;
+    private String organisateurNom;
+    private String lieuNom;
+    private String categorieNom;
+    private Long placesTotal;
+    private Long placesDisponibles;
+
     public EvenementDTO() {}
 
     public Integer getIdEvenement() { return idEvenement; }
@@ -60,4 +67,22 @@ public class EvenementDTO {
 
     public String getCodeOrganisateur() { return codeOrganisateur; }
     public void setCodeOrganisateur(String codeOrganisateur) { this.codeOrganisateur = codeOrganisateur; }
+
+    public String getMotifAnnulation() { return motifAnnulation; }
+    public void setMotifAnnulation(String motifAnnulation) { this.motifAnnulation = motifAnnulation; }
+
+    public String getOrganisateurNom() { return organisateurNom; }
+    public void setOrganisateurNom(String organisateurNom) { this.organisateurNom = organisateurNom; }
+
+    public String getLieuNom() { return lieuNom; }
+    public void setLieuNom(String lieuNom) { this.lieuNom = lieuNom; }
+
+    public String getCategorieNom() { return categorieNom; }
+    public void setCategorieNom(String categorieNom) { this.categorieNom = categorieNom; }
+
+    public Long getPlacesTotal() { return placesTotal; }
+    public void setPlacesTotal(Long placesTotal) { this.placesTotal = placesTotal; }
+
+    public Long getPlacesDisponibles() { return placesDisponibles; }
+    public void setPlacesDisponibles(Long placesDisponibles) { this.placesDisponibles = placesDisponibles; }
 }

@@ -4,14 +4,18 @@ import com.ihm.exception.ResourceNotFoundException;
 import com.ihm.model.dto.*;
 import com.ihm.repository.*;
 import com.ihm.schemat.*;
+import com.ihm.schemat.StatutPlace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import com.ihm.repository.*;
 
 @Service
 public class EventSearchService {
@@ -40,6 +44,7 @@ public class EventSearchService {
         this.salleRepository = salleRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<EvenementDTO> searchEvents(EventSearchRequest request) {
         log.debug("Searching events with query: {}, categorie: {}, ville: {}", request.getQ(), request.getCategorie(), request.getVille());
 
@@ -91,9 +96,36 @@ public class EventSearchService {
                     .collect(Collectors.toList());
         }
 
+        if (request.getIdLieu() != null) {
+            events = events.stream()
+                    .filter(e -> e.getLieu() != null && request.getIdLieu().equals(e.getLieu().getIdLieu()))
+                    .collect(Collectors.toList());
+        }
+
+        if (request.getPrixMin() != null || request.getPrixMax() != null) {
+            Set<Integer> eventIds = events.stream().map(Evenement::getIdEvenement).collect(Collectors.toSet());
+            if (!eventIds.isEmpty()) {
+                Map<Integer, BigDecimal> minPrices = new HashMap<>();
+                for (Integer eid : eventIds) {
+                    BigDecimal minP = ticketRepository.findMinPriceByEvent(eid);
+                    if (minP != null) minPrices.put(eid, minP);
+                }
+                events = events.stream()
+                        .filter(e -> {
+                            BigDecimal ep = minPrices.get(e.getIdEvenement());
+                            if (ep == null) return false;
+                            if (request.getPrixMin() != null && ep.compareTo(request.getPrixMin()) < 0) return false;
+                            if (request.getPrixMax() != null && ep.compareTo(request.getPrixMax()) > 0) return false;
+                            return true;
+                        })
+                        .collect(Collectors.toList());
+            }
+        }
+
         return events.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<EvenementDTO> getUpcomingEvents() {
         log.debug("Fetching upcoming events");
         return evenementRepository.findUpcomingEvents(LocalDate.now())
@@ -102,6 +134,7 @@ public class EventSearchService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<EvenementDTO> getPopularEvents() {
         log.debug("Fetching popular events");
         List<Evenement> upcoming = evenementRepository.findUpcomingEvents(LocalDate.now());
@@ -116,6 +149,7 @@ public class EventSearchService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public EventDetailDTO getEventDetail(Integer idEvent) {
         log.debug("Fetching event detail: {}", idEvent);
         Evenement event = evenementRepository.findByIdEvenement(idEvent)
@@ -156,6 +190,7 @@ public class EventSearchService {
         return dto;
     }
 
+    @Transactional(readOnly = true)
     public List<SeatingDTO> getAvailableSeats(Integer idEvent) {
         log.debug("Fetching available seats for event: {}", idEvent);
         Evenement event = evenementRepository.findByIdEvenement(idEvent)
@@ -194,8 +229,19 @@ public class EventSearchService {
             seating.setRang(place.getRange());
             seating.setTypePlace(place.getTypePlace());
             seating.setSalle(place.getSalle().getNumeroSalle());
-            seating.setDisponible(!reservedPlaces.contains(place.getNumeroPlace()));
-            seating.setPrix(placePrices.getOrDefault(place.getNumeroPlace(), BigDecimal.ZERO));
+            seating.setStatut(place.getStatut() != null ? place.getStatut().name() : "DISPONIBLE");
+            boolean estReservee = reservedPlaces.contains(place.getNumeroPlace());
+            if (StatutPlace.INDISPONIBLE.equals(place.getStatut())) {
+                seating.setDisponible(false);
+            } else {
+                seating.setDisponible(!estReservee);
+            }
+            BigDecimal prixPlace = place.getPrix();
+            if (prixPlace != null && prixPlace.compareTo(BigDecimal.ZERO) > 0) {
+                seating.setPrix(prixPlace);
+            } else {
+                seating.setPrix(placePrices.getOrDefault(place.getNumeroPlace(), BigDecimal.ZERO));
+            }
             seatingList.add(seating);
         }
 

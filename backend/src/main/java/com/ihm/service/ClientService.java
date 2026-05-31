@@ -3,11 +3,9 @@ package com.ihm.service;
 import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
 import com.ihm.model.dto.ClientDTO;
-import com.ihm.repository.AdministrateurRepository;
-import com.ihm.repository.ClientRepository;
-import com.ihm.repository.UtilisateurRepository;
-import com.ihm.schemat.Administrateur;
-import com.ihm.schemat.Client;
+import com.ihm.model.dto.ClientTicketDTO;
+import com.ihm.repository.*;
+import com.ihm.schemat.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,15 +24,21 @@ public class ClientService {
     private final UtilisateurRepository utilisateurRepository;
     private final AdministrateurRepository administrateurRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TicketRepository ticketRepository;
+    private final ConcernerRepository concernerRepository;
 
     public ClientService(ClientRepository clientRepository,
                          UtilisateurRepository utilisateurRepository,
                          AdministrateurRepository administrateurRepository,
-                         PasswordEncoder passwordEncoder) {
+                         PasswordEncoder passwordEncoder,
+                         TicketRepository ticketRepository,
+                         ConcernerRepository concernerRepository) {
         this.clientRepository = clientRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.administrateurRepository = administrateurRepository;
         this.passwordEncoder = passwordEncoder;
+        this.ticketRepository = ticketRepository;
+        this.concernerRepository = concernerRepository;
     }
 
     public List<ClientDTO> getAll() {
@@ -114,6 +118,35 @@ public class ClientService {
         }
         clientRepository.deleteById(code);
         log.info("Client deleted: {}", code);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClientTicketDTO> getClientTickets(String codeClient) {
+        log.debug("Fetching tickets for client: {}", codeClient);
+        List<Ticket> tickets = ticketRepository.findByCorrespondances_Reservation_Client_CodeUtilisateur(codeClient);
+        return tickets.stream().map(ticket -> {
+            ClientTicketDTO dto = new ClientTicketDTO();
+            dto.setCodeTicket(ticket.getCodeTicket());
+            dto.setPrix(ticket.getPrix());
+            List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(ticket.getCodeTicket());
+            if (!concerners.isEmpty()) {
+                Concerner c = concerners.get(0);
+                dto.setEvenementTitre(c.getEvenement().getTitre());
+                dto.setDateEvenement(c.getEvenement().getDateEvenement());
+                dto.setHeureEvenement(c.getEvenement().getHeureEvenement());
+                dto.setNumeroPlace(c.getPlace().getNumeroPlace());
+                dto.setRang(c.getPlace().getRange());
+                dto.setTypePlace(c.getPlace().getTypePlace());
+                dto.setStatut(c.getPlace().getStatut().name());
+                if (c.getEvenement().getLieu() != null) {
+                    dto.setLieuNom(c.getEvenement().getLieu().getNomLieu());
+                }
+                if (c.getPlace().getSalle() != null) {
+                    dto.setSalleNom(c.getPlace().getSalle().getNomSalle());
+                }
+            }
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     private ClientDTO toDTO(Client client) {

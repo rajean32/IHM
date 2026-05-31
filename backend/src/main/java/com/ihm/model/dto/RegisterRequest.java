@@ -10,7 +10,6 @@ import java.time.LocalDate;
 
 public class RegisterRequest {
 
-    @NotBlank(message = "User code is required")
     private String codeUtilisateur;
 
     @NotBlank(message = "Last name is required")

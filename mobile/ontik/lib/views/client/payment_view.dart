@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../controllers/reservation_controller.dart';
-import '../../models/reservation.dart';
+import '../../controllers/auth_controller.dart';
 
 class PaymentView extends ConsumerStatefulWidget {
-  final int reservationId;
+  final int eventId;
   final double amount;
+  final List<Map<String, dynamic>> tickets;
+
   const PaymentView({
     super.key,
-    required this.reservationId,
+    required this.eventId,
     required this.amount,
+    required this.tickets,
   });
 
   @override
@@ -28,47 +30,47 @@ class _PaymentViewState extends ConsumerState<PaymentView> {
   ];
 
   Future<void> _processPayment() async {
+    if (widget.tickets.isEmpty) return;
     setState(() => _processing = true);
     try {
-      final paiementRepo = ref.read(paiementRepositoryProvider);
+      final authState = ref.read(authControllerProvider);
+      final clientCode = authState.user?.codeUtilisateur ?? '';
+      final apiClient = ref.read(apiClientProvider);
 
-      final paiement = Paiement(
-        montant: widget.amount,
-        datePaiement: DateTime.now(),
-        modePaiement: _selectedMethod,
-        idReservation: widget.reservationId,
-      );
+      final ticketsPayload = widget.tickets.map((seat) => {
+        'codeTicket': 'TKT-${widget.eventId}-${seat['numeroPlace']}-${DateTime.now().millisecondsSinceEpoch}',
+        'prix': (seat['prix'] as num?)?.toDouble() ?? 0,
+        'idEvenement': widget.eventId,
+        'numeroPlace': seat['numeroPlace'],
+      }).toList();
 
-      await paiementRepo.create(paiement);
-      final status = await paiementRepo.getPaymentStatus(widget.reservationId);
+      await apiClient.post('/achat', data: {
+        'codeClient': clientCode,
+        'tickets': ticketsPayload,
+        'modePaiement': _selectedMethod,
+        'montant': widget.amount,
+      });
 
       if (!mounted) return;
-
-      if (status.status == 'PAID' || status.status == 'COMPLETED' || status.status == 'CONFIRMED') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment successful!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        if (context.mounted) {
-          context.go('/my-reservations');
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment status: ${status.status}'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Paiement réussi !'), backgroundColor: Colors.green),
+      );
+      if (context.mounted) {
+        context.go('/my-reservations');
       }
     } catch (e) {
       if (!mounted) return;
+      final msg = e.toString();
+      String displayMsg = 'Échec du paiement';
+      if (msg.contains('fonds insuffisants') || msg.contains('Fonds insuffisants')) {
+        displayMsg = 'Fonds insuffisants : solde insuffisant pour effectuer cette transaction';
+      } else if (msg.contains('already reserved') || msg.contains('concurrent')) {
+        displayMsg = 'Place déjà réservée par un autre utilisateur. Veuillez réessayer.';
+      } else if (msg.contains('API Error')) {
+        displayMsg = msg.replaceAll('Exception: ', '');
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment failed: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(displayMsg), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _processing = false);
@@ -78,7 +80,7 @@ class _PaymentViewState extends ConsumerState<PaymentView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment')),
+      appBar: AppBar(title: const Text('Paiement')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -90,12 +92,12 @@ class _PaymentViewState extends ConsumerState<PaymentView> {
                 child: Column(
                   children: [
                     const Text(
-                      'Amount to Pay',
+                      'Montant à payer',
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '\$${widget.amount.toStringAsFixed(2)}',
+                      '${widget.amount.toStringAsFixed(2)} €',
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -107,12 +109,12 @@ class _PaymentViewState extends ConsumerState<PaymentView> {
             ),
             const SizedBox(height: 24),
             const Text(
-              'Select Payment Method',
+              'Mode de paiement',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ..._methods.map((m) => _buildPaymentOption(m)),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -123,7 +125,7 @@ class _PaymentViewState extends ConsumerState<PaymentView> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Pay Now'),
+                    : const Text('Payer maintenant'),
               ),
             ),
           ],

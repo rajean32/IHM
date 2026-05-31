@@ -23,4 +23,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
 
     @Query("SELECT r FROM Reservation r ORDER BY r.dateReservation DESC")
     List<Reservation> findRecentReservations(org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT COUNT(r) FROM Reservation r WHERE r.idReservation NOT IN (SELECT p.reservation.idReservation FROM Paiement p)")
+    long countWithoutPayment();
 }

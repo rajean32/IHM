@@ -1,6 +1,7 @@
 package com.ihm.api;
 
 import com.ihm.model.ApiResponse;
+import com.ihm.model.dto.CancelEventRequest;
 import com.ihm.model.dto.EvenementDTO;
 import com.ihm.service.EvenementService;
 import jakarta.validation.Valid;
@@ -8,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -71,5 +73,38 @@ public class EvenementController {
         log.info("DELETE /api/evenements/{}", id);
         evenementService.delete(id);
         return ResponseEntity.ok(ApiResponse.success(200, "Event deleted successfully"));
+    }
+
+    @PutMapping("/{id}/validate")
+    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    public ResponseEntity<ApiResponse<EvenementDTO>> validate(@PathVariable Integer id) {
+        log.info("PUT /api/evenements/{}/validate", id);
+        EvenementDTO data = evenementService.validate(id);
+        return ResponseEntity.ok(ApiResponse.success(200, "Event validated successfully", data));
+    }
+
+    @PutMapping("/{id}/suspend")
+    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    public ResponseEntity<ApiResponse<EvenementDTO>> suspend(@PathVariable Integer id) {
+        log.info("PUT /api/evenements/{}/suspend", id);
+        EvenementDTO data = evenementService.suspend(id);
+        return ResponseEntity.ok(ApiResponse.success(200, "Event suspended successfully", data));
+    }
+
+    @PutMapping("/{id}/resume")
+    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    public ResponseEntity<ApiResponse<EvenementDTO>> resume(@PathVariable Integer id) {
+        log.info("PUT /api/evenements/{}/resume", id);
+        EvenementDTO data = evenementService.resume(id);
+        return ResponseEntity.ok(ApiResponse.success(200, "Event resumed successfully", data));
+    }
+
+    @PutMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('ADMINISTRATEUR')")
+    public ResponseEntity<ApiResponse<EvenementDTO>> cancel(@PathVariable Integer id,
+                                                             @Valid @RequestBody CancelEventRequest request) {
+        log.info("PUT /api/evenements/{}/cancel", id);
+        EvenementDTO data = evenementService.cancel(id, request.getMotif());
+        return ResponseEntity.ok(ApiResponse.success(200, "Event cancelled successfully", data));
     }
 }

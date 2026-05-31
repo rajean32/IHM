@@ -90,7 +90,7 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> register({
-    required String codeUtilisateur,
+    String? codeUtilisateur,
     required String nom,
     required String prenoms,
     required String sexe,
@@ -103,7 +103,7 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final user = await _repository.register(
-        codeUtilisateur: codeUtilisateur,
+        codeUtilisateur: codeUtilisateur ?? '',
         nom: nom,
         prenoms: prenoms,
         sexe: sexe,

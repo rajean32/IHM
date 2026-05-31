@@ -35,8 +35,8 @@ public class Ticket {
     public BigDecimal getPrix() { return prix; }
     public void setPrix(BigDecimal prix) { this.prix = prix; }
 
-    public List<Concerner> getConcerning() { return concerners; }
-    public void setConcerning(List<Concerner> concerners) { this.concerners = concerners; }
+    public List<Concerner> getConcerners() { return concerners; }
+    public void setConcerners(List<Concerner> concerners) { this.concerners = concerners; }
 
     public List<CorrespondA> getCorrespondances() { return correspondances; }
     public void setCorrespondances(List<CorrespondA> correspondances) { this.correspondances = correspondances; }

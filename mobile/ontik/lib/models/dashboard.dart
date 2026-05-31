@@ -71,7 +71,10 @@ class OrganizerDashboardStats {
   final double totalRevenue;
   final int totalPlaces;
   final int placesDisponibles;
+  final double fillRate;
   final List<Evenement> myEvents;
+  final List<Evenement> topEvents;
+  final List<DailySales> dailySales;
 
   OrganizerDashboardStats({
     this.codeOrganisateur = '',
@@ -81,7 +84,10 @@ class OrganizerDashboardStats {
     this.totalRevenue = 0,
     this.totalPlaces = 0,
     this.placesDisponibles = 0,
+    this.fillRate = 0,
     this.myEvents = const [],
+    this.topEvents = const [],
+    this.dailySales = const [],
   });
 
   factory OrganizerDashboardStats.fromJson(Map<String, dynamic> json) {
@@ -95,11 +101,38 @@ class OrganizerDashboardStats {
           : 0,
       totalPlaces: json['totalPlaces'] ?? 0,
       placesDisponibles: json['placesDisponibles'] ?? 0,
+      fillRate: (json['fillRate'] ?? 0).toDouble(),
       myEvents: json['myEvents'] != null
           ? (json['myEvents'] as List)
               .map((e) => Evenement.fromJson(e))
               .toList()
           : [],
+      topEvents: json['topEvents'] != null
+          ? (json['topEvents'] as List)
+              .map((e) => Evenement.fromJson(e))
+              .toList()
+          : [],
+      dailySales: json['dailySales'] != null
+          ? (json['dailySales'] as List)
+              .map((e) => DailySales.fromJson(e))
+              .toList()
+          : [],
+    );
+  }
+}
+
+class DailySales {
+  final String date;
+  final int ticketsSold;
+  final double revenue;
+
+  DailySales({required this.date, this.ticketsSold = 0, this.revenue = 0});
+
+  factory DailySales.fromJson(Map<String, dynamic> json) {
+    return DailySales(
+      date: json['date'] ?? '',
+      ticketsSold: json['ticketsSold'] ?? 0,
+      revenue: (json['revenue'] ?? 0).toDouble(),
     );
   }
 }

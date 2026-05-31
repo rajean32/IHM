@@ -1,8 +1,10 @@
 package com.ihm.config;
 
+import com.ihm.security.FirstLoginCheckFilter;
 import com.ihm.security.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -16,9 +18,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final FirstLoginCheckFilter firstLoginCheckFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, FirstLoginCheckFilter firstLoginCheckFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.firstLoginCheckFilter = firstLoginCheckFilter;
     }
 
     @Bean
@@ -42,16 +46,46 @@ public class SecurityConfig {
                     "/api-docs/**",
                     "/v3/api-docs/**"
                 ).permitAll()
-                .requestMatchers(
-                    "GET /api/evenements/**",
-                    "GET /api/categories/**",
-                    "GET /api/lieux/**",
-                    "GET /api/tickets/*/qrcode",
-                    "POST /api/tickets/validate"
+                .requestMatchers(HttpMethod.GET,
+                    "/api/evenements/**",
+                    "/api/categories/**",
+                    "/api/lieux/**",
+                    "/api/tickets/*/qrcode"
                 ).permitAll()
-                .anyRequest().permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/tickets/validate"
+                ).permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMINISTRATEUR")
+                .requestMatchers(HttpMethod.GET,
+                    "/api/organisateur/**",
+                    "/api/salles/**",
+                    "/api/places/**",
+                    "/api/lieux/**",
+                    "/api/categories/**"
+                ).authenticated()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/organisateur/**",
+                    "/api/places/**",
+                    "/api/places/batch",
+                    "/api/salles/**",
+                    "/api/lieux/**"
+                ).authenticated()
+                .requestMatchers(HttpMethod.PUT,
+                    "/api/organisateur/**",
+                    "/api/places/**",
+                    "/api/salles/**",
+                    "/api/lieux/**"
+                ).authenticated()
+                .requestMatchers(HttpMethod.DELETE,
+                    "/api/organisateur/**",
+                    "/api/places/**",
+                    "/api/salles/**",
+                    "/api/lieux/**"
+                ).authenticated()
+                .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(firstLoginCheckFilter, JwtAuthFilter.class);
 
         return http.build();
     }

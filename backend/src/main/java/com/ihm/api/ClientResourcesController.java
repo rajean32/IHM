@@ -1,9 +1,11 @@
 package com.ihm.api;
 
 import com.ihm.model.ApiResponse;
+import com.ihm.model.dto.ClientTicketDTO;
 import com.ihm.model.dto.PaiementDTO;
 import com.ihm.model.dto.ReservationDTO;
 import com.ihm.model.dto.TicketDTO;
+import com.ihm.service.ClientService;
 import com.ihm.service.PaiementService;
 import com.ihm.service.ReservationService;
 import com.ihm.service.TicketService;
@@ -24,13 +26,16 @@ public class ClientResourcesController {
     private final ReservationService reservationService;
     private final TicketService ticketService;
     private final PaiementService paiementService;
+    private final ClientService clientService;
 
     public ClientResourcesController(ReservationService reservationService,
                                      TicketService ticketService,
-                                     PaiementService paiementService) {
+                                     PaiementService paiementService,
+                                     ClientService clientService) {
         this.reservationService = reservationService;
         this.ticketService = ticketService;
         this.paiementService = paiementService;
+        this.clientService = clientService;
     }
 
     @GetMapping("/{code}/reservations")
@@ -41,20 +46,16 @@ public class ClientResourcesController {
     }
 
     @GetMapping("/{code}/tickets")
-    public ResponseEntity<ApiResponse<List<TicketDTO>>> getClientTickets(@PathVariable String code) {
+    public ResponseEntity<ApiResponse<List<ClientTicketDTO>>> getClientTickets(@PathVariable String code) {
         log.info("GET /api/clients/{}/tickets", code);
-        List<ReservationDTO> reservations = reservationService.getByClient(code);
-        List<TicketDTO> allTickets = reservations.stream()
-                .flatMap(r -> r.getCodeTickets() != null ? r.getCodeTickets().stream() : java.util.stream.Stream.empty())
-                .map(ticketService::getById)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(ApiResponse.success(200, "Client tickets fetched successfully", allTickets));
+        List<ClientTicketDTO> tickets = clientService.getClientTickets(code);
+        return ResponseEntity.ok(ApiResponse.success(200, "Client tickets fetched successfully", tickets));
     }
 
     @GetMapping("/{code}/payments")
     public ResponseEntity<ApiResponse<List<PaiementDTO>>> getClientPayments(@PathVariable String code) {
         log.info("GET /api/clients/{}/payments", code);
-        List<PaiementDTO> allPayments = paiementService.getAll();
+        List<PaiementDTO> allPayments = paiementService.getByClient(code);
         return ResponseEntity.ok(ApiResponse.success(200, "Client payments fetched successfully", allPayments));
     }
 }

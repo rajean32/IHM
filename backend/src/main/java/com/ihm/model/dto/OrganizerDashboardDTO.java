@@ -15,7 +15,10 @@ public class OrganizerDashboardDTO {
     private BigDecimal totalRevenue;
     private long totalPlaces;
     private long placesDisponibles;
+    private double fillRate;
     private List<EvenementDTO> myEvents;
+    private List<EvenementDTO> topEvents;
+    private List<DailySalesDTO> dailySales;
 
     public OrganizerDashboardDTO() {}
 
@@ -42,4 +45,13 @@ public class OrganizerDashboardDTO {
 
     public List<EvenementDTO> getMyEvents() { return myEvents; }
     public void setMyEvents(List<EvenementDTO> myEvents) { this.myEvents = myEvents; }
+
+    public List<EvenementDTO> getTopEvents() { return topEvents; }
+    public void setTopEvents(List<EvenementDTO> topEvents) { this.topEvents = topEvents; }
+
+    public List<DailySalesDTO> getDailySales() { return dailySales; }
+    public void setDailySales(List<DailySalesDTO> dailySales) { this.dailySales = dailySales; }
+
+    public double getFillRate() { return fillRate; }
+    public void setFillRate(double fillRate) { this.fillRate = fillRate; }
 }

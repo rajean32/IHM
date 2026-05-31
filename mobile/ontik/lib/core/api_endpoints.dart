@@ -12,6 +12,7 @@ class ApiEndpoints {
   static const salles = SallesEndpoints();
   static const places = PlacesEndpoints();
   static const organizerVenues = OrganizerVenueEndpoints();
+  static const organizerPricing = OrganizerPricingEndpoints();
 }
 
 class AuthEndpoints {
@@ -37,6 +38,10 @@ class EventsEndpoints {
   String byOrganisateur(String code) => '/evenements?organisateur=$code';
   String byCategorie(String code) => '/evenements?categorie=$code';
   String byStatut(String statut) => '/evenements?statut=$statut';
+  String validate(int id) => '/evenements/$id/validate';
+  String suspend(int id) => '/evenements/$id/suspend';
+  String resume(int id) => '/evenements/$id/resume';
+  String cancel(int id) => '/evenements/$id/cancel';
 }
 
 class ReservationsEndpoints {
@@ -53,6 +58,7 @@ class TicketsEndpoints {
   String get all => '/tickets';
   String byId(String code) => '/tickets/$code';
   String qrcode(String code) => '/tickets/$code/qrcode';
+  String pdf(String code) => '/tickets/$code/pdf';
   String get validate => '/tickets/validate';
 }
 
@@ -76,6 +82,30 @@ class OrganisateurEndpoints {
   String get all => '/organisateurs';
   String byId(String code) => '/organisateurs/$code';
   String dashboard(String code) => '/organisateurs/$code/dashboard';
+}
+
+class OrganizerPricingEndpoints {
+  const OrganizerPricingEndpoints();
+  String rowPricing(int eventId) => '/organisateur/evenements/$eventId/places/rang/pricing';
+  String placePricing(String numeroPlace) => '/organisateur/places/$numeroPlace/pricing';
+  String eventPlaces(int eventId) => '/organisateur/evenements/$eventId/places';
+  String eventSalles(int eventId) => '/organisateur/evenements/$eventId/salles';
+  String eventRangs(int eventId, String salle) => '/organisateur/evenements/$eventId/rangs?salle=$salle';
+  String placesWithConfig(int eventId, {String? salle}) => '/organisateur/evenements/$eventId/places/config${salle != null ? '?salle=$salle' : ''}';
+  String singlePlaceConfig(int eventId, String numeroPlace) => '/organisateur/evenements/$eventId/places/config/$numeroPlace';
+  String searchPlaces(int eventId, {String? q, String? type}) {
+    final params = <String>[];
+    if (q != null && q.isNotEmpty) params.add('q=$q');
+    if (type != null && type.isNotEmpty) params.add('type=$type');
+    final query = params.isEmpty ? '' : '?${params.join('&')}';
+    return '/organisateur/evenements/$eventId/places/config/search$query';
+  }
+  String distinctTypes(int eventId) => '/organisateur/evenements/$eventId/places/config/types';
+}
+
+class PurchaseEndpoints {
+  const PurchaseEndpoints();
+  String get create => '/achat';
 }
 
 class AdminEndpoints {

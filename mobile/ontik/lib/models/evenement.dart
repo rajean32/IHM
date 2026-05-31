@@ -11,6 +11,12 @@ class Evenement {
   final String? codeCategorie;
   final int? idLieu;
   final String codeOrganisateur;
+  final String? motifAnnulation;
+  final String? organisateurNom;
+  final String? lieuNom;
+  final String? categorieNom;
+  final int? placesTotal;
+  final int? placesDisponibles;
 
   Evenement({
     this.idEvenement,
@@ -23,6 +29,12 @@ class Evenement {
     this.codeCategorie,
     this.idLieu,
     required this.codeOrganisateur,
+    this.motifAnnulation,
+    this.organisateurNom,
+    this.lieuNom,
+    this.categorieNom,
+    this.placesTotal,
+    this.placesDisponibles,
   });
 
   factory Evenement.fromJson(Map<String, dynamic> json) {
@@ -39,6 +51,12 @@ class Evenement {
       codeCategorie: json['codeCategorie'],
       idLieu: json['idLieu'],
       codeOrganisateur: json['codeOrganisateur'] ?? '',
+      motifAnnulation: json['motifAnnulation'],
+      organisateurNom: json['organisateurNom'],
+      lieuNom: json['lieuNom'],
+      categorieNom: json['categorieNom'],
+      placesTotal: json['placesTotal'],
+      placesDisponibles: json['placesDisponibles'],
     );
   }
 
@@ -54,6 +72,7 @@ class Evenement {
       'codeCategorie': codeCategorie,
       'idLieu': idLieu,
       'codeOrganisateur': codeOrganisateur,
+      'motifAnnulation': motifAnnulation,
     };
   }
 }

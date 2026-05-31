@@ -122,7 +122,13 @@ class _TicketViewState extends ConsumerState<TicketView> {
                 const SizedBox(height: 24),
                 if (_qrData!['qrCodeBase64'] != null)
                   _buildQRCode(_qrData!['qrCodeBase64'] as String),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: _downloadPDF,
+                  icon: const Icon(Icons.download, size: 18),
+                  label: const Text('Télécharger PDF'),
+                ),
+                const SizedBox(height: 12),
                 const Divider(),
                 _infoRow('Event', _qrData!['evenementTitre'] ?? 'N/A'),
                 _infoRow('Seat', _qrData!['placeNumero'] ?? 'N/A'),
@@ -149,6 +155,22 @@ class _TicketViewState extends ConsumerState<TicketView> {
         ],
       ),
     );
+  }
+
+  Future<void> _downloadPDF() async {
+    try {
+      final repo = ref.read(ticketRepositoryProvider);
+      final path = await repo.downloadPDF(widget.ticketCode);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF saved: $path'), backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Download failed: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Widget _buildQRCode(String base64) {

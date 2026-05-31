@@ -19,6 +19,22 @@ final placeRepositoryProvider = Provider<PlaceRepository>((ref) {
   return PlaceRepository(ref.watch(apiClientProvider));
 });
 
+final ticketRepositoryProvider = Provider<TicketRepository>((ref) {
+  return TicketRepository(ref.watch(apiClientProvider));
+});
+
+final reservationRepositoryProvider = Provider<ReservationRepository>((ref) {
+  return ReservationRepository(ref.watch(apiClientProvider));
+});
+
+final paiementRepositoryProvider = Provider<PaiementRepository>((ref) {
+  return PaiementRepository(ref.watch(apiClientProvider));
+});
+
+final adminUserRepositoryProvider = Provider<AdminUserRepository>((ref) {
+  return AdminUserRepository(ref.watch(apiClientProvider));
+});
+
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
   return DashboardRepository(ref.watch(apiClientProvider));
 });

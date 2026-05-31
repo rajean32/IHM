@@ -1,7 +1,6 @@
 package com.ihm.schemat;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 
 import java.math.BigDecimal;
@@ -27,7 +26,6 @@ public class Evenement {
     private String description;
 
     @Column(name = "dateEvenement", nullable = false)
-    @Future(message = "Event date must be in the future")
     private LocalDate dateEvenement;
 
     @Column(name = "heureEvenement")
@@ -38,6 +36,9 @@ public class Evenement {
 
     @Column(name = "statut", length = 50)
     private String statut;
+
+    @Column(name = "motifAnnulation", columnDefinition = "TEXT")
+    private String motifAnnulation;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CodeCategorie", referencedColumnName = "CodeCategorie")
@@ -77,6 +78,9 @@ public class Evenement {
     public String getStatut() { return statut; }
     public void setStatut(String statut) { this.statut = statut; }
 
+    public String getMotifAnnulation() { return motifAnnulation; }
+    public void setMotifAnnulation(String motifAnnulation) { this.motifAnnulation = motifAnnulation; }
+
     public Categorie getCategorie() { return categorie; }
     public void setCategorie(Categorie categorie) { this.categorie = categorie; }
 
@@ -86,6 +90,6 @@ public class Evenement {
     public Organisateur getOrganisateur() { return organisateur; }
     public void setOrganisateur(Organisateur organisateur) { this.organisateur = organisateur; }
 
-    public List<Concerner> getConcerning() { return concerners; }
-    public void setConcerning(List<Concerner> concerners) { this.concerners = concerners; }
+    public List<Concerner> getConcerners() { return concerners; }
+    public void setConcerners(List<Concerner> concerners) { this.concerners = concerners; }
 }

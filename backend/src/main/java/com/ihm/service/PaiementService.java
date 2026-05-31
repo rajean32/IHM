@@ -40,6 +40,14 @@ public class PaiementService {
                 .collect(Collectors.toList());
     }
 
+    public List<PaiementDTO> getByClient(String codeClient) {
+        log.debug("Fetching payments by client: {}", codeClient);
+        return paiementRepository.findByClient(codeClient)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     public PaiementDTO getById(Integer id) {
         log.debug("Fetching payment by id: {}", id);
         Paiement paiement = paiementRepository.findByIdPaiement(id)

@@ -26,4 +26,7 @@ public interface PlaceRepository extends JpaRepository<Place, String> {
 
     @Query("SELECT COUNT(p) FROM Place p WHERE p.salle IN (SELECT s FROM Salle s WHERE s.lieu IN (SELECT e.lieu FROM Evenement e WHERE e.idEvenement = :idEvent))")
     long countPlacesForEventLocation(@Param("idEvent") Integer idEvent);
+
+    @Query("SELECT COUNT(p) FROM Place p WHERE p.statut = 'RESERVEE' AND p.numeroPlace NOT IN (SELECT c.place.numeroPlace FROM Concerner c)")
+    long countReservedWithoutConcerner();
 }

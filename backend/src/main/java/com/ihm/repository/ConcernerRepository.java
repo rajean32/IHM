@@ -15,4 +15,6 @@ public interface ConcernerRepository extends JpaRepository<Concerner, ConcernerI
     List<Concerner> findByTicket_CodeTicket(String codeTicket);
 
     List<Concerner> findByPlace_NumeroPlace(String numeroPlace);
+
+    boolean existsByEvenement_IdEvenementAndPlace_NumeroPlace(Integer idEvenement, String numeroPlace);
 }

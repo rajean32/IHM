@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -31,17 +32,24 @@ public class EventSearchController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String categorie,
             @RequestParam(required = false) String ville,
+            @RequestParam(required = false) Integer idLieu,
             @RequestParam(required = false) LocalDate dateFrom,
             @RequestParam(required = false) LocalDate dateTo,
-            @RequestParam(required = false) String statut) {
-        log.info("GET /api/evenements/search - q: {}, categorie: {}, ville: {}", q, categorie, ville);
+            @RequestParam(required = false) String statut,
+            @RequestParam(required = false) BigDecimal prixMin,
+            @RequestParam(required = false) BigDecimal prixMax) {
+        log.info("GET /api/evenements/search - q: {}, categorie: {}, lieu: {}, ville: {}, prix: {}-{}",
+                q, categorie, idLieu, ville, prixMin, prixMax);
         EventSearchRequest request = new EventSearchRequest();
         request.setQ(q);
         request.setCategorie(categorie);
         request.setVille(ville);
+        request.setIdLieu(idLieu);
         request.setDateFrom(dateFrom);
         request.setDateTo(dateTo);
         request.setStatut(statut);
+        request.setPrixMin(prixMin);
+        request.setPrixMax(prixMax);
         List<EvenementDTO> results = eventSearchService.searchEvents(request);
         return ResponseEntity.ok(ApiResponse.success(200, "Search completed, found " + results.size() + " events", results));
     }

@@ -1,0 +1,107 @@
+export const ENTITY_CONFIG = {
+  evenements: {
+    label: 'Événements',
+    endpoint: '/api/evenements',
+    fields: [
+      { key: 'idEvenement', label: 'ID', type: 'number', editable: false },
+      { key: 'titre', label: 'Titre', type: 'text', required: true },
+      { key: 'description', label: 'Description', type: 'textarea' },
+      { key: 'dateEvenement', label: 'Date', type: 'date', required: true },
+      { key: 'heureEvenement', label: 'Heure', type: 'time' },
+      { key: 'image', label: 'Image URL', type: 'text' },
+      { key: 'statut', label: 'Statut', type: 'select', options: ['planifie', 'en_cours', 'termine', 'annule'] },
+      { key: 'codeCategorie', label: 'Catégorie', type: 'text' },
+      { key: 'idLieu', label: 'Lieu ID', type: 'number' },
+      { key: 'codeOrganisateur', label: 'Organisateur', type: 'text', required: true },
+    ],
+    displayFields: ['idEvenement', 'titre', 'dateEvenement', 'statut'],
+  },
+  utilisateurs: {
+    label: 'Utilisateurs',
+    endpoint: '/api/admin/users',
+    fields: [
+      { key: 'codeUtilisateur', label: 'Code', type: 'text', required: true },
+      { key: 'nom', label: 'Nom', type: 'text', required: true },
+      { key: 'prenoms', label: 'Prénoms', type: 'text', required: true },
+      { key: 'email', label: 'Email', type: 'email', required: true },
+      { key: 'tel', label: 'Téléphone', type: 'text' },
+      { key: 'role', label: 'Rôle', type: 'select', options: ['CLIENT', 'ORGANISATEUR', 'ADMINISTRATEUR'] },
+    ],
+    displayFields: ['codeUtilisateur', 'nom', 'prenoms', 'email', 'role'],
+  },
+  categories: {
+    label: 'Catégories',
+    endpoint: '/api/categories',
+    fields: [
+      { key: 'codeCategorie', label: 'Code', type: 'text', required: true },
+      { key: 'nomCategorie', label: 'Nom', type: 'text', required: true },
+    ],
+    displayFields: ['codeCategorie', 'nomCategorie'],
+  },
+  lieux: {
+    label: 'Lieux',
+    endpoint: '/api/lieux',
+    fields: [
+      { key: 'idLieu', label: 'ID', type: 'number', editable: false },
+      { key: 'nomLieu', label: 'Nom', type: 'text', required: true },
+      { key: 'adresse', label: 'Adresse', type: 'text' },
+      { key: 'ville', label: 'Ville', type: 'text' },
+    ],
+    displayFields: ['idLieu', 'nomLieu', 'ville'],
+  },
+  salles: {
+    label: 'Salles',
+    endpoint: '/api/salles',
+    fields: [
+      { key: 'numeroSalle', label: 'Numéro', type: 'text', required: true },
+      { key: 'nomSalle', label: 'Nom', type: 'text' },
+      { key: 'idLieu', label: 'Lieu ID', type: 'number', required: true },
+    ],
+    displayFields: ['numeroSalle', 'nomSalle', 'idLieu'],
+  },
+  tickets: {
+    label: 'Tickets',
+    endpoint: '/api/tickets',
+    fields: [
+      { key: 'codeTicket', label: 'Code', type: 'text', editable: false },
+      { key: 'prix', label: 'Prix', type: 'number' },
+      { key: 'numeroPlace', label: 'Place', type: 'text' },
+      { key: 'idEvenement', label: 'Événement ID', type: 'number' },
+    ],
+    displayFields: ['codeTicket', 'prix', 'numeroPlace'],
+  },
+  reservations: {
+    label: 'Réservations',
+    endpoint: '/api/reservations',
+    fields: [
+      { key: 'idReservation', label: 'ID', type: 'number', editable: false },
+      { key: 'dateReservation', label: 'Date', type: 'datetime' },
+      { key: 'codeClient', label: 'Client', type: 'text' },
+    ],
+    displayFields: ['idReservation', 'dateReservation', 'codeClient'],
+  },
+  paiements: {
+    label: 'Paiements',
+    endpoint: '/api/paiements',
+    fields: [
+      { key: 'idPaiement', label: 'ID', type: 'number', editable: false },
+      { key: 'montant', label: 'Montant', type: 'number' },
+      { key: 'modePaiement', label: 'Mode', type: 'text' },
+      { key: 'idReservation', label: 'Réservation ID', type: 'number' },
+    ],
+    displayFields: ['idPaiement', 'montant', 'modePaiement'],
+  },
+  places: {
+    label: 'Places',
+    endpoint: '/api/places',
+    fields: [
+      { key: 'numeroPlace', label: 'Numéro', type: 'text', required: true },
+      { key: 'range', label: 'Rangée', type: 'text' },
+      { key: 'typePlace', label: 'Type', type: 'text' },
+      { key: 'prix', label: 'Prix', type: 'number' },
+      { key: 'statut', label: 'Statut', type: 'select', options: ['DISPONIBLE', 'RESERVEE', 'INDISPONIBLE', 'EN_ATTENTE'] },
+      { key: 'numeroSalle', label: 'Salle', type: 'text' },
+    ],
+    displayFields: ['numeroPlace', 'range', 'typePlace', 'prix', 'statut'],
+  },
+};

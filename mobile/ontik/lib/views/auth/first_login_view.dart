@@ -100,12 +100,13 @@ class _FirstLoginViewState extends ConsumerState<FirstLoginView> {
                     const SizedBox(height: 32),
                     TextFormField(
                       controller: _codeCtrl,
+                      readOnly: true,
                       decoration: const InputDecoration(
                         labelText: 'User Code',
                         prefixIcon: Icon(Icons.badge),
+                        filled: true,
+                        fillColor: Color(0xFFF5F5F5),
                       ),
-                      validator: (v) =>
-                          v == null || v.isEmpty ? 'Enter your user code' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(

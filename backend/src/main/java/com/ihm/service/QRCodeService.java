@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
@@ -40,6 +42,17 @@ public class QRCodeService {
         } catch (WriterException | IOException e) {
             log.error("Failed to generate QR code: {}", e.getMessage());
             throw new RuntimeException("Failed to generate QR code", e);
+        }
+    }
+
+    public BufferedImage decodeBase64ToBufferedImage(String base64) {
+        try {
+            byte[] imageBytes = Base64.getDecoder().decode(base64);
+            ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
+            return ImageIO.read(bais);
+        } catch (IOException e) {
+            log.error("Failed to decode base64 image: {}", e.getMessage());
+            throw new RuntimeException("Failed to decode QR code image", e);
         }
     }
 

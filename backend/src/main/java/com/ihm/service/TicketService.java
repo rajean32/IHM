@@ -43,6 +43,7 @@ public class TicketService {
         this.qrCodeService = qrCodeService;
     }
 
+    @Transactional(readOnly = true)
     public List<TicketDTO> getAll() {
         log.debug("Fetching all tickets");
         return ticketRepository.findAll()
@@ -51,6 +52,7 @@ public class TicketService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public TicketDTO getById(String code) {
         log.debug("Fetching ticket by code: {}", code);
         Ticket ticket = ticketRepository.findByCodeTicket(code)
@@ -70,6 +72,11 @@ public class TicketService {
         Ticket saved = ticketRepository.save(ticket);
 
         if (dto.getIdEvenement() != null && dto.getNumeroPlace() != null) {
+            if (concernerRepository.existsByEvenement_IdEvenementAndPlace_NumeroPlace(
+                    dto.getIdEvenement(), dto.getNumeroPlace())) {
+                throw new BadRequestException("Place " + dto.getNumeroPlace()
+                        + " is already reserved for this event");
+            }
             Evenement event = evenementRepository.findByIdEvenement(dto.getIdEvenement())
                     .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", dto.getIdEvenement()));
             Place place = placeRepository.findByNumeroPlace(dto.getNumeroPlace())
@@ -82,6 +89,11 @@ public class TicketService {
             concerner.setTicket(saved);
             concerner.setPlace(place);
             concernerRepository.save(concerner);
+
+            place.setStatut(StatutPlace.RESERVEE);
+            placeRepository.save(place);
+
+            log.info("Concerner created for ticket {} and place {} (status: RESERVEE)", dto.getCodeTicket(), dto.getNumeroPlace());
         }
 
         log.info("Ticket created: {}", saved.getCodeTicket());
@@ -105,10 +117,21 @@ public class TicketService {
         if (!ticketRepository.existsByCodeTicket(code)) {
             throw new ResourceNotFoundException("Ticket", "codeTicket", code);
         }
+
+        List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(code);
+        for (Concerner c : concerners) {
+            Place place = c.getPlace();
+            if (place != null) {
+                place.setStatut(StatutPlace.DISPONIBLE);
+                placeRepository.save(place);
+            }
+        }
+
         ticketRepository.deleteById(code);
         log.info("Ticket deleted: {}", code);
     }
 
+    @Transactional(readOnly = true)
     public TicketQRResponse generateQRCode(String codeTicket) {
         log.debug("Generating QR code for ticket: {}", codeTicket);
         Ticket ticket = ticketRepository.findByCodeTicket(codeTicket)
@@ -144,6 +167,7 @@ public class TicketService {
         return response;
     }
 
+    @Transactional(readOnly = true)
     public TicketValidationResponse validateTicket(String codeTicket) {
         log.debug("Validating ticket: {}", codeTicket);
         Ticket ticket = ticketRepository.findByCodeTicket(codeTicket)

@@ -78,4 +78,24 @@ class EventRepository {
   Future<void> delete(int id) async {
     await _client.delete(ApiEndpoints.events.byId(id));
   }
+
+  Future<Evenement> validate(int id) async {
+    final response = await _client.put(ApiEndpoints.events.validate(id));
+    return ApiWrapper.fromJson(response).getData((d) => Evenement.fromJson(d));
+  }
+
+  Future<Evenement> suspend(int id) async {
+    final response = await _client.put(ApiEndpoints.events.suspend(id));
+    return ApiWrapper.fromJson(response).getData((d) => Evenement.fromJson(d));
+  }
+
+  Future<Evenement> resume(int id) async {
+    final response = await _client.put(ApiEndpoints.events.resume(id));
+    return ApiWrapper.fromJson(response).getData((d) => Evenement.fromJson(d));
+  }
+
+  Future<Evenement> cancel(int id, String motif) async {
+    final response = await _client.put(ApiEndpoints.events.cancel(id), data: {'motif': motif});
+    return ApiWrapper.fromJson(response).getData((d) => Evenement.fromJson(d));
+  }
 }

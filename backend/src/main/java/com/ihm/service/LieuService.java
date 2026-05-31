@@ -2,8 +2,10 @@ package com.ihm.service;
 
 import com.ihm.exception.ResourceNotFoundException;
 import com.ihm.model.dto.LieuDTO;
+import com.ihm.model.dto.SalleDTO;
 import com.ihm.repository.LieuRepository;
 import com.ihm.schemat.Lieu;
+import com.ihm.schemat.Salle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class LieuService {
         this.lieuRepository = lieuRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<LieuDTO> getAll() {
         log.debug("Fetching all locations");
         return lieuRepository.findAll()
@@ -31,11 +34,12 @@ public class LieuService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public LieuDTO getById(Integer id) {
         log.debug("Fetching location by id: {}", id);
         Lieu lieu = lieuRepository.findByIdLieu(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lieu", "idLieu", id));
-        return toDTO(lieu);
+        return toDTODetail(lieu);
     }
 
     @Transactional
@@ -79,6 +83,24 @@ public class LieuService {
         dto.setNomLieu(lieu.getNomLieu());
         dto.setAdresse(lieu.getAdresse());
         dto.setVille(lieu.getVille());
+        return dto;
+    }
+
+    private LieuDTO toDTODetail(Lieu lieu) {
+        LieuDTO dto = toDTO(lieu);
+        if (lieu.getSalles() != null) {
+            dto.setSalles(lieu.getSalles().stream()
+                    .map(this::toSalleDTO)
+                    .collect(Collectors.toList()));
+        }
+        return dto;
+    }
+
+    private SalleDTO toSalleDTO(Salle salle) {
+        SalleDTO dto = new SalleDTO();
+        dto.setNumeroSalle(salle.getNumeroSalle());
+        dto.setNomSalle(salle.getNomSalle());
+        dto.setIdLieu(salle.getLieu() != null ? salle.getLieu().getIdLieu() : null);
         return dto;
     }
 }

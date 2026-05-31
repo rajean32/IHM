@@ -30,6 +30,15 @@ export async function loginAdmin(code, password) {
   return handleResponse(res);
 }
 
+export async function firstLoginUpdate(data) {
+  const res = await fetch('/api/auth/first-login-update', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
+
 export async function register(data) {
   const res = await fetch('/api/auth/register', {
     method: 'POST',

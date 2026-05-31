@@ -2,16 +2,20 @@ package com.ihm.service;
 
 import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
+import com.ihm.model.dto.BatchPlaceRequest;
 import com.ihm.model.dto.PlaceDTO;
 import com.ihm.repository.PlaceRepository;
 import com.ihm.repository.SalleRepository;
+import com.ihm.schemat.Lieu;
 import com.ihm.schemat.Place;
 import com.ihm.schemat.Salle;
+import com.ihm.schemat.StatutPlace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,9 +32,24 @@ public class PlaceService {
         this.salleRepository = salleRepository;
     }
 
+    private String buildCombinedKey(Salle salle, String rang, String seatNumber) {
+        Lieu lieu = salle.getLieu();
+        String lieuName = lieu != null ? lieu.getNomLieu().replace("-", " ") : "Inconnu";
+        String salleName = salle.getNomSalle().replace("-", " ");
+        return lieuName + " - " + salleName + " - " + rang + " - " + seatNumber;
+    }
+
     public List<PlaceDTO> getAll() {
         log.debug("Fetching all places");
         return placeRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<PlaceDTO> getBySalle(String numeroSalle) {
+        log.debug("Fetching places by salle: {}", numeroSalle);
+        return placeRepository.findBySalle_NumeroSalle(numeroSalle)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
@@ -45,20 +64,62 @@ public class PlaceService {
 
     @Transactional
     public PlaceDTO create(PlaceDTO dto) {
-        log.debug("Creating place: {}", dto.getNumeroPlace());
-        if (placeRepository.existsByNumeroPlace(dto.getNumeroPlace())) {
-            throw new DuplicateResourceException("Place", "numeroPlace", dto.getNumeroPlace());
-        }
         Salle salle = salleRepository.findByNumeroSalle(dto.getNumeroSalle())
                 .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", dto.getNumeroSalle()));
+
+        String rang = dto.getRange() != null ? dto.getRange() : "?";
+        String seatNum = dto.getNumeroPlace() != null ? dto.getNumeroPlace().replaceAll(".*-", "") : "?";
+        String combinedKey = buildCombinedKey(salle, rang, seatNum);
+
+        if (placeRepository.existsByNumeroPlace(combinedKey)) {
+            log.warn("Place already exists, skipping: {}", combinedKey);
+            throw new DuplicateResourceException("Place", "numeroPlace", combinedKey);
+        }
+
+        log.debug("Creating place with combined key: {}", combinedKey);
         Place place = new Place();
-        place.setNumeroPlace(dto.getNumeroPlace());
-        place.setRange(dto.getRange());
+        place.setNumeroPlace(combinedKey);
+        place.setRange(rang);
         place.setTypePlace(dto.getTypePlace());
+        place.setPrix(dto.getPrix());
+        place.setStatut(dto.getStatut() != null ? StatutPlace.valueOf(dto.getStatut()) : StatutPlace.DISPONIBLE);
         place.setSalle(salle);
         Place saved = placeRepository.save(place);
         log.info("Place created: {}", saved.getNumeroPlace());
         return toDTO(saved);
+    }
+
+    @Transactional
+    public List<PlaceDTO> createBatch(BatchPlaceRequest request) {
+        log.debug("Batch creating places for salle: {}", request.getNumeroSalle());
+        Salle salle = salleRepository.findByNumeroSalle(request.getNumeroSalle())
+                .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", request.getNumeroSalle()));
+
+        List<PlaceDTO> created = new ArrayList<>();
+        String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        for (int r = 0; r < request.getNombreRangees(); r++) {
+            String rang = request.getPrefixeRangee() + (r < 26 ? String.valueOf(letters.charAt(r)) : "R" + r);
+            for (int s = 0; s < request.getPlacesParRangee(); s++) {
+                int num = request.getDebutNumero() + s;
+                String combinedKey = buildCombinedKey(salle, rang, String.valueOf(num));
+                if (placeRepository.existsByNumeroPlace(combinedKey)) {
+                    log.warn("Place already exists, skipping: {}", combinedKey);
+                    continue;
+                }
+                Place place = new Place();
+                place.setNumeroPlace(combinedKey);
+                place.setRange(rang);
+                place.setTypePlace(request.getTypePlace());
+                place.setPrix(request.getPrix());
+                place.setStatut(StatutPlace.DISPONIBLE);
+                place.setSalle(salle);
+                Place saved = placeRepository.save(place);
+                created.add(toDTO(saved));
+            }
+        }
+        log.info("Batch created {} places for salle: {}", created.size(), request.getNumeroSalle());
+        return created;
     }
 
     @Transactional
@@ -68,6 +129,8 @@ public class PlaceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Place", "numeroPlace", numero));
         if (dto.getRange() != null) place.setRange(dto.getRange());
         if (dto.getTypePlace() != null) place.setTypePlace(dto.getTypePlace());
+        if (dto.getPrix() != null) place.setPrix(dto.getPrix());
+        if (dto.getStatut() != null) place.setStatut(StatutPlace.valueOf(dto.getStatut()));
         if (dto.getNumeroSalle() != null) {
             Salle salle = salleRepository.findByNumeroSalle(dto.getNumeroSalle())
                     .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", dto.getNumeroSalle()));
@@ -93,6 +156,8 @@ public class PlaceService {
         dto.setNumeroPlace(place.getNumeroPlace());
         dto.setRange(place.getRange());
         dto.setTypePlace(place.getTypePlace());
+        dto.setPrix(place.getPrix());
+        dto.setStatut(place.getStatut() != null ? place.getStatut().name() : StatutPlace.DISPONIBLE.name());
         dto.setNumeroSalle(place.getSalle() != null ? place.getSalle().getNumeroSalle() : null);
         return dto;
     }

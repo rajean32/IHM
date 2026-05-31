@@ -1,6 +1,7 @@
 package com.ihm.api;
 
 import com.ihm.model.ApiResponse;
+import com.ihm.model.dto.BatchPlaceRequest;
 import com.ihm.model.dto.PlaceDTO;
 import com.ihm.service.PlaceService;
 import jakarta.validation.Valid;
@@ -25,9 +26,15 @@ public class PlaceController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PlaceDTO>>> getAll() {
+    public ResponseEntity<ApiResponse<List<PlaceDTO>>> getAll(
+            @RequestParam(required = false) String salle) {
         log.info("GET /api/places");
-        List<PlaceDTO> data = placeService.getAll();
+        List<PlaceDTO> data;
+        if (salle != null) {
+            data = placeService.getBySalle(salle);
+        } else {
+            data = placeService.getAll();
+        }
         return ResponseEntity.ok(ApiResponse.success(200, "Places fetched successfully", data));
     }
 
@@ -44,6 +51,15 @@ public class PlaceController {
         PlaceDTO data = placeService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(201, "Place created successfully", data));
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<ApiResponse<List<PlaceDTO>>> createBatch(@Valid @RequestBody BatchPlaceRequest request) {
+        log.info("POST /api/places/batch - salle: {}, rangees: {}, parRangee: {}",
+                request.getNumeroSalle(), request.getNombreRangees(), request.getPlacesParRangee());
+        List<PlaceDTO> data = placeService.createBatch(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(201, data.size() + " places created successfully", data));
     }
 
     @PutMapping("/{numero}")

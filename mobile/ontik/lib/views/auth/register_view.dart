@@ -14,7 +14,6 @@ class RegisterView extends ConsumerStatefulWidget {
 
 class _RegisterViewState extends ConsumerState<RegisterView> {
   final _formKey = GlobalKey<FormState>();
-  final _codeCtrl = TextEditingController();
   final _nomCtrl = TextEditingController();
   final _prenomsCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -26,7 +25,6 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
 
   @override
   void dispose() {
-    _codeCtrl.dispose();
     _nomCtrl.dispose();
     _prenomsCtrl.dispose();
     _emailCtrl.dispose();
@@ -55,7 +53,6 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
         return;
       }
       ref.read(authControllerProvider.notifier).register(
-            codeUtilisateur: _codeCtrl.text.trim(),
             nom: _nomCtrl.text.trim(),
             prenoms: _prenomsCtrl.text.trim(),
             sexe: _sexe,
@@ -94,12 +91,6 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextFormField(
-                    controller: _codeCtrl,
-                    decoration: const InputDecoration(labelText: 'User Code'),
-                    validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
                   TextFormField(
                     controller: _nomCtrl,
                     decoration: const InputDecoration(labelText: 'Last Name'),

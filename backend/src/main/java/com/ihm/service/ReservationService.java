@@ -24,19 +24,26 @@ public class ReservationService {
     private final TicketRepository ticketRepository;
     private final CorrespondARepository correspondARepository;
     private final PaiementRepository paiementRepository;
+    private final ConcernerRepository concernerRepository;
+    private final PlaceRepository placeRepository;
 
     public ReservationService(ReservationRepository reservationRepository,
                               ClientRepository clientRepository,
                               TicketRepository ticketRepository,
                               CorrespondARepository correspondARepository,
-                              PaiementRepository paiementRepository) {
+                              PaiementRepository paiementRepository,
+                              ConcernerRepository concernerRepository,
+                              PlaceRepository placeRepository) {
         this.reservationRepository = reservationRepository;
         this.clientRepository = clientRepository;
         this.ticketRepository = ticketRepository;
         this.correspondARepository = correspondARepository;
         this.paiementRepository = paiementRepository;
+        this.concernerRepository = concernerRepository;
+        this.placeRepository = placeRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<ReservationDTO> getAll() {
         log.debug("Fetching all reservations");
         return reservationRepository.findAll()
@@ -45,6 +52,7 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ReservationDTO getById(Integer id) {
         log.debug("Fetching reservation by id: {}", id);
         Reservation reservation = reservationRepository.findByIdReservation(id)
@@ -52,6 +60,7 @@ public class ReservationService {
         return toDTO(reservation);
     }
 
+    @Transactional(readOnly = true)
     public List<ReservationDTO> getByClient(String codeClient) {
         log.debug("Fetching reservations by client: {}", codeClient);
         return reservationRepository.findByClient_CodeUtilisateur(codeClient)
@@ -65,6 +74,14 @@ public class ReservationService {
         log.debug("Creating reservation for client: {}", dto.getCodeClient());
         Client client = clientRepository.findByCodeUtilisateur(dto.getCodeClient())
                 .orElseThrow(() -> new ResourceNotFoundException("Client", "codeClient", dto.getCodeClient()));
+
+        if (dto.getCodeTickets() != null && !dto.getCodeTickets().isEmpty()) {
+            for (String codeTicket : dto.getCodeTickets()) {
+                if (!correspondARepository.findByTicket_CodeTicket(codeTicket).isEmpty()) {
+                    throw new BadRequestException("Ticket " + codeTicket + " is already used in another reservation");
+                }
+            }
+        }
 
         Reservation reservation = new Reservation();
         reservation.setDateReservation(dto.getDateReservation() != null ? dto.getDateReservation() : LocalDateTime.now());
@@ -130,7 +147,19 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findByIdReservation(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", "idReservation", id));
 
-        correspondARepository.findByReservation_IdReservation(id).forEach(correspondARepository::delete);
+        List<CorrespondA> correspondances = correspondARepository.findByReservation_IdReservation(id);
+        for (CorrespondA ca : correspondances) {
+            List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(ca.getTicket().getCodeTicket());
+            for (Concerner c : concerners) {
+                Place place = c.getPlace();
+                if (place != null) {
+                    place.setStatut(StatutPlace.DISPONIBLE);
+                    placeRepository.save(place);
+                }
+            }
+        }
+
+        correspondances.forEach(correspondARepository::delete);
 
         paiementRepository.findByReservation_IdReservation(id).ifPresent(paiementRepository::delete);
 

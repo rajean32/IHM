@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:ontik/core/api_client.dart';
 import 'package:ontik/core/api_endpoints.dart';
 import 'package:ontik/models/api_wrapper.dart';
@@ -42,5 +45,17 @@ class TicketRepository {
   Future<List<Ticket>> getByClient(String clientCode) async {
     final response = await _client.get(ApiEndpoints.clients.tickets(clientCode));
     return ApiWrapper.fromJson(response).getDataList((e) => Ticket.fromJson(e));
+  }
+
+  Future<String> downloadPDF(String code) async {
+    final response = await _client.dio.get(
+      ApiEndpoints.tickets.pdf(code),
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final bytes = response.data as List<int>;
+    final dir = Directory.systemTemp;
+    final file = File('${dir.path}/ticket_$code.pdf');
+    await file.writeAsBytes(bytes);
+    return file.path;
   }
 }

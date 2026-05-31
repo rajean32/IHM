@@ -13,6 +13,7 @@ public class SeatingDTO {
     private boolean disponible;
     private BigDecimal prix;
     private String salle;
+    private String statut;
 
     public SeatingDTO() {}
 
@@ -33,4 +34,7 @@ public class SeatingDTO {
 
     public String getSalle() { return salle; }
     public void setSalle(String salle) { this.salle = salle; }
+
+    public String getStatut() { return statut; }
+    public void setStatut(String statut) { this.statut = statut; }
 }
