@@ -3,6 +3,7 @@ package com.ihm.model.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -17,6 +18,7 @@ public class EvenementDTO {
 
     private String description;
 
+    @NotNull(message = "Event date is required")
     @Future(message = "Event date must be in the future")
     private LocalDate dateEvenement;
 

@@ -1,19 +1,13 @@
 package com.ihm.model.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.List;
 
 public class PurchaseRequest {
-    @NotBlank
+
     private String codeClient;
-    @NotEmpty
     private List<PurchaseTicketItem> tickets;
-    @NotBlank
     private String modePaiement;
-    @Positive
     private BigDecimal montant;
 
     public PurchaseRequest() {}
@@ -31,12 +25,12 @@ public class PurchaseRequest {
     public void setMontant(BigDecimal montant) { this.montant = montant; }
 
     public static class PurchaseTicketItem {
-        @NotBlank
+
         private String codeTicket;
-        @NotBlank
         private String numeroPlace;
         private Integer idEvenement;
         private BigDecimal prix;
+        private String idPlaceCombine;
 
         public PurchaseTicketItem() {}
 
@@ -51,5 +45,8 @@ public class PurchaseRequest {
 
         public BigDecimal getPrix() { return prix; }
         public void setPrix(BigDecimal prix) { this.prix = prix; }
+
+        public String getIdPlaceCombine() { return idPlaceCombine; }
+        public void setIdPlaceCombine(String idPlaceCombine) { this.idPlaceCombine = idPlaceCombine; }
     }
 }

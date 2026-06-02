@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/evenement.dart';
-import '../core/constants.dart';
+import '../models/evenement_model.dart';
+import '../core/assets/app_colors.dart';
 
 class EventCard extends StatelessWidget {
   final Evenement event;
@@ -76,11 +76,11 @@ class EventCard extends StatelessWidget {
               if (event.dateEvenement != null)
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                    const Icon(Icons.calendar_today, size: 16, color: AppTheme.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       DateFormat('MMM d, yyyy').format(event.dateEvenement!),
-                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                     ),
                   ],
                 ),
@@ -90,7 +90,7 @@ class EventCard extends StatelessWidget {
                   event.description!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                 ),
               ],
             ],
@@ -104,8 +104,8 @@ class EventCard extends StatelessWidget {
     return Container(
       height: 160,
       width: double.infinity,
-      color: Colors.grey.shade200,
-      child: const Icon(Icons.event, size: 64, color: Colors.grey),
+      color: AppTheme.surfaceColor,
+      child: const Icon(Icons.event, size: 64, color: AppTheme.textSecondary),
     );
   }
 }

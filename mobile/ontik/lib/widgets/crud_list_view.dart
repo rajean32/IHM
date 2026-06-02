@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/assets/app_colors.dart';
 
 class CrudItem {
   final String id;
@@ -141,7 +142,7 @@ class _CrudListViewState extends State<CrudListView> {
         content: const Text('Supprimer cet élément ?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: Colors.red))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: AppTheme.errorColor))),
         ],
       ),
     );
@@ -159,7 +160,7 @@ class _CrudListViewState extends State<CrudListView> {
         content: Text('Supprimer ${_selectedIds.length} élément(s) ?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer tout', style: TextStyle(color: Colors.red))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer tout', style: TextStyle(color: AppTheme.errorColor))),
         ],
       ),
     );
@@ -366,7 +367,7 @@ class _CrudListViewState extends State<CrudListView> {
             ),
           if (_bulkMode && _selectedIds.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.delete_sweep, color: Colors.red),
+              icon: const Icon(Icons.delete_sweep, color: AppTheme.errorColor),
               tooltip: 'Supprimer sélection',
               onPressed: _handleBulkDelete,
             ),
@@ -430,7 +431,7 @@ class _CrudListViewState extends State<CrudListView> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(widget.error!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+                          Text(widget.error!, style: const TextStyle(color: AppTheme.errorColor), textAlign: TextAlign.center),
                           const SizedBox(height: 12),
                           ElevatedButton(onPressed: widget.onRefresh, child: const Text('Réessayer')),
                         ],
@@ -443,11 +444,11 @@ class _CrudListViewState extends State<CrudListView> {
                               : Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.inbox, size: 48, color: Colors.grey.withValues(alpha: 0.4)),
+                                    Icon(Icons.inbox, size: 48, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
                                     const SizedBox(height: 12),
                                     Text(
                                       widget.emptyMessage ?? 'Aucun élément',
-                                      style: const TextStyle(color: Colors.grey, fontSize: 16),
+                                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 16),
                                     ),
                                     if (widget.onAdd != null) ...[
                                       const SizedBox(height: 16),
@@ -499,7 +500,7 @@ class _CrudListViewState extends State<CrudListView> {
                                         ),
                                       if (widget.onDelete != null)
                                         IconButton(
-                                          icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                                          icon: const Icon(Icons.delete, size: 20, color: AppTheme.errorColor),
                                           onPressed: () => _handleDelete(item.id),
                                         ),
                                     ],

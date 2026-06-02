@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/venue.dart';
+import '../models/lieu_model.dart';
+import '../core/assets/app_colors.dart';
 
 const _seatAvailableStatuses = {'DISPONIBLE', null};
 
@@ -28,229 +29,116 @@ class _SeatPickerState extends State<SeatPicker> {
     return widget.seats.where((s) => s.typePlace == _selectedCategory).toList();
   }
 
-  Set<String> get _availableCategories {
-    return widget.seats.where((s) => s.typePlace != null).map((s) => s.typePlace!).toSet();
+  Set<String> get _categories {
+    return widget.seats.map((s) => s.typePlace ?? 'Standard').toSet();
   }
 
-  bool _isSeatAvailable(SeatingPlace seat) {
-    return seat.disponible && _seatAvailableStatuses.contains(seat.statut);
+  @override
+  void initState() {
+    super.initState();
+    final cats = _categories.toList()..sort();
+    if (cats.isNotEmpty) _selectedCategory = cats.first;
   }
 
   void _toggleSeat(SeatingPlace seat) {
-    if (!_isSeatAvailable(seat)) return;
+    if (!_seatAvailableStatuses.contains(seat.statut)) return;
     setState(() {
       if (_selectedSeats.contains(seat.numeroPlace)) {
         _selectedSeats.remove(seat.numeroPlace);
       } else {
         _selectedSeats.add(seat.numeroPlace);
       }
+      widget.onSeatsSelected(
+        widget.seats.where((s) => _selectedSeats.contains(s.numeroPlace)).toList(),
+      );
     });
-    widget.onSeatsSelected(
-      widget.seats
-          .where((s) => _selectedSeats.contains(s.numeroPlace))
-          .toList(),
-    );
-  }
-
-  Map<String, List<SeatingPlace>> _groupByRang(List<SeatingPlace> seats) {
-    final Map<String, List<SeatingPlace>> groups = {};
-    for (final seat in seats) {
-      final rang = seat.rang ?? 'Unknown';
-      groups.putIfAbsent(rang, () => []).add(seat);
-    }
-    return groups;
   }
 
   @override
   Widget build(BuildContext context) {
-    final categories = _availableCategories;
-    final groups = _groupByRang(_filteredSeats);
-    return Column(
-      children: [
-        _buildLegend(),
-        if (categories.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          _buildCategoryFilter(categories),
-        ],
-        const SizedBox(height: 16),
-        _buildSeatCountAndTotal(),
-        const SizedBox(height: 12),
-        if (groups.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Text('No seats available for this category',
-                style: TextStyle(color: Colors.grey)),
-          )
-        else
-          ...groups.entries.map(
-            (e) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 40,
-                    alignment: Alignment.center,
-                    child: Text(
-                      e.key,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: e.value.map((s) => _buildSeatTile(s)).toList(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryFilter(Set<String> categories) {
-    return SizedBox(
-      height: 36,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              label: const Text('All'),
-              selected: _selectedCategory == null,
-              onSelected: (_) => setState(() => _selectedCategory = null),
-            ),
-          ),
-          ...categories.map((cat) {
-            final price = widget.categoryPrices?[cat];
-            final label = price != null ? '$cat (\$${price.toStringAsFixed(0)})' : cat;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: Text(label, style: const TextStyle(fontSize: 12)),
-                selected: _selectedCategory == cat,
-                onSelected: (_) => setState(() => _selectedCategory = cat),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSeatCountAndTotal() {
-    if (_selectedSeats.isEmpty) return const SizedBox.shrink();
-    double total = 0;
-    for (final seat in widget.seats) {
-      if (_selectedSeats.contains(seat.numeroPlace) && seat.prix != null) {
-        total += seat.prix!;
-      }
+    final cats = _categories.toList()..sort();
+    final grouped = <String, List<SeatingPlace>>{};
+    for (final s in _filteredSeats) {
+      final key = s.rang ?? '?';
+      grouped.putIfAbsent(key, () => []);
+      grouped[key]!.add(s);
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.confirmation_number, size: 20, color: Colors.blue),
-          const SizedBox(width: 8),
-          Text(
-            '${_selectedSeats.length} seat(s) selected',
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          if (total > 0) ...[
-            const SizedBox(width: 16),
-            Text(
-              'Total: \$${total.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+    final sortedKeys = grouped.keys.toList()..sort((a, b) {
+      final an = int.tryParse(a.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+      final bn = int.tryParse(b.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+      return an.compareTo(bn);
+    });
 
-  Widget _buildSeatTile(SeatingPlace seat) {
-    final isSelected = _selectedSeats.contains(seat.numeroPlace);
-    final isAvailable = _isSeatAvailable(seat);
-    final isPending = seat.statut == 'EN_ATTENTE';
-    return GestureDetector(
-      onTap: () => _toggleSeat(seat),
-      child: Tooltip(
-        message:
-            '${seat.numeroPlace}${seat.prix != null ? ' - \$${seat.prix!.toStringAsFixed(0)}' : ''}${seat.typePlace != null ? ' (${seat.typePlace})' : ''}${seat.statut != null ? ' [${seat.statut}]' : ''}',
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: isSelected
-                ? Colors.blue
-                : isAvailable
-                    ? Colors.green.shade200
-                    : isPending
-                        ? Colors.orange.shade200
-                        : Colors.red.shade200,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: isSelected ? Colors.blue.shade700 : Colors.grey,
-              width: 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (cats.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(children: [
+                ...cats.map((cat) => Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: FilterChip(
+                    label: Text(cat, style: TextStyle(fontSize: 11, color: _selectedCategory == cat ? Colors.white : null)),
+                    selected: _selectedCategory == cat,
+                    onSelected: (_) => setState(() => _selectedCategory = cat),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                )),
+              ]),
             ),
           ),
-          alignment: Alignment.center,
-          child: Text(
-            seat.numeroPlace.replaceAll(RegExp(r'[^0-9]'), ''),
-            style: TextStyle(
-              color: isAvailable || isSelected ? Colors.white : Colors.grey,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-            ),
+        Expanded(
+          child: ListView(
+            children: sortedKeys.map((row) {
+              final seats = grouped[row]!;
+              seats.sort((a, b) => a.numeroPlace.compareTo(b.numeroPlace));
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Row $row', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                    const SizedBox(height: 4),
+                    Wrap(spacing: 4, runSpacing: 4, children: seats.map((seat) {
+                      final avail = _seatAvailableStatuses.contains(seat.statut);
+                      final sel = _selectedSeats.contains(seat.numeroPlace);
+                      final color = AppConstants.placeTypeColors[seat.typePlace] ?? AppColors.primary;
+                      return GestureDetector(
+                        onTap: avail ? () => _toggleSeat(seat) : null,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 34,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: sel ? color : (avail ? color.withValues(alpha: 0.12) : Colors.grey.shade200),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: sel ? color : (avail ? color.withValues(alpha: 0.3) : Colors.grey.shade300),
+                              width: sel ? 2 : 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              seat.numeroPlace.replaceAll(RegExp(r'^[A-Z]*'), ''),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: sel ? Colors.white : (avail ? color : Colors.grey),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList()),
+                  ],
+                ),
+              );
+            }).toList(),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLegend() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _legendItem(Colors.green.shade200, 'Available'),
-        const SizedBox(width: 12),
-        _legendItem(Colors.blue, 'Selected'),
-        const SizedBox(width: 12),
-        _legendItem(Colors.orange.shade200, 'Pending'),
-        const SizedBox(width: 12),
-        _legendItem(Colors.red.shade200, 'Taken'),
-      ],
-    );
-  }
-
-  Widget _legendItem(Color color, String label) {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-            border: Border.all(color: Colors.grey, width: 1),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
   }

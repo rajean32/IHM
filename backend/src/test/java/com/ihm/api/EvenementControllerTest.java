@@ -49,6 +49,7 @@ class EvenementControllerTest {
 
     private String organisateurCode;
     private String categorieCode;
+    private Integer lieuId;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -82,7 +83,8 @@ class EvenementControllerTest {
         Lieu lieu = new Lieu();
         lieu.setNomLieu("Salle de Test");
         lieu.setVille("Paris");
-        lieuRepository.save(lieu);
+        lieu = lieuRepository.save(lieu);
+        lieuId = lieu.getIdLieu();
     }
 
     @Test
@@ -94,6 +96,7 @@ class EvenementControllerTest {
         dto.setHeureEvenement(LocalTime.of(20, 0));
         dto.setStatut("planifie");
         dto.setCodeCategorie(categorieCode);
+        dto.setIdLieu(lieuId);
         dto.setCodeOrganisateur(organisateurCode);
 
         mockMvc.perform(post("/api/evenements")
@@ -109,6 +112,7 @@ class EvenementControllerTest {
         EvenementDTO dto = new EvenementDTO();
         dto.setTitre("Event sans organisateur");
         dto.setDateEvenement(LocalDate.now().plusDays(10));
+        dto.setIdLieu(lieuId);
         dto.setCodeOrganisateur("");
 
         mockMvc.perform(post("/api/evenements")
@@ -123,6 +127,7 @@ class EvenementControllerTest {
         dto.setTitre("Concert");
         dto.setDateEvenement(LocalDate.now().plusDays(30));
         dto.setStatut("planifie");
+        dto.setIdLieu(lieuId);
         dto.setCodeOrganisateur(organisateurCode);
         mockMvc.perform(post("/api/evenements")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -144,6 +149,7 @@ class EvenementControllerTest {
         EvenementDTO dto = new EvenementDTO();
         dto.setTitre("Event to delete");
         dto.setDateEvenement(LocalDate.now().plusDays(15));
+        dto.setIdLieu(lieuId);
         dto.setCodeOrganisateur(organisateurCode);
 
         MvcResult result = mockMvc.perform(post("/api/evenements")

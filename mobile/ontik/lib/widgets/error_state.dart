@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/assets/app_colors.dart';
 
 class ErrorState extends StatelessWidget {
   final String message;
@@ -14,23 +15,22 @@ class ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              ElevatedButton.icon(
+              ElevatedButton(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                child: const Text('Réessayer'),
               ),
             ],
           ],

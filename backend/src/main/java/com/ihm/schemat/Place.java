@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +30,9 @@ public class Place {
     @Column(name = "statut", length = 20, nullable = false)
     private StatutPlace statut = StatutPlace.DISPONIBLE;
 
+    @Column(name = "dateMiseEnAttente")
+    private LocalDateTime dateMiseEnAttente;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "NumeroSalle", referencedColumnName = "NumeroSalle", nullable = false)
     private Salle salle;
@@ -52,6 +56,9 @@ public class Place {
 
     public StatutPlace getStatut() { return statut; }
     public void setStatut(StatutPlace statut) { this.statut = statut; }
+
+    public LocalDateTime getDateMiseEnAttente() { return dateMiseEnAttente; }
+    public void setDateMiseEnAttente(LocalDateTime dateMiseEnAttente) { this.dateMiseEnAttente = dateMiseEnAttente; }
 
     public Salle getSalle() { return salle; }
     public void setSalle(Salle salle) { this.salle = salle; }

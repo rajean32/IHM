@@ -29,19 +29,22 @@ public class EventSearchService {
     private final ConcernerRepository concernerRepository;
     private final CorrespondARepository correspondARepository;
     private final SalleRepository salleRepository;
+    private final EvenementPlaceConfigurationRepository configRepository;
 
     public EventSearchService(EvenementRepository evenementRepository,
                               PlaceRepository placeRepository,
                               TicketRepository ticketRepository,
                               ConcernerRepository concernerRepository,
                               CorrespondARepository correspondARepository,
-                              SalleRepository salleRepository) {
+                              SalleRepository salleRepository,
+                              EvenementPlaceConfigurationRepository configRepository) {
         this.evenementRepository = evenementRepository;
         this.placeRepository = placeRepository;
         this.ticketRepository = ticketRepository;
         this.concernerRepository = concernerRepository;
         this.correspondARepository = correspondARepository;
         this.salleRepository = salleRepository;
+        this.configRepository = configRepository;
     }
 
     @Transactional(readOnly = true)
@@ -184,6 +187,27 @@ public class EventSearchService {
 
         BigDecimal minPrice = ticketRepository.findMinPriceByEvent(idEvent);
         BigDecimal maxPrice = ticketRepository.findMaxPriceByEvent(idEvent);
+        List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(idEvent);
+        Set<String> configuredPlaces = new HashSet<>();
+        for (EvenementPlaceConfiguration cfg : configs) {
+            configuredPlaces.add(cfg.getPlace().getNumeroPlace());
+            if (cfg.getPrixOverride() != null && cfg.getPrixOverride().compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal p = cfg.getPrixOverride();
+                if (minPrice == null || p.compareTo(minPrice) < 0) minPrice = p;
+                if (maxPrice == null || p.compareTo(maxPrice) > 0) maxPrice = p;
+            }
+        }
+        List<Salle> salles = salleRepository.findByLieu_IdLieu(event.getLieu().getIdLieu());
+        for (Salle salle : salles) {
+            List<Place> places = placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle());
+            for (Place place : places) {
+                if (!configuredPlaces.contains(place.getNumeroPlace()) && place.getPrix() != null && place.getPrix().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal p = place.getPrix();
+                    if (minPrice == null || p.compareTo(minPrice) < 0) minPrice = p;
+                    if (maxPrice == null || p.compareTo(maxPrice) > 0) maxPrice = p;
+                }
+            }
+        }
         dto.setPrixMin(minPrice);
         dto.setPrixMax(maxPrice);
 
@@ -212,6 +236,12 @@ public class EventSearchService {
             allPlaces.addAll(placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle()));
         }
 
+        List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(idEvent);
+        Map<String, EvenementPlaceConfiguration> configMap = new HashMap<>();
+        for (EvenementPlaceConfiguration cfg : configs) {
+            configMap.put(cfg.getPlace().getNumeroPlace(), cfg);
+        }
+
         List<Ticket> tickets = ticketRepository.findByConcerners_Evenement_IdEvenement(idEvent);
         Map<String, BigDecimal> placePrices = new HashMap<>();
         for (Ticket ticket : tickets) {
@@ -227,20 +257,30 @@ public class EventSearchService {
             SeatingDTO seating = new SeatingDTO();
             seating.setNumeroPlace(place.getNumeroPlace());
             seating.setRang(place.getRange());
-            seating.setTypePlace(place.getTypePlace());
             seating.setSalle(place.getSalle().getNumeroSalle());
             seating.setStatut(place.getStatut() != null ? place.getStatut().name() : "DISPONIBLE");
+
+            EvenementPlaceConfiguration cfg = configMap.get(place.getNumeroPlace());
+            if (cfg != null && cfg.getTypePlaceOverride() != null) {
+                seating.setTypePlace(cfg.getTypePlaceOverride());
+            } else {
+                seating.setTypePlace(place.getTypePlace());
+            }
+
             boolean estReservee = reservedPlaces.contains(place.getNumeroPlace());
             if (StatutPlace.INDISPONIBLE.equals(place.getStatut())) {
                 seating.setDisponible(false);
             } else {
                 seating.setDisponible(!estReservee);
             }
+
             BigDecimal prixPlace = place.getPrix();
-            if (prixPlace != null && prixPlace.compareTo(BigDecimal.ZERO) > 0) {
+            if (cfg != null && cfg.getPrixOverride() != null && cfg.getPrixOverride().compareTo(BigDecimal.ZERO) > 0) {
+                seating.setPrix(cfg.getPrixOverride());
+            } else if (prixPlace != null && prixPlace.compareTo(BigDecimal.ZERO) > 0) {
                 seating.setPrix(prixPlace);
             } else {
-                seating.setPrix(placePrices.getOrDefault(place.getNumeroPlace(), BigDecimal.ZERO));
+                seating.setPrix(null);
             }
             seatingList.add(seating);
         }

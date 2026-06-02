@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'routes/app_router.dart';
-import 'core/app_theme.dart';
+import 'core/routes/app_router.dart';
+import 'core/assets/app_colors.dart';
+import 'core/api/dio_config.dart';
 
-void main() {
-  runApp(
-    const ProviderScope(
-      child: OntikApp(),
-    ),
-  );
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await init();
+  runApp(const MyApp());
 }
 
-class OntikApp extends ConsumerWidget {
-  const OntikApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
-    return MaterialApp.router(
-      title: 'Ontik',
+  Widget build(BuildContext context) {
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      routerConfig: router,
+      title: 'Ontik',
+      theme: AppTheme.light,
+      initialRoute: '/login',
+      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }

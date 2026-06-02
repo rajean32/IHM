@@ -4,6 +4,8 @@ import com.ihm.model.ApiResponse;
 import com.ihm.model.dto.EventPlaceConfigDTO;
 import com.ihm.model.dto.PlaceDTO;
 import com.ihm.model.dto.RowPricingRequest;
+import com.ihm.model.dto.TypeAssignRequest;
+import com.ihm.model.dto.TypePricingRequest;
 import com.ihm.schemat.Salle;
 import com.ihm.service.EventPricingService;
 import com.ihm.service.OrganizerPricingService;
@@ -120,5 +122,28 @@ public class OrganizerPricingController {
         log.info("GET /api/organisateur/evenements/{}/places/config/types", eventId);
         List<String> types = eventPricingService.getDistinctTypesForEvent(eventId);
         return ResponseEntity.ok(ApiResponse.success(200, "Distinct types fetched", types));
+    }
+
+    @PutMapping("/evenements/{eventId}/places/type/pricing")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> applyTypePricing(
+            @PathVariable Integer eventId,
+            @Valid @RequestBody TypePricingRequest request) {
+        log.info("PUT /api/organisateur/evenements/{}/places/type/pricing - type: {}, prix: {}",
+                eventId, request.getTypePlace(), request.getPrix());
+        int updated = eventPricingService.applyTypePricing(eventId, request.getTypePlace(), request.getPrix());
+        return ResponseEntity.ok(ApiResponse.success(200, "Type pricing applied",
+                Map.of("updated", updated, "typePlace", request.getTypePlace())));
+    }
+
+    @PutMapping("/evenements/{eventId}/places/assign-type")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> assignTypeToPlaces(
+            @PathVariable Integer eventId,
+            @Valid @RequestBody TypeAssignRequest request) {
+        log.info("PUT /api/organisateur/evenements/{}/places/assign-type - type: {}, places: {}, rows: {}",
+                eventId, request.getTypePlace(), request.getPlaceIds(), request.getRows());
+        int updated = eventPricingService.assignTypeToPlaces(
+                eventId, request.getTypePlace(), request.getPlaceIds(), request.getRows());
+        return ResponseEntity.ok(ApiResponse.success(200, "Type assigned to places",
+                Map.of("updated", updated, "typePlace", request.getTypePlace())));
     }
 }

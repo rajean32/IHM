@@ -18,7 +18,7 @@ public class Ticket {
     private String codeTicket;
 
     @Column(name = "prix", precision = 10, scale = 2, nullable = false)
-    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be positive")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Price must be positive")
     private BigDecimal prix;
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

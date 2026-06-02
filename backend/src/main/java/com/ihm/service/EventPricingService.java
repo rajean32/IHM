@@ -171,6 +171,73 @@ public class EventPricingService {
         return getPlacesWithConfig(eventId, null);
     }
 
+    @Transactional
+    public int applyTypePricing(Integer eventId, String typePlace, BigDecimal prix) {
+        Evenement event = evenementRepository.findByIdEvenement(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", eventId));
+
+        List<EvenementPlaceConfiguration> configs = configRepository
+                .findByEventAndTypePlace(eventId, typePlace);
+
+        if (configs.isEmpty()) {
+            log.warn("No places with type '{}' found for event {}", typePlace, eventId);
+            return 0;
+        }
+
+        int updated = 0;
+        for (EvenementPlaceConfiguration config : configs) {
+            config.setPrixOverride(prix);
+            configRepository.save(config);
+            updated++;
+        }
+        log.info("Type pricing applied for event {} type '{}': {} places updated", eventId, typePlace, updated);
+        return updated;
+    }
+
+    @Transactional
+    public int assignTypeToPlaces(Integer eventId, String typePlace,
+                                   List<String> placeIds, List<String> rows) {
+        Evenement event = evenementRepository.findByIdEvenement(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", eventId));
+
+        List<Place> allPlaces;
+        if (event.getLieu() != null) {
+            allPlaces = placeRepository.findPlacesForEventLocation(eventId);
+        } else {
+            throw new BadRequestException("Event has no associated venue");
+        }
+
+        List<Place> targetPlaces = allPlaces.stream()
+                .filter(p -> {
+                    boolean matchPlace = placeIds != null && placeIds.contains(p.getNumeroPlace());
+                    boolean matchRow = rows != null && rows.contains(p.getRange());
+                    return matchPlace || matchRow;
+                })
+                .collect(Collectors.toList());
+
+        if (targetPlaces.isEmpty()) {
+            log.warn("No places match the selection for event {}", eventId);
+            return 0;
+        }
+
+        int updated = 0;
+        for (Place place : targetPlaces) {
+            EvenementPlaceConfiguration config = configRepository
+                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(eventId, place.getNumeroPlace())
+                    .orElseGet(() -> {
+                        EvenementPlaceConfiguration newConfig = new EvenementPlaceConfiguration();
+                        newConfig.setEvenement(event);
+                        newConfig.setPlace(place);
+                        return newConfig;
+                    });
+            config.setTypePlaceOverride(typePlace);
+            configRepository.save(config);
+            updated++;
+        }
+        log.info("Type assigned for event {}: {} places → '{}'", eventId, updated, typePlace);
+        return updated;
+    }
+
     @Transactional(readOnly = true)
     public List<String> getDistinctTypesForEvent(Integer eventId) {
         return configRepository.findByEvenement_IdEvenement(eventId)

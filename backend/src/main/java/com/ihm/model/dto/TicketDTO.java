@@ -12,7 +12,7 @@ public class TicketDTO {
     @NotBlank(message = "Ticket code is required")
     private String codeTicket;
 
-    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be positive")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Price must be positive")
     private BigDecimal prix;
 
     private String numeroPlace;

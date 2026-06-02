@@ -1,0 +1,431 @@
+import 'package:flutter/material.dart';
+import '../../models/evenement_model.dart';
+import '../../models/lieu_model.dart';
+import '../../models/categorie_model.dart';
+import '../../widgets/event_card.dart';
+
+import '../../core/services/categorie_service.dart';
+import '../../core/services/lieu_service.dart';
+import '../../core/api/dio_config.dart';
+import '../../core/api/endpoints.dart';
+import '../../core/assets/app_colors.dart';
+import '../../core/routes/client_routes.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final _searchCtrl = TextEditingController();
+  String? _selectedCategorie;
+  String? _selectedStatut;
+  int? _selectedLieu;
+  DateTimeRange? _selectedDateRange;
+  double? _prixMin;
+  double? _prixMax;
+  int _currentIndex = 0;
+  List<Lieu> _lieux = [];
+  List<Categorie> _categories = [];
+  final _scrollCtrl = ScrollController();
+
+  List<Evenement> _events = [];
+  bool _isLoading = true;
+  String? _error;
+
+  static const _statusOptions = [
+    'Tous',
+    'planifie',
+    'en_cours',
+    'termine',
+    'annule',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFilterData();
+    _loadEvents();
+    _scrollCtrl.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
+    }
+  }
+
+  Future<void> _loadFilterData() async {
+    try {
+      final _lieuService = LieuService();
+      final _categorieService = CategorieService();
+      final lieuxData = await _lieuService.getLieux();
+      final catsData = await _categorieService.getCategories();
+      if (!mounted) return;
+      setState(() {
+        _lieux = lieuxData.map((e) => Lieu.fromJson(e as Map<String, dynamic>)).toList();
+        _categories = catsData.map((e) => Categorie.fromJson(e as Map<String, dynamic>)).toList();
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() => _isLoading = true);
+    try {
+      final params = <String, dynamic>{};
+      if (_searchCtrl.text.isNotEmpty) params['q'] = _searchCtrl.text;
+      if (_selectedCategorie != null) params['categorie'] = _selectedCategorie;
+      if (_selectedStatut != null) params['statut'] = _selectedStatut;
+      if (_selectedLieu != null) params['idLieu'] = _selectedLieu;
+      if (_prixMin != null) params['prixMin'] = _prixMin;
+      if (_prixMax != null) params['prixMax'] = _prixMax;
+
+      final resp = await dio.get(
+        Endpoints.events,
+        queryParameters: params.isNotEmpty ? params : null,
+      );
+      final data = resp.data['data'] as List? ?? [];
+      final events = data.map((e) => Evenement.fromJson(e as Map<String, dynamic>)).toList();
+      if (!mounted) return;
+      setState(() {
+        _events = events;
+        _isLoading = false;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _applyFilters() => _loadEvents();
+
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 24, right: 24, top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Filters', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    TextButton(
+                      onPressed: () {
+                        setSheetState(() {
+                          _selectedStatut = null;
+                          _selectedLieu = null;
+                          _selectedDateRange = null;
+                          _prixMin = null;
+                          _prixMax = null;
+                        });
+                      },
+                      child: const Text('Reset'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Status', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: _selectedStatut,
+                  decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                  items: _statusOptions.map((s) => DropdownMenuItem(
+                    value: s == 'Tous' ? null : s,
+                    child: Text(s == 'Tous' ? 'All' : s),
+                  )).toList(),
+                  onChanged: (v) => setSheetState(() => _selectedStatut = v),
+                ),
+                const SizedBox(height: 16),
+                const Text('Venue', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<int>(
+                  value: _selectedLieu,
+                  decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('All Venues')),
+                    ..._lieux.map((l) => DropdownMenuItem(
+                      value: l.idLieu,
+                      child: Text(l.nomLieu),
+                    )),
+                  ],
+                  onChanged: (v) => setSheetState(() => _selectedLieu = v),
+                ),
+                const SizedBox(height: 16),
+                const Text('Date Range', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () async {
+                    final range = await showDateRangePicker(
+                      context: ctx,
+                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      initialDateRange: _selectedDateRange,
+                    );
+                    if (range != null) setSheetState(() => _selectedDateRange = range);
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                    child: Text(
+                      _selectedDateRange != null
+                          ? '${_selectedDateRange!.start.toIso8601String().split('T').first} \u2014 ${_selectedDateRange!.end.toIso8601String().split('T').first}'
+                          : 'Select date range',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Price Range', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          labelText: 'Min',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (v) => _prixMin = double.tryParse(v),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text('\u2014'),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          labelText: 'Max',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (v) => _prixMax = double.tryParse(v),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _applyFilters();
+                  },
+                  child: const Text('Apply Filters'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pages = <Widget>[
+      _buildEventList(),
+      _buildTicketsTab(),
+      _buildProfilePage(),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(children: [
+          Image.asset('lib/utils/logo_icon.png', height: 24, fit: BoxFit.contain, color: Colors.white),
+          const SizedBox(width: 6),
+          const Text('Ontik'),
+        ]),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await clearSession();
+              if (!mounted) return;
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: const InputDecoration(
+                      hintText: 'Search events...',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    onSubmitted: (_) => _applyFilters(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Badge(
+                    isLabelVisible: _selectedStatut != null || _selectedLieu != null ||
+                        _selectedDateRange != null || _prixMin != null || _prixMax != null,
+                    child: const Icon(Icons.tune),
+                  ),
+                  onPressed: _showFilterSheet,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 48,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              children: [
+                _buildCategoryChip('All', null),
+                ..._categories.map((c) => _buildCategoryChip(c.nomCategorie, c.codeCategorie)),
+              ],
+            ),
+          ),
+          Expanded(child: pages[_currentIndex]),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.event), label: 'Events'),
+          NavigationDestination(icon: Icon(Icons.receipt_long), label: 'My Tickets'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(String label, String? code) {
+    final selected = _selectedCategorie == code;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: FilterChip(
+        label: Text(label),
+        selected: selected,
+        onSelected: (v) {
+          setState(() => _selectedCategorie = v ? code : null);
+          _applyFilters();
+        },
+      ),
+    );
+  }
+
+  Widget _buildEventList() {
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) return Center(child: Text(_error!));
+    if (_events.isEmpty) return const Center(child: Text('No events found'));
+
+    return RefreshIndicator(
+      onRefresh: _loadEvents,
+      child: ListView.builder(
+        controller: _scrollCtrl,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _events.length,
+        itemBuilder: (context, index) {
+          final event = _events[index];
+          return EventCard(
+            event: event,
+            onTap: () => Navigator.pushNamed(
+              context,
+              ClientRoutes.homeDetail,
+              arguments: event.idEvenement,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTicketsTab() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.receipt_long, size: 64, color: AppColors.textSecondary),
+          const SizedBox(height: 16),
+          const Text('View your tickets and reservations'),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pushNamed(context, ClientRoutes.profile),
+            icon: const Icon(Icons.receipt_long),
+            label: const Text('My Tickets'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfilePage() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const CircleAvatar(
+          radius: 48,
+          child: Icon(Icons.person, size: 48),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          userNom ?? 'User',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          userRole ?? 'CLIENT',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 24),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.receipt_long),
+          title: const Text('My Reservations'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.pushNamed(context, ClientRoutes.profile),
+        ),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.logout, color: AppColors.error),
+          title: const Text('Logout', style: TextStyle(color: AppColors.error)),
+          onTap: () async {
+            await clearSession();
+            if (!mounted) return;
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          },
+        ),
+      ],
+    );
+  }
+}

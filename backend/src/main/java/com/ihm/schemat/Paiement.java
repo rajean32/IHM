@@ -18,7 +18,7 @@ public class Paiement {
     private Integer idPaiement;
 
     @Column(name = "montant", precision = 10, scale = 2, nullable = false)
-    @DecimalMin(value = "0.0", inclusive = false, message = "Amount must be positive")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Amount must be positive")
     private BigDecimal montant;
 
     @Column(name = "datePaiement", nullable = false)
