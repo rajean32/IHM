@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/categorie_service.dart';
 import '../../models/categorie_model.dart';
 import '../../widgets/crud_list_view.dart';
+import '../../core/utils/error_helper.dart';
 
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
@@ -30,7 +31,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = apiErrorString(e); _loading = false; });
     }
   }
 

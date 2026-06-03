@@ -1,23 +1,27 @@
 class Lieu {
-  final int? idLieu;
+  final String code;
   final String nomLieu;
   final String? adresse;
   final String? ville;
+  final List<Salle>? salles;
 
-  Lieu({this.idLieu, required this.nomLieu, this.adresse, this.ville});
+  Lieu({required this.code, required this.nomLieu, this.adresse, this.ville, this.salles});
 
   factory Lieu.fromJson(Map<String, dynamic> json) {
     return Lieu(
-      idLieu: json['idLieu'],
+      code: json['code'] ?? '',
       nomLieu: json['nomLieu'] ?? '',
       adresse: json['adresse'],
       ville: json['ville'],
+      salles: json['salles'] != null
+          ? (json['salles'] as List).map((e) => Salle.fromJson(e as Map<String, dynamic>)).toList()
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      if (idLieu != null) 'idLieu': idLieu,
+      'code': code,
       'nomLieu': nomLieu,
       'adresse': adresse,
       'ville': ville,
@@ -28,15 +32,15 @@ class Lieu {
 class Salle {
   final String numeroSalle;
   final String nomSalle;
-  final int? idLieu;
+  final String? codeLieu;
 
-  Salle({required this.numeroSalle, required this.nomSalle, this.idLieu});
+  Salle({required this.numeroSalle, required this.nomSalle, this.codeLieu});
 
   factory Salle.fromJson(Map<String, dynamic> json) {
     return Salle(
       numeroSalle: json['numeroSalle'] ?? '',
       nomSalle: json['nomSalle'] ?? '',
-      idLieu: json['idLieu'],
+      codeLieu: json['codeLieu'],
     );
   }
 
@@ -44,29 +48,35 @@ class Salle {
     return {
       'numeroSalle': numeroSalle,
       'nomSalle': nomSalle,
-      'idLieu': idLieu,
+      'codeLieu': codeLieu,
     };
   }
 }
 
 class Place {
   final String numeroPlace;
-  final String? rang;
+  final String? range;
   final String? typePlace;
+  final double? prix;
+  final String? statut;
   final String numeroSalle;
 
   Place({
     required this.numeroPlace,
-    this.rang,
+    this.range,
     this.typePlace,
+    this.prix,
+    this.statut,
     required this.numeroSalle,
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
     return Place(
       numeroPlace: json['numeroPlace'] ?? '',
-      rang: json['range'],
+      range: json['range'],
       typePlace: json['typePlace'],
+      prix: json['prix'] != null ? double.tryParse(json['prix'].toString()) : null,
+      statut: json['statut'],
       numeroSalle: json['numeroSalle'] ?? '',
     );
   }
@@ -74,8 +84,10 @@ class Place {
   Map<String, dynamic> toJson() {
     return {
       'numeroPlace': numeroPlace,
-      'range': rang,
+      'range': range,
       'typePlace': typePlace,
+      'prix': prix,
+      'statut': statut,
       'numeroSalle': numeroSalle,
     };
   }

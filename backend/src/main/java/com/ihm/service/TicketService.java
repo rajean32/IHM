@@ -3,11 +3,9 @@ package com.ihm.service;
 import com.ihm.exception.BadRequestException;
 import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
-import com.ihm.model.dto.TicketDTO;
-import com.ihm.model.dto.TicketQRResponse;
-import com.ihm.model.dto.TicketValidationResponse;
+import com.ihm.schema.TicketDTO;
 import com.ihm.repository.*;
-import com.ihm.schemat.*;
+import com.ihm.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -43,6 +41,7 @@ public class TicketService {
         this.qrCodeService = qrCodeService;
     }
 
+    // recuperation de tous les tickets
     @Transactional(readOnly = true)
     public List<TicketDTO> getAll() {
         log.debug("Fetching all tickets");
@@ -60,6 +59,7 @@ public class TicketService {
         return toDTO(ticket);
     }
 
+    // creation d'un ticket
     @Transactional
     public TicketDTO create(TicketDTO dto) {
         log.debug("Creating ticket: {}", dto.getCodeTicket());
@@ -100,6 +100,7 @@ public class TicketService {
         return toDTO(saved);
     }
 
+    // mise a jour d'un ticket
     @Transactional
     public TicketDTO update(String code, TicketDTO dto) {
         log.debug("Updating ticket: {}", code);
@@ -111,6 +112,7 @@ public class TicketService {
         return toDTO(saved);
     }
 
+    // suppression d'un ticket
     @Transactional
     public void delete(String code) {
         log.debug("Deleting ticket: {}", code);
@@ -132,7 +134,7 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
-    public TicketQRResponse generateQRCode(String codeTicket) {
+    public TicketDTO.QRResponse generateQRCode(String codeTicket) {
         log.debug("Generating QR code for ticket: {}", codeTicket);
         Ticket ticket = ticketRepository.findByCodeTicket(codeTicket)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", "codeTicket", codeTicket));
@@ -154,7 +156,7 @@ public class TicketService {
         String ticketData = qrCodeService.generateTicketData(codeTicket, evenementTitre, placeNumero);
         String qrBase64 = qrCodeService.generateQRCodeBase64(ticketData);
 
-        TicketQRResponse response = new TicketQRResponse();
+        TicketDTO.QRResponse response = new TicketDTO.QRResponse();
         response.setCodeTicket(codeTicket);
         response.setQrCodeBase64(qrBase64);
         response.setEvenementTitre(evenementTitre);
@@ -167,15 +169,16 @@ public class TicketService {
         return response;
     }
 
+    // validation d'un ticket
     @Transactional(readOnly = true)
-    public TicketValidationResponse validateTicket(String codeTicket) {
+    public TicketDTO.ValidationResponse validateTicket(String codeTicket) {
         log.debug("Validating ticket: {}", codeTicket);
         Ticket ticket = ticketRepository.findByCodeTicket(codeTicket)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", "codeTicket", codeTicket));
 
         List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(codeTicket);
         if (concerners.isEmpty()) {
-            TicketValidationResponse response = new TicketValidationResponse();
+            TicketDTO.ValidationResponse response = new TicketDTO.ValidationResponse();
             response.setValid(false);
             response.setCodeTicket(codeTicket);
             response.setMessage("Ticket not linked to any event");
@@ -186,7 +189,7 @@ public class TicketService {
         List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(codeTicket);
 
         if (correspondances.isEmpty()) {
-            TicketValidationResponse response = new TicketValidationResponse();
+            TicketDTO.ValidationResponse response = new TicketDTO.ValidationResponse();
             response.setValid(false);
             response.setCodeTicket(codeTicket);
             response.setMessage("Ticket not used in any reservation");
@@ -196,7 +199,7 @@ public class TicketService {
         String clientNom = correspondances.get(0).getReservation().getClient().getNom() + " " +
                 correspondances.get(0).getReservation().getClient().getPrenoms();
 
-        TicketValidationResponse response = new TicketValidationResponse();
+        TicketDTO.ValidationResponse response = new TicketDTO.ValidationResponse();
         response.setValid(true);
         response.setCodeTicket(codeTicket);
         response.setEvenementTitre(concerner.getEvenement().getTitre());

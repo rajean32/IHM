@@ -3,6 +3,7 @@ import '../../core/services/user_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
+import '../../core/utils/error_helper.dart';
 import '../../models/user_model.dart';
 import '../../widgets/error_state.dart';
 
@@ -27,7 +28,7 @@ class _UsersPageState extends State<UsersPage> {
     setState(() => _loading = true);
     try {
       final usersData = await _api.getUsers();
-      final auditResp = await dio.get('${Endpoints.users}/audit');
+      final auditResp = await dio.get(Endpoints.usersAuditLog);
       final auditData = (auditResp.data['data'] as List?) ?? [];
       if (!mounted) return;
       setState(() {
@@ -37,7 +38,7 @@ class _UsersPageState extends State<UsersPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = apiErrorString(e); _loading = false; });
     }
   }
 
@@ -85,8 +86,33 @@ class _UsersPageState extends State<UsersPage> {
       ),
     );
     if (confirm != true) return;
+    final newPassword = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final ctrl = TextEditingController();
+        return AlertDialog(
+          title: const Text('Nouveau mot de passe'),
+          content: TextField(
+            controller: ctrl,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'Mot de passe',
+              hintText: 'Entrez un nouveau mot de passe',
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: const Text('Confirmer')),
+          ],
+        );
+      },
+    );
+    if (newPassword == null || newPassword.isEmpty) return;
     try {
-      await dio.post('${Endpoints.users}/${user.codeUtilisateur}/reset-password');
+      await dio.post(Endpoints.usersResetPassword, data: {
+        'codeUtilisateur': user.codeUtilisateur,
+        'newPassword': newPassword,
+      });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Mot de passe réinitialisé'), backgroundColor: AppColors.secondary),

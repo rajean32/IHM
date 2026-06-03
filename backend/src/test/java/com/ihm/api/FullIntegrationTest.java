@@ -1,9 +1,9 @@
 package com.ihm.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ihm.model.dto.*;
+import com.ihm.schema.*;
 import com.ihm.repository.*;
-import com.ihm.schemat.*;
+import com.ihm.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +64,7 @@ class FullIntegrationTest {
     private String organisateurCode;
     private String clientCode;
     private String categorieCode;
-    private Integer lieuId;
+    private String lieuCode;
     private String salleNumero;
     private String placeNumero;
     private Integer evenementId;
@@ -121,11 +121,12 @@ class FullIntegrationTest {
         categorieCode = "CAT_INT";
 
         Lieu lieu = new Lieu();
+        lieu.setCode("VENUE02");
         lieu.setNomLieu("Test Venue");
         lieu.setAdresse("123 Test St");
         lieu.setVille("Test City");
         lieu = lieuRepository.save(lieu);
-        lieuId = lieu.getIdLieu();
+        lieuCode = lieu.getCode();
 
         Salle salle = new Salle();
         salle.setNumeroSalle("SAL_INT");
@@ -152,7 +153,7 @@ class FullIntegrationTest {
         dto.setHeureEvenement(LocalTime.of(21, 0));
         dto.setStatut("planifie");
         dto.setCodeCategorie(categorieCode);
-        dto.setIdLieu(lieuId);
+        dto.setCodeLieu(lieuCode);
         dto.setCodeOrganisateur(organisateurCode);
 
         MvcResult result = mockMvc.perform(post("/api/evenements")

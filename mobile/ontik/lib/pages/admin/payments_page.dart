@@ -3,6 +3,7 @@ import '../../core/services/paiement_service.dart';
 import '../../core/assets/app_colors.dart';
 import '../../models/reservation_model.dart';
 import '../../widgets/crud_list_view.dart';
+import '../../core/utils/error_helper.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
@@ -31,7 +32,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = apiErrorString(e); _loading = false; });
     }
   }
 

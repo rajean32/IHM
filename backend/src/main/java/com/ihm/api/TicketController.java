@@ -1,9 +1,7 @@
 package com.ihm.api;
 
-import com.ihm.model.ApiResponse;
-import com.ihm.model.dto.TicketDTO;
-import com.ihm.model.dto.TicketQRResponse;
-import com.ihm.model.dto.TicketValidationResponse;
+import com.ihm.schema.ApiResponse;
+import com.ihm.schema.TicketDTO;
 import com.ihm.service.PDFTicketService;
 import com.ihm.service.TicketService;
 import jakarta.validation.Valid;
@@ -31,6 +29,7 @@ public class TicketController {
         this.pdfTicketService = pdfTicketService;
     }
 
+    // tous les tickets
     @GetMapping
     public ResponseEntity<ApiResponse<List<TicketDTO>>> getAll() {
         log.info("GET /api/tickets");
@@ -38,6 +37,7 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success(200, "Tickets fetched successfully", data));
     }
 
+    // ticket par code
     @GetMapping("/{code}")
     public ResponseEntity<ApiResponse<TicketDTO>> getById(@PathVariable String code) {
         log.info("GET /api/tickets/{}", code);
@@ -45,6 +45,7 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success(200, "Ticket fetched successfully", data));
     }
 
+    // creation de ticket
     @PostMapping
     public ResponseEntity<ApiResponse<TicketDTO>> create(@Valid @RequestBody TicketDTO dto) {
         log.info("POST /api/tickets - code: {}", dto.getCodeTicket());
@@ -53,6 +54,7 @@ public class TicketController {
                 .body(ApiResponse.success(201, "Ticket created successfully", data));
     }
 
+    // modification de ticket
     @PutMapping("/{code}")
     public ResponseEntity<ApiResponse<TicketDTO>> update(@PathVariable String code,
                                                            @Valid @RequestBody TicketDTO dto) {
@@ -61,6 +63,7 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success(200, "Ticket updated successfully", data));
     }
 
+    // suppression de ticket
     @DeleteMapping("/{code}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String code) {
         log.info("DELETE /api/tickets/{}", code);
@@ -68,21 +71,24 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success(200, "Ticket deleted successfully"));
     }
 
+    // generation QR code
     @GetMapping("/{code}/qrcode")
-    public ResponseEntity<ApiResponse<TicketQRResponse>> getQRCode(@PathVariable String code) {
+    public ResponseEntity<ApiResponse<TicketDTO.QRResponse>> getQRCode(@PathVariable String code) {
         log.info("GET /api/tickets/{}/qrcode", code);
-        TicketQRResponse data = ticketService.generateQRCode(code);
+        TicketDTO.QRResponse data = ticketService.generateQRCode(code);
         return ResponseEntity.ok(ApiResponse.success(200, "QR code generated successfully", data));
     }
 
+    // validation de ticket
     @PostMapping("/validate")
-    public ResponseEntity<ApiResponse<TicketValidationResponse>> validateTicket(
+    public ResponseEntity<ApiResponse<TicketDTO.ValidationResponse>> validateTicket(
             @RequestParam String codeTicket) {
         log.info("POST /api/tickets/validate - code: {}", codeTicket);
-        TicketValidationResponse result = ticketService.validateTicket(codeTicket);
+        TicketDTO.ValidationResponse result = ticketService.validateTicket(codeTicket);
         return ResponseEntity.ok(ApiResponse.success(200, "Ticket validated successfully", result));
     }
 
+    // telechargement PDF
     @GetMapping("/{code}/pdf")
     public ResponseEntity<byte[]> downloadPDF(@PathVariable String code) {
         log.info("GET /api/tickets/{}/pdf", code);

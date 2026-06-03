@@ -2,10 +2,9 @@ package com.ihm.service;
 
 import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
-import com.ihm.model.dto.ClientDTO;
-import com.ihm.model.dto.ClientTicketDTO;
+import com.ihm.schema.ClientDTO;
 import com.ihm.repository.*;
-import com.ihm.schemat.*;
+import com.ihm.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,6 +40,7 @@ public class ClientService {
         this.concernerRepository = concernerRepository;
     }
 
+    // recuperation de tous les clients
     public List<ClientDTO> getAll() {
         log.debug("Fetching all clients");
         return clientRepository.findAll()
@@ -49,6 +49,7 @@ public class ClientService {
                 .collect(Collectors.toList());
     }
 
+    // recuperation d'un client
     public ClientDTO getById(String code) {
         log.debug("Fetching client by code: {}", code);
         Client client = clientRepository.findByCodeUtilisateur(code)
@@ -56,6 +57,7 @@ public class ClientService {
         return toDTO(client);
     }
 
+    // creation d'un client
     @Transactional
     public ClientDTO create(ClientDTO dto) {
         log.debug("Creating client: {}", dto.getEmail());
@@ -84,6 +86,7 @@ public class ClientService {
         return toDTO(saved);
     }
 
+    // mise a jour d'un client
     @Transactional
     public ClientDTO update(String code, ClientDTO dto) {
         log.debug("Updating client: {}", code);
@@ -110,6 +113,7 @@ public class ClientService {
         return toDTO(saved);
     }
 
+    // suppression d'un client
     @Transactional
     public void delete(String code) {
         log.debug("Deleting client: {}", code);
@@ -120,12 +124,13 @@ public class ClientService {
         log.info("Client deleted: {}", code);
     }
 
+    // tickets d'un client
     @Transactional(readOnly = true)
-    public List<ClientTicketDTO> getClientTickets(String codeClient) {
+    public List<ClientDTO.ClientTicket> getClientTickets(String codeClient) {
         log.debug("Fetching tickets for client: {}", codeClient);
         List<Ticket> tickets = ticketRepository.findByCorrespondances_Reservation_Client_CodeUtilisateur(codeClient);
         return tickets.stream().map(ticket -> {
-            ClientTicketDTO dto = new ClientTicketDTO();
+            ClientDTO.ClientTicket dto = new ClientDTO.ClientTicket();
             dto.setCodeTicket(ticket.getCodeTicket());
             dto.setPrix(ticket.getPrix());
             List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(ticket.getCodeTicket());

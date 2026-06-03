@@ -2,9 +2,9 @@ package com.ihm.service;
 
 import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
-import com.ihm.model.dto.CategorieDTO;
+import com.ihm.schema.CategorieDTO;
 import com.ihm.repository.CategorieRepository;
-import com.ihm.schemat.Categorie;
+import com.ihm.model.Categorie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,6 +24,7 @@ public class CategorieService {
         this.categorieRepository = categorieRepository;
     }
 
+    // recuperation de toutes les categories
     public List<CategorieDTO> getAll() {
         log.debug("Fetching all categories");
         return categorieRepository.findAll()
@@ -32,6 +33,7 @@ public class CategorieService {
                 .collect(Collectors.toList());
     }
 
+    // recuperation d'une categorie
     public CategorieDTO getById(String code) {
         log.debug("Fetching category by code: {}", code);
         Categorie cat = categorieRepository.findByCodeCategorie(code)
@@ -39,6 +41,7 @@ public class CategorieService {
         return toDTO(cat);
     }
 
+    // creation d'une categorie
     @Transactional
     public CategorieDTO create(CategorieDTO dto) {
         log.debug("Creating category: {}", dto.getCodeCategorie());
@@ -51,6 +54,7 @@ public class CategorieService {
         return toDTO(saved);
     }
 
+    // mise a jour d'une categorie
     @Transactional
     public CategorieDTO update(String code, CategorieDTO dto) {
         log.debug("Updating category: {}", code);
@@ -64,6 +68,7 @@ public class CategorieService {
         return toDTO(saved);
     }
 
+    // suppression d'une categorie
     @Transactional
     public void delete(String code) {
         log.debug("Deleting category: {}", code);

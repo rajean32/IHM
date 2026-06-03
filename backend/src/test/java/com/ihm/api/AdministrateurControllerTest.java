@@ -1,8 +1,8 @@
 package com.ihm.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ihm.model.ApiResponse;
-import com.ihm.model.dto.AdministrateurDTO;
+import com.ihm.schema.ApiResponse;
+import com.ihm.schema.UtilisateurDTO;
 import com.ihm.repository.AdministrateurRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class AdministrateurControllerTest {
 
     @Test
     void testCreateAndGetAdministrateur() throws Exception {
-        AdministrateurDTO dto = new AdministrateurDTO();
+        UtilisateurDTO.AdministrateurDTO dto = new UtilisateurDTO.AdministrateurDTO();
         dto.setCodeAdministrateur("ADM001");
         dto.setMotdepasseAdministrateur("password123");
 
@@ -61,14 +61,14 @@ class AdministrateurControllerTest {
 
     @Test
     void testGetAllAdministrateurs() throws Exception {
-        AdministrateurDTO dto1 = new AdministrateurDTO();
+        UtilisateurDTO.AdministrateurDTO dto1 = new UtilisateurDTO.AdministrateurDTO();
         dto1.setCodeAdministrateur("ADM001");
         dto1.setMotdepasseAdministrateur("pass1");
         mockMvc.perform(post("/api/administrateurs")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto1)));
 
-        AdministrateurDTO dto2 = new AdministrateurDTO();
+        UtilisateurDTO.AdministrateurDTO dto2 = new UtilisateurDTO.AdministrateurDTO();
         dto2.setCodeAdministrateur("ADM002");
         dto2.setMotdepasseAdministrateur("pass2");
         mockMvc.perform(post("/api/administrateurs")
@@ -83,7 +83,7 @@ class AdministrateurControllerTest {
 
     @Test
     void testCreateDuplicateAdministrateur() throws Exception {
-        AdministrateurDTO dto = new AdministrateurDTO();
+        UtilisateurDTO.AdministrateurDTO dto = new UtilisateurDTO.AdministrateurDTO();
         dto.setCodeAdministrateur("ADM001");
         dto.setMotdepasseAdministrateur("pass1");
         mockMvc.perform(post("/api/administrateurs")
@@ -99,7 +99,7 @@ class AdministrateurControllerTest {
 
     @Test
     void testUpdateAdministrateur() throws Exception {
-        AdministrateurDTO dto = new AdministrateurDTO();
+        UtilisateurDTO.AdministrateurDTO dto = new UtilisateurDTO.AdministrateurDTO();
         dto.setCodeAdministrateur("ADM001");
         dto.setMotdepasseAdministrateur("oldpass");
         mockMvc.perform(post("/api/administrateurs")
@@ -116,7 +116,7 @@ class AdministrateurControllerTest {
 
     @Test
     void testDeleteAdministrateur() throws Exception {
-        AdministrateurDTO dto = new AdministrateurDTO();
+        UtilisateurDTO.AdministrateurDTO dto = new UtilisateurDTO.AdministrateurDTO();
         dto.setCodeAdministrateur("ADM001");
         dto.setMotdepasseAdministrateur("pass1");
         mockMvc.perform(post("/api/administrateurs")
@@ -140,7 +140,7 @@ class AdministrateurControllerTest {
 
     @Test
     void testCreateWithInvalidData() throws Exception {
-        AdministrateurDTO dto = new AdministrateurDTO();
+        UtilisateurDTO.AdministrateurDTO dto = new UtilisateurDTO.AdministrateurDTO();
         dto.setCodeAdministrateur("");
         dto.setMotdepasseAdministrateur("");
         mockMvc.perform(post("/api/administrateurs")

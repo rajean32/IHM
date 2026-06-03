@@ -1,6 +1,6 @@
 package com.ihm.repository;
 
-import com.ihm.schemat.Evenement;
+import com.ihm.model.Evenement;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,7 +21,7 @@ public interface EvenementRepository extends JpaRepository<Evenement, Integer> {
 
     List<Evenement> findByDateEvenementBetween(LocalDate start, LocalDate end);
 
-    List<Evenement> findByLieu_IdLieu(Integer idLieu);
+    List<Evenement> findByLieu_Code(String codeLieu);
 
     List<Evenement> findByStatut(String statut);
 
@@ -82,7 +82,7 @@ public interface EvenementRepository extends JpaRepository<Evenement, Integer> {
 
     List<Evenement> findByDateEvenementAndStatut(LocalDate date, String statut);
 
-    @Query("SELECT COUNT(e) FROM Evenement e WHERE e.lieu IS NOT NULL AND (SELECT COUNT(p) FROM Place p WHERE p.salle.lieu.idLieu = e.lieu.idLieu) = 0")
+    @Query("SELECT COUNT(e) FROM Evenement e WHERE e.lieu IS NOT NULL AND (SELECT COUNT(p) FROM Place p WHERE p.salle.lieu.code = e.lieu.code) = 0")
     long countEventsWithoutSallePlaces();
 
     long countByDateEvenementBeforeAndStatutNot(LocalDate date, String statut);

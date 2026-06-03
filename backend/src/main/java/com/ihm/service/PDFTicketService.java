@@ -2,7 +2,7 @@ package com.ihm.service;
 
 import com.ihm.exception.ResourceNotFoundException;
 import com.ihm.repository.*;
-import com.ihm.schemat.*;
+import com.ihm.model.*;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
@@ -49,6 +49,7 @@ public class PDFTicketService {
         this.qrCodeService = qrCodeService;
     }
 
+    // generation du PDF d'un ticket
     public byte[] generateTicketPDF(String codeTicket) {
         log.debug("Generating PDF for ticket: {}", codeTicket);
         Ticket ticket = ticketRepository.findByCodeTicket(codeTicket)

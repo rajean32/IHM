@@ -5,6 +5,7 @@ class LieuService {
 
   Future<List<dynamic>> getLieux() => _api.getLieux();
   Future<Map<String, dynamic>> createLieu(Map<String, dynamic> data) => _api.createLieu(data);
-  Future<void> deleteLieu(int id) => _api.deleteLieu(id);
+  Future<void> deleteLieu(String code) => _api.deleteLieu(code);
   Future<List<dynamic>> getSalles() => _api.getSalles();
+  Future<Map<String, dynamic>> createSalle(Map<String, dynamic> data) => _api.createSalle(data);
 }

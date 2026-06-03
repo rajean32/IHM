@@ -1,11 +1,12 @@
 package com.ihm.service;
 
+import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
-import com.ihm.model.dto.LieuDTO;
-import com.ihm.model.dto.SalleDTO;
+import com.ihm.schema.LieuDTO;
+import com.ihm.schema.SalleDTO;
 import com.ihm.repository.LieuRepository;
-import com.ihm.schemat.Lieu;
-import com.ihm.schemat.Salle;
+import com.ihm.model.Lieu;
+import com.ihm.model.Salle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class LieuService {
         this.lieuRepository = lieuRepository;
     }
 
+    // recuperation de tous les lieux
     @Transactional(readOnly = true)
     public List<LieuDTO> getAll() {
         log.debug("Fetching all locations");
@@ -34,52 +36,64 @@ public class LieuService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public LieuDTO getById(Integer id) {
-        log.debug("Fetching location by id: {}", id);
-        Lieu lieu = lieuRepository.findByIdLieu(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Lieu", "idLieu", id));
+    public LieuDTO getById(String code) {
+        log.debug("Fetching location by code: {}", code);
+        Lieu lieu = lieuRepository.findById(code)
+                .orElseThrow(() -> new ResourceNotFoundException("Lieu", "code", code));
         return toDTODetail(lieu);
     }
 
     @Transactional
     public LieuDTO create(LieuDTO dto) {
         log.debug("Creating location: {}", dto.getNomLieu());
+        if (dto.getCode() == null || dto.getCode().isBlank()) {
+            throw new com.ihm.exception.BadRequestException("Le code du lieu est requis");
+        }
+        if (lieuRepository.existsById(dto.getCode())) {
+            throw new DuplicateResourceException("Lieu", "code", dto.getCode());
+        }
         Lieu lieu = new Lieu();
+        lieu.setCode(dto.getCode());
         lieu.setNomLieu(dto.getNomLieu());
         lieu.setAdresse(dto.getAdresse());
         lieu.setVille(dto.getVille());
         Lieu saved = lieuRepository.save(lieu);
-        log.info("Location created: id={}", saved.getIdLieu());
+        log.info("Location created: code={}", saved.getCode());
         return toDTO(saved);
     }
 
     @Transactional
-    public LieuDTO update(Integer id, LieuDTO dto) {
-        log.debug("Updating location: {}", id);
-        Lieu lieu = lieuRepository.findByIdLieu(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Lieu", "idLieu", id));
+    public LieuDTO update(String code, LieuDTO dto) {
+        log.debug("Updating location: {}", code);
+        Lieu lieu = lieuRepository.findById(code)
+                .orElseThrow(() -> new ResourceNotFoundException("Lieu", "code", code));
+        if (dto.getCode() != null && !dto.getCode().equals(lieu.getCode())) {
+            if (lieuRepository.existsById(dto.getCode())) {
+                throw new DuplicateResourceException("Lieu", "code", dto.getCode());
+            }
+            lieu.setCode(dto.getCode());
+        }
         if (dto.getNomLieu() != null) lieu.setNomLieu(dto.getNomLieu());
         if (dto.getAdresse() != null) lieu.setAdresse(dto.getAdresse());
         if (dto.getVille() != null) lieu.setVille(dto.getVille());
         Lieu saved = lieuRepository.save(lieu);
-        log.info("Location updated: id={}", id);
+        log.info("Location updated: code={}", code);
         return toDTO(saved);
     }
 
     @Transactional
-    public void delete(Integer id) {
-        log.debug("Deleting location: {}", id);
-        if (!lieuRepository.existsByIdLieu(id)) {
-            throw new ResourceNotFoundException("Lieu", "idLieu", id);
+    public void delete(String code) {
+        log.debug("Deleting location: {}", code);
+        if (!lieuRepository.existsById(code)) {
+            throw new ResourceNotFoundException("Lieu", "code", code);
         }
-        lieuRepository.deleteById(id);
-        log.info("Location deleted: id={}", id);
+        lieuRepository.deleteById(code);
+        log.info("Location deleted: code={}", code);
     }
 
     private LieuDTO toDTO(Lieu lieu) {
         LieuDTO dto = new LieuDTO();
-        dto.setIdLieu(lieu.getIdLieu());
+        dto.setCode(lieu.getCode());
         dto.setNomLieu(lieu.getNomLieu());
         dto.setAdresse(lieu.getAdresse());
         dto.setVille(lieu.getVille());
@@ -100,7 +114,7 @@ public class LieuService {
         SalleDTO dto = new SalleDTO();
         dto.setNumeroSalle(salle.getNumeroSalle());
         dto.setNomSalle(salle.getNomSalle());
-        dto.setIdLieu(salle.getLieu() != null ? salle.getLieu().getIdLieu() : null);
+        dto.setCodeLieu(salle.getLieu() != null ? salle.getLieu().getCode() : null);
         return dto;
     }
 }

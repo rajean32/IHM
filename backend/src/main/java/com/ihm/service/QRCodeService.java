@@ -25,6 +25,7 @@ public class QRCodeService {
     private static final Logger log = LoggerFactory.getLogger(QRCodeService.class);
     private static final int QR_SIZE = 300;
 
+    // generation d'un QR code en base64
     public String generateQRCodeBase64(String data) {
         try {
             Map<EncodeHintType, Object> hints = new HashMap<>();
@@ -45,6 +46,7 @@ public class QRCodeService {
         }
     }
 
+    // decodage d'une image base64
     public BufferedImage decodeBase64ToBufferedImage(String base64) {
         try {
             byte[] imageBytes = Base64.getDecoder().decode(base64);
@@ -56,6 +58,7 @@ public class QRCodeService {
         }
     }
 
+    // donnees d'un ticket pour QR code
     public String generateTicketData(String codeTicket, String evenementTitre, String placeNumero) {
         return String.format("TICKET:%s|EVENT:%s|PLACE:%s", codeTicket, evenementTitre, placeNumero);
     }

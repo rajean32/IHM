@@ -1,7 +1,7 @@
 package com.ihm.security;
 
 import com.ihm.repository.UtilisateurRepository;
-import com.ihm.schemat.Utilisateur;
+import com.ihm.model.Utilisateur;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

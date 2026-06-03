@@ -1,7 +1,7 @@
 package com.ihm.api;
 
-import com.ihm.model.ApiResponse;
-import com.ihm.model.dto.CategorieDTO;
+import com.ihm.schema.ApiResponse;
+import com.ihm.schema.CategorieDTO;
 import com.ihm.service.CategorieService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -24,6 +24,7 @@ public class CategorieController {
         this.categorieService = categorieService;
     }
 
+    // liste des categories
     @GetMapping
     public ResponseEntity<ApiResponse<List<CategorieDTO>>> getAll() {
         log.info("GET /api/categories");
@@ -31,6 +32,7 @@ public class CategorieController {
         return ResponseEntity.ok(ApiResponse.success(200, "Categories fetched successfully", data));
     }
 
+    // categorie par code
     @GetMapping("/{code}")
     public ResponseEntity<ApiResponse<CategorieDTO>> getById(@PathVariable String code) {
         log.info("GET /api/categories/{}", code);
@@ -38,6 +40,7 @@ public class CategorieController {
         return ResponseEntity.ok(ApiResponse.success(200, "Category fetched successfully", data));
     }
 
+    // creation de categorie
     @PostMapping
     public ResponseEntity<ApiResponse<CategorieDTO>> create(@Valid @RequestBody CategorieDTO dto) {
         log.info("POST /api/categories - code: {}", dto.getCodeCategorie());
@@ -46,6 +49,7 @@ public class CategorieController {
                 .body(ApiResponse.success(201, "Category created successfully", data));
     }
 
+    // modification de categorie
     @PutMapping("/{code}")
     public ResponseEntity<ApiResponse<CategorieDTO>> update(@PathVariable String code,
                                                              @Valid @RequestBody CategorieDTO dto) {
@@ -54,6 +58,7 @@ public class CategorieController {
         return ResponseEntity.ok(ApiResponse.success(200, "Category updated successfully", data));
     }
 
+    // suppression de categorie
     @DeleteMapping("/{code}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String code) {
         log.info("DELETE /api/categories/{}", code);

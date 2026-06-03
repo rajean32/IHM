@@ -1,10 +1,10 @@
 package com.ihm.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ihm.model.dto.PurchaseRequest;
-import com.ihm.model.dto.PurchaseRequest.PurchaseTicketItem;
+import com.ihm.schema.ReservationDTO;
+import com.ihm.schema.ReservationDTO.PurchaseRequest.PurchaseTicketItem;
 import com.ihm.repository.*;
-import com.ihm.schemat.*;
+import com.ihm.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +63,7 @@ class PurchaseIntegrationTest {
     private String clientCode;
     private String organisateurCode;
     private String categorieCode;
-    private Integer lieuId;
+    private String lieuCode;
     private String salleNumero;
     private String placeNumero;
     private Integer evenementId;
@@ -118,11 +118,12 @@ class PurchaseIntegrationTest {
         categorieCode = "CAT_PUR";
 
         Lieu lieu = new Lieu();
+        lieu.setCode("VENUE01");
         lieu.setNomLieu("Test Venue");
         lieu.setAdresse("123 Test St");
         lieu.setVille("Test City");
         lieu = lieuRepository.save(lieu);
-        lieuId = lieu.getIdLieu();
+        lieuCode = lieu.getCode();
 
         Salle salle = new Salle();
         salle.setNumeroSalle("SAL_PUR");
@@ -143,7 +144,7 @@ class PurchaseIntegrationTest {
 
     @Test
     void testFullPurchaseFlow() throws Exception {
-        PurchaseRequest req = new PurchaseRequest();
+        ReservationDTO.PurchaseRequest req = new ReservationDTO.PurchaseRequest();
         req.setCodeClient(clientCode);
         req.setModePaiement("GRATUIT");
         req.setMontant(BigDecimal.ZERO);
@@ -167,7 +168,7 @@ class PurchaseIntegrationTest {
 
     @Test
     void testPurchaseWithNonExistentPlace() throws Exception {
-        PurchaseRequest req = new PurchaseRequest();
+        ReservationDTO.PurchaseRequest req = new ReservationDTO.PurchaseRequest();
         req.setCodeClient(clientCode);
         req.setModePaiement("GRATUIT");
         req.setMontant(BigDecimal.ZERO);
@@ -186,7 +187,7 @@ class PurchaseIntegrationTest {
 
     @Test
     void testPurchaseWithoutClient() throws Exception {
-        PurchaseRequest req = new PurchaseRequest();
+        ReservationDTO.PurchaseRequest req = new ReservationDTO.PurchaseRequest();
         req.setCodeClient("");
         PurchaseTicketItem item = new PurchaseTicketItem();
         item.setCodeTicket("TKT_NOCLI");
@@ -204,7 +205,7 @@ class PurchaseIntegrationTest {
     void testPurchaseReservedPlaceShouldFail() throws Exception {
         createEvent();
 
-        PurchaseRequest req = new PurchaseRequest();
+        ReservationDTO.PurchaseRequest req = new ReservationDTO.PurchaseRequest();
         req.setCodeClient(clientCode);
         req.setModePaiement("GRATUIT");
         req.setMontant(BigDecimal.ZERO);
@@ -221,7 +222,7 @@ class PurchaseIntegrationTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated());
 
-        PurchaseRequest req2 = new PurchaseRequest();
+        ReservationDTO.PurchaseRequest req2 = new ReservationDTO.PurchaseRequest();
         req2.setCodeClient(clientCode);
         PurchaseTicketItem item2 = new PurchaseTicketItem();
         item2.setCodeTicket("TKT_SECOND");
@@ -238,7 +239,7 @@ class PurchaseIntegrationTest {
 
     @Test
     void testPurchaseWithSimulatedPaymentFailure() throws Exception {
-        PurchaseRequest req = new PurchaseRequest();
+        ReservationDTO.PurchaseRequest req = new ReservationDTO.PurchaseRequest();
         req.setCodeClient(clientCode);
         req.setModePaiement("SIMULATION_FONDS_INSUFFISANTS");
         req.setMontant(new BigDecimal("999999.00"));
@@ -258,14 +259,14 @@ class PurchaseIntegrationTest {
 
     private Integer createEvent() throws Exception {
         if (evenementId != null) return evenementId;
-        com.ihm.model.dto.EvenementDTO dto = new com.ihm.model.dto.EvenementDTO();
+        com.ihm.schema.EvenementDTO dto = new com.ihm.schema.EvenementDTO();
         dto.setTitre("Purchase Test Event");
         dto.setDescription("Test event for purchase flow");
         dto.setDateEvenement(LocalDate.now().plusDays(60));
         dto.setHeureEvenement(LocalTime.of(21, 0));
         dto.setStatut("planifie");
         dto.setCodeCategorie(categorieCode);
-        dto.setIdLieu(lieuId);
+        dto.setCodeLieu(lieuCode);
         dto.setCodeOrganisateur(organisateurCode);
 
         var result = mockMvc.perform(post("/api/evenements")

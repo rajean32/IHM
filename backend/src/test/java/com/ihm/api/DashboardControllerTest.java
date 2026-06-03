@@ -2,7 +2,7 @@ package com.ihm.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ihm.repository.*;
-import com.ihm.schemat.*;
+import com.ihm.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,6 +102,7 @@ class DashboardControllerTest {
         categorieRepository.save(cat);
 
         Lieu lieu = new Lieu();
+        lieu.setCode("LIEU_DASH");
         lieu.setNomLieu("Test Lieu");
         lieu.setVille("Test");
         lieu = lieuRepository.save(lieu);
@@ -141,6 +142,7 @@ class DashboardControllerTest {
         categorieRepository.save(cat);
 
         Lieu lieu = new Lieu();
+        lieu.setCode("LIEU_DASH2");
         lieu.setNomLieu("Place Event");
         lieu.setVille("Test");
         lieu = lieuRepository.save(lieu);

@@ -1,12 +1,12 @@
 package com.ihm.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ihm.model.dto.*;
+import com.ihm.schema.*;
 import com.ihm.repository.*;
-import com.ihm.schemat.Administrateur;
-import com.ihm.schemat.Categorie;
-import com.ihm.schemat.Lieu;
-import com.ihm.schemat.Organisateur;
+import com.ihm.model.Administrateur;
+import com.ihm.model.Categorie;
+import com.ihm.model.Lieu;
+import com.ihm.model.Organisateur;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +49,7 @@ class EvenementControllerTest {
 
     private String organisateurCode;
     private String categorieCode;
-    private Integer lieuId;
+    private String lieuCode;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -81,10 +81,11 @@ class EvenementControllerTest {
         categorieCode = "CAT_EVT";
 
         Lieu lieu = new Lieu();
+        lieu.setCode("SALTEST");
         lieu.setNomLieu("Salle de Test");
         lieu.setVille("Paris");
         lieu = lieuRepository.save(lieu);
-        lieuId = lieu.getIdLieu();
+        lieuCode = lieu.getCode();
     }
 
     @Test
@@ -96,7 +97,7 @@ class EvenementControllerTest {
         dto.setHeureEvenement(LocalTime.of(20, 0));
         dto.setStatut("planifie");
         dto.setCodeCategorie(categorieCode);
-        dto.setIdLieu(lieuId);
+        dto.setCodeLieu(lieuCode);
         dto.setCodeOrganisateur(organisateurCode);
 
         mockMvc.perform(post("/api/evenements")
@@ -112,7 +113,7 @@ class EvenementControllerTest {
         EvenementDTO dto = new EvenementDTO();
         dto.setTitre("Event sans organisateur");
         dto.setDateEvenement(LocalDate.now().plusDays(10));
-        dto.setIdLieu(lieuId);
+        dto.setCodeLieu(lieuCode);
         dto.setCodeOrganisateur("");
 
         mockMvc.perform(post("/api/evenements")
@@ -127,7 +128,7 @@ class EvenementControllerTest {
         dto.setTitre("Concert");
         dto.setDateEvenement(LocalDate.now().plusDays(30));
         dto.setStatut("planifie");
-        dto.setIdLieu(lieuId);
+        dto.setCodeLieu(lieuCode);
         dto.setCodeOrganisateur(organisateurCode);
         mockMvc.perform(post("/api/evenements")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -149,7 +150,7 @@ class EvenementControllerTest {
         EvenementDTO dto = new EvenementDTO();
         dto.setTitre("Event to delete");
         dto.setDateEvenement(LocalDate.now().plusDays(15));
-        dto.setIdLieu(lieuId);
+        dto.setCodeLieu(lieuCode);
         dto.setCodeOrganisateur(organisateurCode);
 
         MvcResult result = mockMvc.perform(post("/api/evenements")

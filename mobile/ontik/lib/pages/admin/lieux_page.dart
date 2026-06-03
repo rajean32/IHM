@@ -3,6 +3,7 @@ import '../../core/services/lieu_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
+import '../../core/utils/error_helper.dart';
 import '../../models/lieu_model.dart';
 import '../../widgets/crud_list_view.dart';
 
@@ -41,12 +42,12 @@ class _LieuxPageState extends State<LieuxPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = apiErrorString(e); _loading = false; });
     }
   }
 
-  List<Salle> _sallesForLieu(int? idLieu) {
-    return _allSalles.where((s) => s.idLieu == idLieu).toList();
+  List<Salle> _sallesForLieu(String codeLieu) {
+    return _allSalles.where((s) => s.codeLieu == codeLieu).toList();
   }
 
   int _placeCountForSalle(String numeroSalle) {
@@ -54,7 +55,7 @@ class _LieuxPageState extends State<LieuxPage> {
   }
 
   void _showSallesModal(Lieu lieu) {
-    final salles = _sallesForLieu(lieu.idLieu);
+    final salles = _sallesForLieu(lieu.code);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -77,34 +78,68 @@ class _LieuxPageState extends State<LieuxPage> {
               ),
               const Divider(),
               if (salles.isEmpty)
-                const Expanded(child: Center(child: Text('Aucune salle pour ce lieu')))
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.meeting_room, size: 48, color: AppColors.textSecondary),
+                        const SizedBox(height: 12),
+                        const Text('Aucune salle pour ce lieu', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _showAddSalleDialog(lieu),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Ajouter une salle'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
               else
                 Expanded(
-                  child: ListView.builder(
-                    controller: scrollCtrl,
-                    itemCount: salles.length,
-                    itemBuilder: (ctx, i) {
-                      final s = salles[i];
-                      final nPlaces = _placeCountForSalle(s.numeroSalle);
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                            child: Text('$nPlaces', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                          ),
-                          title: Text(s.nomSalle),
-                          subtitle: Text('N° ${s.numeroSalle}  •  $nPlaces place(s)'),
-                          trailing: TextButton(
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              widget.onGestionPlaces?.call(s.numeroSalle);
-                            },
-                            child: const Text('Gérer les places'),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          controller: scrollCtrl,
+                          itemCount: salles.length,
+                          itemBuilder: (ctx, i) {
+                            final s = salles[i];
+                            final nPlaces = _placeCountForSalle(s.numeroSalle);
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                                  child: Text('$nPlaces', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                                ),
+                                title: Text(s.nomSalle),
+                                subtitle: Text('N° ${s.numeroSalle}  •  $nPlaces place(s)'),
+                                trailing: TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    widget.onGestionPlaces?.call(s.numeroSalle);
+                                  },
+                                  child: const Text('Gérer les places'),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _showAddSalleDialog(lieu),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Ajouter une salle'),
                           ),
                         ),
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -119,9 +154,56 @@ class _LieuxPageState extends State<LieuxPage> {
     _loadData();
   }
 
-  Future<bool> _delete(String id) async {
+  void _showAddSalleDialog(Lieu lieu) {
+    final nomCtrl = TextEditingController();
+    final numCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Ajouter une salle'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: numCtrl,
+              decoration: const InputDecoration(labelText: 'Numéro de salle', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: nomCtrl,
+              decoration: const InputDecoration(labelText: 'Nom de la salle', border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () async {
+              if (numCtrl.text.trim().isEmpty || nomCtrl.text.trim().isEmpty) return;
+              try {
+                await _api.createSalle({
+                  'numeroSalle': numCtrl.text.trim(),
+                  'nomSalle': nomCtrl.text.trim(),
+                  'codeLieu': lieu.code,
+                });
+                if (!ctx.mounted) return;
+                Navigator.pop(ctx);
+                _loadData();
+              } catch (e) {
+                if (!ctx.mounted) return;
+                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
+              }
+            },
+            child: const Text('Ajouter'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _delete(String code) async {
     try {
-      await _api.deleteLieu(int.parse(id));
+      await _api.deleteLieu(code);
       _loadData();
       return true;
     } catch (_) { return false; }
@@ -134,14 +216,15 @@ class _LieuxPageState extends State<LieuxPage> {
       isLoading: _loading,
       error: _error,
       items: _lieux.map((l) => CrudItem(
-        id: l.idLieu.toString(),
+        id: l.code,
         title: l.nomLieu,
         subtitle: '${l.ville ?? ''}  •  ${l.adresse ?? ''}',
         leading: const CircleAvatar(child: Icon(Icons.location_city)),
-        data: {'nom': l.nomLieu, 'adresse': l.adresse ?? '', 'ville': l.ville ?? ''},
+        data: {'code': l.code, 'nomLieu': l.nomLieu, 'adresse': l.adresse ?? '', 'ville': l.ville ?? ''},
       )).toList(),
       formFields: [
-        CrudField(key: 'nom', label: 'Nom', required: true),
+        CrudField(key: 'code', label: 'Code lieu', required: true),
+        CrudField(key: 'nomLieu', label: 'Nom', required: true),
         CrudField(key: 'adresse', label: 'Adresse'),
         CrudField(key: 'ville', label: 'Ville', required: true),
       ],
@@ -150,8 +233,8 @@ class _LieuxPageState extends State<LieuxPage> {
       onRefresh: _loadData,
       emptyMessage: 'Aucun lieu trouvé',
       itemBuilder: (item, onEdit, onDelete) {
-        final lieu = _lieux.firstWhere((l) => l.idLieu.toString() == item.id);
-        final salles = _sallesForLieu(lieu.idLieu);
+        final lieu = _lieux.firstWhere((l) => l.code == item.id);
+        final salles = _sallesForLieu(lieu.code);
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           child: ListTile(

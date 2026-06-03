@@ -1,7 +1,7 @@
 package com.ihm.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ihm.model.dto.CategorieDTO;
+import com.ihm.schema.CategorieDTO;
 import com.ihm.repository.CategorieRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

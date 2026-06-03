@@ -1,6 +1,6 @@
 package com.ihm.exception;
 
-import com.ihm.model.ApiResponse;
+import com.ihm.schema.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.validation.ConstraintViolationException;

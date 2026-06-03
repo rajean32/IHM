@@ -5,6 +5,7 @@ import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
 import '../../models/api_wrapper_model.dart';
 import '../../models/ticket_model.dart';
+import '../../core/utils/error_helper.dart';
 
 class ScanPage extends StatefulWidget {
   final int? eventId;
@@ -46,7 +47,7 @@ class _ScanPageState extends State<ScanPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _errorMessage = apiErrorString(e);
         _lastResult = null;
       });
     } finally {

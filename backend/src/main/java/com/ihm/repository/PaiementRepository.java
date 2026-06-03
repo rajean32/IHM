@@ -1,6 +1,6 @@
 package com.ihm.repository;
 
-import com.ihm.schemat.Paiement;
+import com.ihm.model.Paiement;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

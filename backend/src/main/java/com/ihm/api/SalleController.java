@@ -1,7 +1,7 @@
 package com.ihm.api;
 
-import com.ihm.model.ApiResponse;
-import com.ihm.model.dto.SalleDTO;
+import com.ihm.schema.ApiResponse;
+import com.ihm.schema.SalleDTO;
 import com.ihm.service.SalleService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -24,6 +24,7 @@ public class SalleController {
         this.salleService = salleService;
     }
 
+    // toutes les salles
     @GetMapping
     public ResponseEntity<ApiResponse<List<SalleDTO>>> getAll() {
         log.info("GET /api/salles");
@@ -31,6 +32,7 @@ public class SalleController {
         return ResponseEntity.ok(ApiResponse.success(200, "Rooms fetched successfully", data));
     }
 
+    // salle par numero
     @GetMapping("/{numero}")
     public ResponseEntity<ApiResponse<SalleDTO>> getById(@PathVariable String numero) {
         log.info("GET /api/salles/{}", numero);
@@ -38,6 +40,7 @@ public class SalleController {
         return ResponseEntity.ok(ApiResponse.success(200, "Room fetched successfully", data));
     }
 
+    // creation de salle
     @PostMapping
     public ResponseEntity<ApiResponse<SalleDTO>> create(@Valid @RequestBody SalleDTO dto) {
         log.info("POST /api/salles - numero: {}", dto.getNumeroSalle());
@@ -46,6 +49,7 @@ public class SalleController {
                 .body(ApiResponse.success(201, "Room created successfully", data));
     }
 
+    // modification de salle
     @PutMapping("/{numero}")
     public ResponseEntity<ApiResponse<SalleDTO>> update(@PathVariable String numero, @Valid @RequestBody SalleDTO dto) {
         log.info("PUT /api/salles/{}", numero);
@@ -53,6 +57,7 @@ public class SalleController {
         return ResponseEntity.ok(ApiResponse.success(200, "Room updated successfully", data));
     }
 
+    // suppression de salle
     @DeleteMapping("/{numero}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String numero) {
         log.info("DELETE /api/salles/{}", numero);

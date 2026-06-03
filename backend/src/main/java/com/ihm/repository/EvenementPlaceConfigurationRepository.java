@@ -1,6 +1,6 @@
 package com.ihm.repository;
 
-import com.ihm.schemat.EvenementPlaceConfiguration;
+import com.ihm.model.EvenementPlaceConfiguration;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

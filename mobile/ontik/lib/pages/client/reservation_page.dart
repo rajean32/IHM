@@ -7,6 +7,7 @@ import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
 import '../../widgets/seat_picker.dart';
 import '../../widgets/error_state.dart';
+import '../../core/utils/error_helper.dart';
 
 class ReservationPage extends StatefulWidget {
   final int eventId;
@@ -50,7 +51,7 @@ class _ReservationPageState extends State<ReservationPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = apiErrorString(e);
         _isLoading = false;
       });
     }

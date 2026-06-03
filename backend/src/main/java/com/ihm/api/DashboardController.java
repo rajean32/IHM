@@ -1,10 +1,8 @@
 package com.ihm.api;
 
-import com.ihm.model.ApiResponse;
-import com.ihm.model.dto.DashboardStatsDTO;
-import com.ihm.model.dto.EventStatsDTO;
-import com.ihm.model.dto.OrganizerDashboardDTO;
-import com.ihm.schemat.ActionLog;
+import com.ihm.schema.ApiResponse;
+import com.ihm.schema.DashboardDTO;
+import com.ihm.model.ActionLog;
 import com.ihm.service.ActionLogService;
 import com.ihm.service.DashboardService;
 import org.slf4j.Logger;
@@ -28,27 +26,31 @@ public class DashboardController {
         this.actionLogService = actionLogService;
     }
 
+    // statistiques dashboard admin
     @GetMapping("/admin/dashboard")
-    public ResponseEntity<ApiResponse<DashboardStatsDTO>> getAdminDashboard() {
+    public ResponseEntity<ApiResponse<DashboardDTO.AdminStats>> getAdminDashboard() {
         log.info("GET /api/admin/dashboard");
-        DashboardStatsDTO stats = dashboardService.getAdminStats();
+        DashboardDTO.AdminStats stats = dashboardService.getAdminStats();
         return ResponseEntity.ok(ApiResponse.success(200, "Admin dashboard stats fetched successfully", stats));
     }
 
+    // statistiques organisateur
     @GetMapping("/organisateurs/{code}/dashboard")
-    public ResponseEntity<ApiResponse<OrganizerDashboardDTO>> getOrganizerDashboard(@PathVariable String code) {
+    public ResponseEntity<ApiResponse<DashboardDTO.OrganizerStats>> getOrganizerDashboard(@PathVariable String code) {
         log.info("GET /api/organisateurs/{}/dashboard", code);
-        OrganizerDashboardDTO stats = dashboardService.getOrganizerStats(code);
+        DashboardDTO.OrganizerStats stats = dashboardService.getOrganizerStats(code);
         return ResponseEntity.ok(ApiResponse.success(200, "Organizer dashboard stats fetched successfully", stats));
     }
 
+    // statistiques evenement
     @GetMapping("/evenements/{id}/stats")
-    public ResponseEntity<ApiResponse<EventStatsDTO>> getEventStats(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<DashboardDTO.EventStats>> getEventStats(@PathVariable Integer id) {
         log.info("GET /api/evenements/{}/stats", id);
-        EventStatsDTO stats = dashboardService.getEventStats(id);
+        DashboardDTO.EventStats stats = dashboardService.getEventStats(id);
         return ResponseEntity.ok(ApiResponse.success(200, "Event stats fetched successfully", stats));
     }
 
+    // activite recente (admin)
     @GetMapping("/admin/activity")
     public ResponseEntity<ApiResponse<List<ActionLog>>> getRecentActivity() {
         log.info("GET /api/admin/activity");

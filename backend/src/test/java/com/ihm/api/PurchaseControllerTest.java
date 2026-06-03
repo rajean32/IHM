@@ -1,7 +1,7 @@
 package com.ihm.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ihm.model.dto.PurchaseRequest;
+import com.ihm.schema.ReservationDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -30,7 +30,7 @@ public class PurchaseControllerTest {
 
     @Test
     void testPurchaseWithEmptyPayload() throws Exception {
-        String json = objectMapper.writeValueAsString(new PurchaseRequest());
+        String json = objectMapper.writeValueAsString(new ReservationDTO.PurchaseRequest());
         mockMvc.perform(post("/api/achat")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
@@ -40,8 +40,8 @@ public class PurchaseControllerTest {
 
     @Test
     void testPurchaseWithMissingFields() throws Exception {
-        PurchaseRequest req = new PurchaseRequest();
-        PurchaseRequest.PurchaseTicketItem item = new PurchaseRequest.PurchaseTicketItem();
+        ReservationDTO.PurchaseRequest req = new ReservationDTO.PurchaseRequest();
+        ReservationDTO.PurchaseRequest.PurchaseTicketItem item = new ReservationDTO.PurchaseRequest.PurchaseTicketItem();
         item.setCodeTicket("");
         item.setNumeroPlace("");
         req.setTickets(List.of(item));

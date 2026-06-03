@@ -1,7 +1,7 @@
 package com.ihm.repository;
 
-import com.ihm.schemat.CorrespondA;
-import com.ihm.schemat.CorrespondAId;
+import com.ihm.model.CorrespondA;
+import com.ihm.model.CorrespondAId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

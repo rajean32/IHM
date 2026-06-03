@@ -1,7 +1,7 @@
 package com.ihm.service;
 
 import com.ihm.repository.ActionLogRepository;
-import com.ihm.schemat.ActionLog;
+import com.ihm.model.ActionLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,16 +19,19 @@ public class ActionLogService {
         this.actionLogRepository = actionLogRepository;
     }
 
+    // enregistrement d'une action
     public void log(String codeUtilisateur, String action, String entityType, String entityId, String details) {
         ActionLog al = new ActionLog(codeUtilisateur, action, entityType, entityId, details);
         actionLogRepository.save(al);
         log.debug("Action logged: {} by {} on {} {}", action, codeUtilisateur, entityType, entityId);
     }
 
+    // actions recentes
     public List<ActionLog> getRecentActions() {
         return actionLogRepository.findTop20ByOrderByDateActionDesc();
     }
 
+    // actions d'un utilisateur
     public List<ActionLog> getActionsByUser(String codeUtilisateur) {
         return actionLogRepository.findByCodeUtilisateurOrderByDateActionDesc(codeUtilisateur);
     }

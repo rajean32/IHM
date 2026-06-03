@@ -10,7 +10,7 @@ class Evenement {
   final String? image;
   final String? statut;
   final String? codeCategorie;
-  final int? idLieu;
+  final String? codeLieu;
   final String codeOrganisateur;
   final String? motifAnnulation;
   final String? organisateurNom;
@@ -28,7 +28,7 @@ class Evenement {
     this.image,
     this.statut,
     this.codeCategorie,
-    this.idLieu,
+    this.codeLieu,
     required this.codeOrganisateur,
     this.motifAnnulation,
     this.organisateurNom,
@@ -50,7 +50,7 @@ class Evenement {
       image: json['image'],
       statut: json['statut'],
       codeCategorie: json['codeCategorie'],
-      idLieu: json['idLieu'],
+      codeLieu: json['codeLieu'],
       codeOrganisateur: json['codeOrganisateur'] ?? '',
       motifAnnulation: json['motifAnnulation'],
       organisateurNom: json['organisateurNom'],
@@ -71,7 +71,7 @@ class Evenement {
       'image': image,
       'statut': statut,
       'codeCategorie': codeCategorie,
-      'idLieu': idLieu,
+      'codeLieu': codeLieu,
       'codeOrganisateur': codeOrganisateur,
       'motifAnnulation': motifAnnulation,
     };
@@ -79,13 +79,8 @@ class Evenement {
 }
 
 class EventDetail extends Evenement {
-  final String? categorieNom;
-  final String? lieuNom;
   final String? lieuAdresse;
   final String? lieuVille;
-  final String? organisateurNom;
-  final int? placesDisponibles;
-  final int? placesTotal;
   final double? prixMin;
   final double? prixMax;
   final List<SeatingPlace>? places;
@@ -99,15 +94,15 @@ class EventDetail extends Evenement {
     String? image,
     String? statut,
     String? codeCategorie,
-    int? idLieu,
+    String? codeLieu,
     required String codeOrganisateur,
-    this.categorieNom,
-    this.lieuNom,
+    String? categorieNom,
+    String? lieuNom,
     this.lieuAdresse,
     this.lieuVille,
-    this.organisateurNom,
-    this.placesDisponibles,
-    this.placesTotal,
+    String? organisateurNom,
+    int? placesDisponibles,
+    int? placesTotal,
     this.prixMin,
     this.prixMax,
     this.places,
@@ -120,8 +115,13 @@ class EventDetail extends Evenement {
           image: image,
           statut: statut,
           codeCategorie: codeCategorie,
-          idLieu: idLieu,
+          codeLieu: codeLieu,
           codeOrganisateur: codeOrganisateur,
+          categorieNom: categorieNom,
+          lieuNom: lieuNom,
+          organisateurNom: organisateurNom,
+          placesDisponibles: placesDisponibles,
+          placesTotal: placesTotal,
         );
 
   factory EventDetail.fromJson(Map<String, dynamic> json) {
@@ -136,7 +136,7 @@ class EventDetail extends Evenement {
       image: json['image'],
       statut: json['statut'],
       codeCategorie: json['codeCategorie'],
-      idLieu: json['idLieu'],
+      codeLieu: json['codeLieu'],
       codeOrganisateur: json['codeOrganisateur'] ?? '',
       categorieNom: json['categorieNom'],
       lieuNom: json['lieuNom'],

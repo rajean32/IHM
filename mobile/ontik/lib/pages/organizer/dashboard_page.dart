@@ -10,6 +10,7 @@ import '../../core/assets/app_colors.dart';
 import '../../widgets/error_state.dart';
 import 'create_event_page.dart';
 import 'scan_page.dart';
+import '../../core/utils/error_helper.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -42,7 +43,7 @@ class _DashboardPageState extends State<DashboardPage> {
       setState(() { _stats = stats; _loading = false; });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = apiErrorString(e); _loading = false; });
     }
   }
 

@@ -5,6 +5,7 @@ import '../../models/lieu_model.dart';
 import '../../core/services/evenement_service.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
+import '../../core/utils/error_helper.dart';
 
 class HomeDetailPage extends StatefulWidget {
   final int eventId;
@@ -42,7 +43,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = apiErrorString(e);
         _isLoading = false;
       });
     }
@@ -118,7 +119,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: event.idEvenement != null
-                  ? () => Navigator.pushNamed(context, ClientRoutes.reservation, arguments: event.idEvenement)
+                  ? () => Navigator.pushNamed(context, ClientRoutes.reservation, arguments: {'eventId': event.idEvenement})
                   : null,
               icon: const Icon(Icons.confirmation_number),
               label: const Text('Reserve Tickets', style: TextStyle(fontSize: 16)),

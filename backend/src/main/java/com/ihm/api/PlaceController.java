@@ -1,8 +1,7 @@
 package com.ihm.api;
 
-import com.ihm.model.ApiResponse;
-import com.ihm.model.dto.BatchPlaceRequest;
-import com.ihm.model.dto.PlaceDTO;
+import com.ihm.schema.ApiResponse;
+import com.ihm.schema.PlaceDTO;
 import com.ihm.service.PlaceService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -25,6 +24,7 @@ public class PlaceController {
         this.placeService = placeService;
     }
 
+    // toutes les places
     @GetMapping
     public ResponseEntity<ApiResponse<List<PlaceDTO>>> getAll(
             @RequestParam(required = false) String salle) {
@@ -38,6 +38,7 @@ public class PlaceController {
         return ResponseEntity.ok(ApiResponse.success(200, "Places fetched successfully", data));
     }
 
+    // place par numero
     @GetMapping("/{numero}")
     public ResponseEntity<ApiResponse<PlaceDTO>> getById(@PathVariable String numero) {
         log.info("GET /api/places/{}", numero);
@@ -45,6 +46,7 @@ public class PlaceController {
         return ResponseEntity.ok(ApiResponse.success(200, "Place fetched successfully", data));
     }
 
+    // creation de place
     @PostMapping
     public ResponseEntity<ApiResponse<PlaceDTO>> create(@Valid @RequestBody PlaceDTO dto) {
         log.info("POST /api/places - numero: {}", dto.getNumeroPlace());
@@ -53,8 +55,9 @@ public class PlaceController {
                 .body(ApiResponse.success(201, "Place created successfully", data));
     }
 
+    // generation par lot
     @PostMapping("/batch")
-    public ResponseEntity<ApiResponse<List<PlaceDTO>>> createBatch(@Valid @RequestBody BatchPlaceRequest request) {
+    public ResponseEntity<ApiResponse<List<PlaceDTO>>> createBatch(@Valid @RequestBody PlaceDTO.BatchPlaceRequest request) {
         log.info("POST /api/places/batch - salle: {}, rangees: {}, parRangee: {}",
                 request.getNumeroSalle(), request.getNombreRangees(), request.getPlacesParRangee());
         List<PlaceDTO> data = placeService.createBatch(request);
@@ -62,6 +65,7 @@ public class PlaceController {
                 .body(ApiResponse.success(201, data.size() + " places created successfully", data));
     }
 
+    // modification de place
     @PutMapping("/{numero}")
     public ResponseEntity<ApiResponse<PlaceDTO>> update(@PathVariable String numero, @Valid @RequestBody PlaceDTO dto) {
         log.info("PUT /api/places/{}", numero);
@@ -69,6 +73,7 @@ public class PlaceController {
         return ResponseEntity.ok(ApiResponse.success(200, "Place updated successfully", data));
     }
 
+    // suppression de place
     @DeleteMapping("/{numero}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String numero) {
         log.info("DELETE /api/places/{}", numero);

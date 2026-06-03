@@ -2,12 +2,11 @@ package com.ihm.service;
 
 import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
-import com.ihm.model.dto.PaiementDTO;
-import com.ihm.model.dto.PaiementStatusDTO;
+import com.ihm.schema.PaiementDTO;
 import com.ihm.repository.PaiementRepository;
 import com.ihm.repository.ReservationRepository;
-import com.ihm.schemat.Paiement;
-import com.ihm.schemat.Reservation;
+import com.ihm.model.Paiement;
+import com.ihm.model.Reservation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -32,6 +31,7 @@ public class PaiementService {
         this.reservationRepository = reservationRepository;
     }
 
+    // recuperation de tous les paiements
     public List<PaiementDTO> getAll() {
         log.debug("Fetching all payments");
         return paiementRepository.findAll()
@@ -40,6 +40,7 @@ public class PaiementService {
                 .collect(Collectors.toList());
     }
 
+    // paiements d'un client
     public List<PaiementDTO> getByClient(String codeClient) {
         log.debug("Fetching payments by client: {}", codeClient);
         return paiementRepository.findByClient(codeClient)
@@ -48,6 +49,7 @@ public class PaiementService {
                 .collect(Collectors.toList());
     }
 
+    // recuperation d'un paiement par son id
     public PaiementDTO getById(Integer id) {
         log.debug("Fetching payment by id: {}", id);
         Paiement paiement = paiementRepository.findByIdPaiement(id)
@@ -55,6 +57,7 @@ public class PaiementService {
         return toDTO(paiement);
     }
 
+    // creation d'un paiement
     @Transactional
     public PaiementDTO create(PaiementDTO dto) {
         log.debug("Creating payment for reservation: {}", dto.getIdReservation());
@@ -73,6 +76,7 @@ public class PaiementService {
         return toDTO(saved);
     }
 
+    // mise a jour d'un paiement
     @Transactional
     public PaiementDTO update(Integer id, PaiementDTO dto) {
         log.debug("Updating payment: {}", id);
@@ -88,8 +92,9 @@ public class PaiementService {
         return toDTO(saved);
     }
 
+    // traitement webhook de paiement
     @Transactional
-    public PaiementStatusDTO processWebhook(String reservationId, BigDecimal amount, String modePaiement, String status) {
+    public PaiementDTO.PaiementStatus processWebhook(String reservationId, BigDecimal amount, String modePaiement, String status) {
         log.debug("Processing payment webhook for reservation: {}", reservationId);
         Integer idReservation = Integer.parseInt(reservationId);
 
@@ -108,7 +113,7 @@ public class PaiementService {
             }
 
             Paiement paiement = paiementRepository.findByReservation_IdReservation(idReservation).orElse(null);
-            PaiementStatusDTO response = new PaiementStatusDTO();
+            PaiementDTO.PaiementStatus response = new PaiementDTO.PaiementStatus();
             response.setIdPaiement(paiement != null ? paiement.getIdPaiement() : null);
             response.setIdReservation(idReservation);
             response.setMontant(amount);
@@ -117,7 +122,7 @@ public class PaiementService {
             response.setStatus("CONFIRMED");
             return response;
         } else {
-            PaiementStatusDTO response = new PaiementStatusDTO();
+            PaiementDTO.PaiementStatus response = new PaiementDTO.PaiementStatus();
             response.setIdReservation(idReservation);
             response.setMontant(amount);
             response.setModePaiement(modePaiement);
@@ -126,12 +131,13 @@ public class PaiementService {
         }
     }
 
-    public PaiementStatusDTO getPaymentStatus(Integer idReservation) {
+    // statut d'un paiement
+    public PaiementDTO.PaiementStatus getPaymentStatus(Integer idReservation) {
         log.debug("Fetching payment status for reservation: {}", idReservation);
         Paiement paiement = paiementRepository.findByReservation_IdReservation(idReservation)
                 .orElse(null);
 
-        PaiementStatusDTO response = new PaiementStatusDTO();
+        PaiementDTO.PaiementStatus response = new PaiementDTO.PaiementStatus();
         if (paiement != null) {
             response.setIdPaiement(paiement.getIdPaiement());
             response.setIdReservation(idReservation);
@@ -146,6 +152,7 @@ public class PaiementService {
         return response;
     }
 
+    // suppression d'un paiement
     @Transactional
     public void delete(Integer id) {
         log.debug("Deleting payment: {}", id);

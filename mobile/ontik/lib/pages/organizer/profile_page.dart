@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/services/user_service.dart';
+import '../../core/utils/error_helper.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -69,7 +70,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil mis à jour'), backgroundColor: AppTheme.secondaryColor));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: AppTheme.errorColor));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

@@ -6,8 +6,6 @@ class AuthService {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final data = await _authApi.login(email, password);
-    await setToken(data['token'] as String?);
-    await setUserInfo(data);
     return data;
   }
 
@@ -15,8 +13,15 @@ class AuthService {
     await _authApi.register(userData);
   }
 
-  Future<void> firstLogin(String email, String password) async {
-    await _authApi.firstLogin(email, password);
+  Future<Map<String, dynamic>> firstLogin(String code, String email, String password) async {
+    final data = await _authApi.firstLogin(code, email, password);
+    await setToken(data['token'] as String?);
+    await setUserInfo(data);
+    return data;
+  }
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    await _authApi.changePassword(currentPassword, newPassword);
   }
 
   Future<void> logout() async {

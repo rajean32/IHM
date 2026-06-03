@@ -1,6 +1,6 @@
 package com.ihm.repository;
 
-import com.ihm.schemat.Administrateur;
+import com.ihm.model.Administrateur;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

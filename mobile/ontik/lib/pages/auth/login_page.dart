@@ -5,6 +5,7 @@ import '../../core/routes/auth_routes.dart';
 import '../../core/routes/client_routes.dart';
 import '../../core/routes/organizer_routes.dart';
 import '../../core/routes/admin_routes.dart';
+import '../../core/utils/error_helper.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -53,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(() => _error = apiErrorString(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

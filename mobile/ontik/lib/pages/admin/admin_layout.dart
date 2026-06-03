@@ -10,6 +10,7 @@ import 'places_page.dart';
 import 'tickets_page.dart';
 import 'reservations_page.dart';
 import 'payments_page.dart';
+import 'profile_page.dart';
 
 class AdminLayout extends StatefulWidget {
   const AdminLayout({super.key});
@@ -50,6 +51,7 @@ class _AdminLayoutState extends State<AdminLayout> {
       const TicketsPage(),
       const ReservationsPage(),
       const PaymentsPage(),
+      const AdminProfilePage(),
     ];
 
     final navDestinations = [
@@ -62,6 +64,7 @@ class _AdminLayoutState extends State<AdminLayout> {
       const NavigationRailDestination(icon: Icon(Icons.confirmation_number), label: Text('Tickets')),
       const NavigationRailDestination(icon: Icon(Icons.book_online), label: Text('Réservations')),
       const NavigationRailDestination(icon: Icon(Icons.payment), label: Text('Paiements')),
+      const NavigationRailDestination(icon: Icon(Icons.person), label: Text('Profil')),
     ];
 
     return Scaffold(

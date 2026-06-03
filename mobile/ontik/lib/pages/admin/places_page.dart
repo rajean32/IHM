@@ -3,6 +3,7 @@ import '../../core/services/lieu_service.dart';
 import '../../core/services/place_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
+import '../../core/utils/error_helper.dart';
 import '../../core/assets/app_colors.dart';
 import '../../models/lieu_model.dart';
 import '../../widgets/error_state.dart';
@@ -20,7 +21,7 @@ class _PlacesPageState extends State<PlacesPage> {
   List<Salle> _salles = [];
   List<Lieu> _lieux = [];
   List<Place> _places = [];
-  int? _selectedLieuId;
+  String? _selectedLieuCode;
   Salle? _selectedSalle;
   bool _bulkMode = false;
   final Set<String> _selectedPlaceIds = {};
@@ -70,19 +71,19 @@ class _PlacesPageState extends State<PlacesPage> {
             (s) => s!.numeroSalle == widget.initialSalleFilter,
             orElse: () => null,
           );
-          if (_selectedSalle != null) _selectedLieuId = _selectedSalle!.idLieu;
+          if (_selectedSalle != null) _selectedLieuCode = _selectedSalle!.codeLieu;
         }
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = apiErrorString(e); _loading = false; });
     }
   }
 
   List<Salle> get _filteredSalles {
     var list = _salles;
-    if (_selectedLieuId != null) {
-      list = list.where((s) => s.idLieu == _selectedLieuId).toList();
+    if (_selectedLieuCode != null) {
+      list = list.where((s) => s.codeLieu == _selectedLieuCode).toList();
     }
     final q = _salleSearchCtrl.text.toLowerCase().trim();
     if (q.isNotEmpty) {
@@ -145,7 +146,7 @@ class _PlacesPageState extends State<PlacesPage> {
       for (int i = start; i <= end; i++) {
         await _placeService.createPlace({
           'numeroPlace': '$rang-$i',
-          'rang': rang,
+          'range': rang,
           'numeroSalle': _selectedSalle!.numeroSalle,
         });
       }
@@ -157,14 +158,14 @@ class _PlacesPageState extends State<PlacesPage> {
       _loadData();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
       }
     }
   }
 
   void _editPlace(Place place) {
     final numCtrl = TextEditingController(text: place.numeroPlace);
-    final rangCtrl = TextEditingController(text: place.rang ?? '');
+    final rangCtrl = TextEditingController(text: place.range ?? '');
     final formKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
@@ -196,7 +197,7 @@ class _PlacesPageState extends State<PlacesPage> {
                   await _placeService.deletePlace(place.numeroPlace);
                   await _placeService.createPlace({
                     'numeroPlace': numCtrl.text.trim(),
-                    'rang': rangCtrl.text.trim().isEmpty ? null : rangCtrl.text.trim(),
+                    'range': rangCtrl.text.trim().isEmpty ? null : rangCtrl.text.trim(),
                     'typePlace': place.typePlace,
                     'numeroSalle': place.numeroSalle,
                   });
@@ -204,7 +205,7 @@ class _PlacesPageState extends State<PlacesPage> {
                   _loadData();
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.error));
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
                   }
                 }
               },
@@ -221,7 +222,7 @@ class _PlacesPageState extends State<PlacesPage> {
   void _showSalleForm({Salle? salle}) {
     final numCtrl = TextEditingController(text: salle?.numeroSalle ?? '');
     final nomCtrl = TextEditingController(text: salle?.nomSalle ?? '');
-    int? lieuId = salle?.idLieu;
+    String? lieuCode = salle?.codeLieu;
     final formKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
@@ -247,18 +248,18 @@ class _PlacesPageState extends State<PlacesPage> {
               validator: (v) => v == null || v.trim().isEmpty ? 'Requis' : null,
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<int>(
-              value: lieuId,
+            DropdownButtonFormField<String>(
+              value: lieuCode,
               decoration: const InputDecoration(labelText: 'Lieu parent', border: OutlineInputBorder()),
-              items: _lieux.map((l) => DropdownMenuItem(value: l.idLieu, child: Text(l.nomLieu))).toList(),
-              onChanged: (v) => lieuId = v,
+              items: _lieux.map((l) => DropdownMenuItem(value: l.code, child: Text(l.nomLieu))).toList(),
+              onChanged: (v) => lieuCode = v,
               validator: (v) => v == null ? 'Requis' : null,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
-                final data = {'numeroSalle': numCtrl.text.trim(), 'nomSalle': nomCtrl.text.trim(), 'idLieu': lieuId?.toString() ?? ''};
+                final data = {'numeroSalle': numCtrl.text.trim(), 'nomSalle': nomCtrl.text.trim(), 'codeLieu': lieuCode};
                 if (salle != null) {
                   await dio.delete('${Endpoints.salles}/${salle.numeroSalle}');
                 }
@@ -326,8 +327,8 @@ class _PlacesPageState extends State<PlacesPage> {
   }
 
   Widget _buildLieuFilter() {
-    return DropdownButtonFormField<int>(
-      value: _selectedLieuId,
+    return DropdownButtonFormField<String>(
+      value: _selectedLieuCode,
       decoration: const InputDecoration(
         labelText: 'Filtrer par lieu',
         border: OutlineInputBorder(),
@@ -336,11 +337,11 @@ class _PlacesPageState extends State<PlacesPage> {
       ),
       isExpanded: true,
       items: [
-        const DropdownMenuItem<int>(value: null, child: Text('Tous les lieux')),
-        ..._lieux.map((l) => DropdownMenuItem(value: l.idLieu, child: Text(l.nomLieu))),
+        const DropdownMenuItem<String>(value: null, child: Text('Tous les lieux')),
+        ..._lieux.map((l) => DropdownMenuItem(value: l.code, child: Text(l.nomLieu))),
       ],
       onChanged: (v) => setState(() {
-        _selectedLieuId = v;
+        _selectedLieuCode = v;
         _selectedSalle = null;
         _selectedPlaceIds.clear();
         _bulkMode = false;
@@ -350,7 +351,7 @@ class _PlacesPageState extends State<PlacesPage> {
 
   Widget _buildSallesSection() {
     final filtered = _filteredSalles;
-    final lieuMap = {for (final l in _lieux) l.idLieu: l};
+    final lieuMap = {for (final l in _lieux) l.code: l};
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,7 +389,7 @@ class _PlacesPageState extends State<PlacesPage> {
                 ),
               ),
               title: Text(s.nomSalle, style: const TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text('N° ${s.numeroSalle}  •  ${lieuMap[s.idLieu]?.nomLieu ?? '-'}'),
+              subtitle: Text('N° ${s.numeroSalle}  •  ${lieuMap[s.codeLieu]?.nomLieu ?? '-'}'),
               selected: _selectedSalle?.numeroSalle == s.numeroSalle,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -435,7 +436,7 @@ class _PlacesPageState extends State<PlacesPage> {
     final places = _placesForSelectedSalle;
     final grouped = <String, List<Place>>{};
     for (final p in places) {
-      grouped.putIfAbsent(p.rang ?? '-', () => []).add(p);
+      grouped.putIfAbsent(p.range ?? '-', () => []).add(p);
     }
     final sortedRangs = grouped.keys.toList()..sort();
 

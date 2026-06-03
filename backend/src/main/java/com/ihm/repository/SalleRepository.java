@@ -1,6 +1,6 @@
 package com.ihm.repository;
 
-import com.ihm.schemat.Salle;
+import com.ihm.model.Salle;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +14,7 @@ public interface SalleRepository extends JpaRepository<Salle, String> {
 
     Optional<Salle> findByNumeroSalle(String numeroSalle);
 
-    List<Salle> findByLieu_IdLieu(Integer idLieu);
+    List<Salle> findByLieu_Code(String codeLieu);
 
     boolean existsByNumeroSalle(String numeroSalle);
 

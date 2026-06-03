@@ -5,6 +5,7 @@ import '../../core/services/ticket_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
+import '../../core/utils/error_helper.dart';
 
 class TicketPage extends StatefulWidget {
   final String ticketCode;
@@ -50,7 +51,7 @@ class _TicketPageState extends State<TicketPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = apiErrorString(e);
         _loading = false;
       });
     }

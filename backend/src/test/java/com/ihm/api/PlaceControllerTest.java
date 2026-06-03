@@ -1,10 +1,9 @@
 package com.ihm.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ihm.model.dto.BatchPlaceRequest;
-import com.ihm.model.dto.PlaceDTO;
+import com.ihm.schema.PlaceDTO;
 import com.ihm.repository.*;
-import com.ihm.schemat.*;
+import com.ihm.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +45,7 @@ class PlaceControllerTest {
     @Test
     void testCreatePlace() throws Exception {
         Lieu lieu = new Lieu();
+        lieu.setCode("TESTLC");
         lieu.setNomLieu("Test Lieu");
         lieu.setVille("Test");
         lieu = lieuRepository.save(lieu);
@@ -62,17 +62,20 @@ class PlaceControllerTest {
         dto.setTypePlace("Standard");
         dto.setNumeroSalle("S001");
 
+        String expectedNumeroPlace = lieu.getCode() + "-S001-A-A1";
+
         mockMvc.perform(post("/api/places")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.numeroPlace").value("Test Lieu - Salle Test - A - A1"));
+                .andExpect(jsonPath("$.data.numeroPlace").value(expectedNumeroPlace));
     }
 
     @Test
     void testBatchCreatePlaces() throws Exception {
         Lieu lieu = new Lieu();
+        lieu.setCode("TESTLC3");
         lieu.setNomLieu("Test Lieu");
         lieu.setVille("Test");
         lieu = lieuRepository.save(lieu);
@@ -83,7 +86,7 @@ class PlaceControllerTest {
         salle.setLieu(lieu);
         salleRepository.save(salle);
 
-        BatchPlaceRequest request = new BatchPlaceRequest();
+        PlaceDTO.BatchPlaceRequest request = new PlaceDTO.BatchPlaceRequest();
         request.setNumeroSalle("S002");
         request.setNombreRangees(3);
         request.setPlacesParRangee(5);
@@ -110,6 +113,7 @@ class PlaceControllerTest {
     @Test
     void testBatchCreateWithCustomPrefix() throws Exception {
         Lieu lieu = new Lieu();
+        lieu.setCode("TESTLC2");
         lieu.setNomLieu("Test Lieu");
         lieu.setVille("Test");
         lieu = lieuRepository.save(lieu);
@@ -120,7 +124,7 @@ class PlaceControllerTest {
         salle.setLieu(lieu);
         salleRepository.save(salle);
 
-        BatchPlaceRequest request = new BatchPlaceRequest();
+        PlaceDTO.BatchPlaceRequest request = new PlaceDTO.BatchPlaceRequest();
         request.setNumeroSalle("S003");
         request.setNombreRangees(2);
         request.setPlacesParRangee(4);
@@ -137,9 +141,9 @@ class PlaceControllerTest {
 
         String response = result.getResponse().getContentAsString();
         String firstPlace = objectMapper.readTree(response).get("data").get(0).get("numeroPlace").asText();
-        assert firstPlace.contains("VIP-A - 1") : "Expected VIP-A - 1 in combined key, got " + firstPlace;
+        assert firstPlace.equals(lieu.getCode() + "-S003-VIP-A-1") : "Expected " + lieu.getCode() + "-S003-VIP-A-1 got " + firstPlace;
 
         String lastPlace = objectMapper.readTree(response).get("data").get(7).get("numeroPlace").asText();
-        assert lastPlace.contains("VIP-B - 4") : "Expected VIP-B - 4 in combined key, got " + lastPlace;
+        assert lastPlace.equals(lieu.getCode() + "-S003-VIP-B-4") : "Expected " + lieu.getCode() + "-S003-VIP-B-4 got " + lastPlace;
     }
 }

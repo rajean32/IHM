@@ -2,11 +2,11 @@ package com.ihm.service;
 
 import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
-import com.ihm.model.dto.SalleDTO;
+import com.ihm.schema.SalleDTO;
 import com.ihm.repository.LieuRepository;
 import com.ihm.repository.SalleRepository;
-import com.ihm.schemat.Lieu;
-import com.ihm.schemat.Salle;
+import com.ihm.model.Lieu;
+import com.ihm.model.Salle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,6 +28,7 @@ public class SalleService {
         this.lieuRepository = lieuRepository;
     }
 
+    // recuperation de toutes les salles
     public List<SalleDTO> getAll() {
         log.debug("Fetching all rooms");
         return salleRepository.findAll()
@@ -36,6 +37,7 @@ public class SalleService {
                 .collect(Collectors.toList());
     }
 
+    // recuperation d'une salle par son numero
     public SalleDTO getById(String numero) {
         log.debug("Fetching room by numero: {}", numero);
         Salle salle = salleRepository.findByNumeroSalle(numero)
@@ -43,14 +45,15 @@ public class SalleService {
         return toDTO(salle);
     }
 
+    // creation d'une salle
     @Transactional
     public SalleDTO create(SalleDTO dto) {
         log.debug("Creating room: {}", dto.getNumeroSalle());
         if (salleRepository.existsByNumeroSalle(dto.getNumeroSalle())) {
             throw new DuplicateResourceException("Salle", "numeroSalle", dto.getNumeroSalle());
         }
-        Lieu lieu = lieuRepository.findByIdLieu(dto.getIdLieu())
-                .orElseThrow(() -> new ResourceNotFoundException("Lieu", "idLieu", dto.getIdLieu()));
+        Lieu lieu = lieuRepository.findById(dto.getCodeLieu())
+                .orElseThrow(() -> new ResourceNotFoundException("Lieu", "codeLieu", dto.getCodeLieu()));
         Salle salle = new Salle();
         salle.setNumeroSalle(dto.getNumeroSalle());
         salle.setNomSalle(dto.getNomSalle());
@@ -60,15 +63,16 @@ public class SalleService {
         return toDTO(saved);
     }
 
+    // mise a jour d'une salle
     @Transactional
     public SalleDTO update(String numero, SalleDTO dto) {
         log.debug("Updating room: {}", numero);
         Salle salle = salleRepository.findByNumeroSalle(numero)
                 .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", numero));
         if (dto.getNomSalle() != null) salle.setNomSalle(dto.getNomSalle());
-        if (dto.getIdLieu() != null) {
-            Lieu lieu = lieuRepository.findByIdLieu(dto.getIdLieu())
-                    .orElseThrow(() -> new ResourceNotFoundException("Lieu", "idLieu", dto.getIdLieu()));
+        if (dto.getCodeLieu() != null) {
+            Lieu lieu = lieuRepository.findById(dto.getCodeLieu())
+                    .orElseThrow(() -> new ResourceNotFoundException("Lieu", "codeLieu", dto.getCodeLieu()));
             salle.setLieu(lieu);
         }
         Salle saved = salleRepository.save(salle);
@@ -76,6 +80,7 @@ public class SalleService {
         return toDTO(saved);
     }
 
+    // suppression d'une salle
     @Transactional
     public void delete(String numero) {
         log.debug("Deleting room: {}", numero);
@@ -90,7 +95,7 @@ public class SalleService {
         SalleDTO dto = new SalleDTO();
         dto.setNumeroSalle(salle.getNumeroSalle());
         dto.setNomSalle(salle.getNomSalle());
-        dto.setIdLieu(salle.getLieu() != null ? salle.getLieu().getIdLieu() : null);
+        dto.setCodeLieu(salle.getLieu() != null ? salle.getLieu().getCode() : null);
         return dto;
     }
 }

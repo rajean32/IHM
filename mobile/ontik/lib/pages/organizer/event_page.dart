@@ -6,6 +6,7 @@ import '../../core/assets/app_colors.dart';
 import '../../widgets/error_state.dart';
 import 'create_event_page.dart';
 import 'pricing_page.dart';
+import '../../core/utils/error_helper.dart';
 
 class EventPage extends StatefulWidget {
   const EventPage({super.key});
@@ -37,7 +38,7 @@ class _EventPageState extends State<EventPage> {
       setState(() { _events = events; _loading = false; });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = apiErrorString(e); _loading = false; });
     }
   }
 
@@ -72,7 +73,7 @@ class _EventPageState extends State<EventPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e'), backgroundColor: AppTheme.errorColor),
+        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
       );
     }
   }

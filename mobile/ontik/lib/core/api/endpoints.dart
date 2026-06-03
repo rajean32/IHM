@@ -3,7 +3,8 @@ class Endpoints {
 
   static const login = '$base/auth/login';
   static const register = '$base/auth/register';
-  static const firstLogin = '$base/auth/first-login';
+  static const firstLogin = '$base/auth/first-login-update';
+  static const changePassword = '$base/auth/change-password';
 
   static const events = '$base/evenements';
   static String eventById(int id) => '$base/evenements/$id';
@@ -22,16 +23,18 @@ class Endpoints {
   static String ticketByCode(String code) => '$base/tickets/$code';
   static const ticketValidate = '$base/tickets/validate';
 
-  static const users = '$base/users';
+  static const users = '$base/admin/users';
+  static const usersAuditLog = '$base/admin/users/audit-log';
+  static const usersResetPassword = '$base/admin/users/reset-password';
   static const categories = '$base/categories';
   static const lieux = '$base/lieux';
   static const salles = '$base/salles';
 
-  static const dashboard = '$base/dashboard';
-  static String organizerDashboard(String code) => '$base/dashboard/organisateur/$code';
+  static const dashboard = '$base/admin/dashboard';
+  static String organizerDashboard(String code) => '$base/organisateurs/$code/dashboard';
 
-  static String typePricing(int eventId) => '$base/evenements/$eventId/pricing/type';
-  static String assignType(int eventId) => '$base/evenements/$eventId/pricing/assign';
+  static String typePricing(int eventId) => '$base/organisateur/evenements/$eventId/places/type/pricing';
+  static String assignType(int eventId) => '$base/organisateur/evenements/$eventId/places/assign-type';
 
   static String organizerProfile(String code) => '$base/organisateurs/$code';
   static String organizerEventSalles(int eventId) => '$base/organisateur/evenements/$eventId/salles';

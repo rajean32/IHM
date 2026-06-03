@@ -2,8 +2,8 @@ package com.ihm.config;
 
 import com.ihm.repository.AdministrateurRepository;
 import com.ihm.repository.UtilisateurRepository;
-import com.ihm.schemat.Administrateur;
-import com.ihm.schemat.Utilisateur;
+import com.ihm.model.Administrateur;
+import com.ihm.model.Utilisateur;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;

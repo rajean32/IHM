@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/services/dashboard_service.dart';
+import '../../core/utils/error_helper.dart';
 import '../../core/assets/app_colors.dart';
 import '../../models/dashboard_model.dart';
 import '../../models/evenement_model.dart';
@@ -38,7 +39,7 @@ class _DashboardPageState extends State<DashboardPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = apiErrorString(e);
         _loading = false;
       });
     }

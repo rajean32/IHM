@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/event_place_config_model.dart';
 import '../../core/assets/app_colors.dart';
 import '../../widgets/error_state.dart';
+import '../../core/utils/error_helper.dart';
 import '../../core/services/evenement_service.dart';
 import '../../core/services/place_service.dart';
 
@@ -71,7 +72,7 @@ class _PricingPageState extends State<PricingPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loadingSalles = false; });
+      setState(() { _error = apiErrorString(e); _loadingSalles = false; });
     }
   }
 
@@ -137,7 +138,7 @@ class _PricingPageState extends State<PricingPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e'), backgroundColor: AppTheme.errorColor),
+        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -157,7 +158,7 @@ class _PricingPageState extends State<PricingPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e'), backgroundColor: AppTheme.errorColor),
+        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -192,7 +193,7 @@ class _PricingPageState extends State<PricingPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e'), backgroundColor: AppTheme.errorColor),
+        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -210,7 +211,7 @@ class _PricingPageState extends State<PricingPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e'), backgroundColor: AppTheme.errorColor),
+        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
       );
     }
   }

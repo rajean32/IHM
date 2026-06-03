@@ -1,6 +1,6 @@
 package com.ihm.repository;
 
-import com.ihm.schemat.Place;
+import com.ihm.model.Place;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;

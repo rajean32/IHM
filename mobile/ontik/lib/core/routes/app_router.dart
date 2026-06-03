@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../pages/auth/login_page.dart';
+import '../assets/app_colors.dart';
 import '../../pages/auth/register_page.dart';
 import '../../pages/auth/forgot_password_page.dart';
 import '../../pages/client/home_page.dart';
@@ -9,6 +10,9 @@ import '../../pages/client/payment_page.dart';
 import '../../pages/client/ticket_page.dart';
 import '../../pages/client/profile_page.dart';
 import '../../pages/organizer/organizer_layout.dart';
+import '../../pages/organizer/create_event_page.dart';
+import '../../pages/organizer/pricing_page.dart';
+import '../../pages/organizer/scan_page.dart';
 import '../../pages/admin/admin_layout.dart';
 import 'auth_routes.dart';
 import 'client_routes.dart';
@@ -46,12 +50,43 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ProfilePage());
       case OrganizerRoutes.layout:
         return MaterialPageRoute(builder: (_) => const OrganizerLayout());
+      case OrganizerRoutes.createEvent:
+        final a = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(builder: (_) => CreateEventPage(event: a?['event']));
+      case OrganizerRoutes.scan:
+        return MaterialPageRoute(builder: (_) => const ScanPage());
+      case OrganizerRoutes.pricing:
+        final a = settings.arguments as Map<String, dynamic>?;
+        if (a == null) return _notFound();
+        return MaterialPageRoute(builder: (_) => PricingPage(eventId: a['eventId'] as int));
       case AdminRoutes.layout:
         return MaterialPageRoute(builder: (_) => const AdminLayout());
       default:
-        return MaterialPageRoute(
-          builder: (_) => const Scaffold(body: Center(child: Text('Page introuvable'))),
-        );
+        return _notFound();
     }
+  }
+
+  static Route<dynamic> _notFound() {
+    return MaterialPageRoute(
+      builder: (context) => Scaffold(
+        appBar: AppBar(title: const Text('Page introuvable')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.search_off, size: 64, color: AppColors.textSecondary),
+              const SizedBox(height: 16),
+              const Text('Page introuvable', style: TextStyle(fontSize: 18, color: AppColors.textSecondary)),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false),
+                icon: const Icon(Icons.home),
+                label: const Text('Accueil'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

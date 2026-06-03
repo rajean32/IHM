@@ -1,17 +1,18 @@
 package com.ihm.api;
 
-import com.ihm.model.ApiResponse;
-import com.ihm.model.dto.FirstLoginUpdateRequest;
-import com.ihm.model.dto.LoginRequest;
-import com.ihm.model.dto.LoginResponse;
-import com.ihm.model.dto.RegisterRequest;
+import com.ihm.schema.ApiResponse;
+import com.ihm.schema.AuthDTO;
+import com.ihm.schema.PasswordDTO;
 import com.ihm.service.AuthService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -25,25 +26,61 @@ public class AuthController {
         this.authService = authService;
     }
 
+    // connexion utilisateur
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<AuthDTO.LoginResponse>> login(@Valid @RequestBody AuthDTO.LoginRequest request) {
         log.info("POST /api/auth/login - email: {}", request.getEmail());
-        LoginResponse data = authService.login(request);
+        AuthDTO.LoginResponse data = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success(200, "Login successful", data));
     }
-
+    // crearion de compte
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<LoginResponse>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<AuthDTO.LoginResponse>> register(@Valid @RequestBody AuthDTO.RegisterRequest request) {
         log.info("POST /api/auth/register - email: {}", request.getEmail());
-        LoginResponse data = authService.register(request);
+        AuthDTO.LoginResponse data = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(201, "Registration successful", data));
     }
 
     @PostMapping("/first-login-update")
-    public ResponseEntity<ApiResponse<LoginResponse>> firstLoginUpdate(@Valid @RequestBody FirstLoginUpdateRequest request) {
+    public ResponseEntity<ApiResponse<AuthDTO.LoginResponse>> firstLoginUpdate(@Valid @RequestBody AuthDTO.FirstLoginUpdateRequest request) {
         log.info("POST /api/auth/first-login-update - user: {}", request.getCodeUtilisateur());
-        LoginResponse data = authService.firstLoginUpdate(request);
+        AuthDTO.LoginResponse data = authService.firstLoginUpdate(request);
         return ResponseEntity.ok(ApiResponse.success(200, "First login update successful", data));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Map<String, String>>> forgotPassword(@Valid @RequestBody PasswordDTO.ResetRequest request) {
+        log.info("POST /api/auth/forgot-password - email: {}", request.getEmail());
+        String token = authService.requestPasswordReset(request.getEmail());
+        Map<String, String> data = Map.of(
+                "message", "Reset token generated. In production, this would be sent via email.",
+                "token", token
+        );
+        return ResponseEntity.ok(ApiResponse.success(200, "Password reset token generated", data));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Map<String, String>>> resetPassword(@Valid @RequestBody PasswordDTO.ResetConfirmRequest request) {
+        log.info("POST /api/auth/reset-password - email: {}", request.getEmail());
+        authService.confirmPasswordReset(request.getEmail(), request.getToken(), request.getNewPassword());
+        Map<String, String> data = Map.of("message", "Password reset successfully");
+        return ResponseEntity.ok(ApiResponse.success(200, "Password reset successful", data));
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<ApiResponse<Map<String, String>>> changePassword(@Valid @RequestBody PasswordDTO.ChangeRequest request) {
+        String codeUtilisateur = SecurityContextHolder.getContext().getAuthentication() != null
+                ? (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal()
+                : null;
+
+        if (codeUtilisateur == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error(401, "Authentication required", "No authenticated user"));
+        }
+
+        log.info("PUT /api/auth/change-password - user: {}", codeUtilisateur);
+        authService.changePassword(codeUtilisateur, request.getCurrentPassword(), request.getNewPassword());
+        Map<String, String> data = Map.of("message", "Password changed successfully");
+        return ResponseEntity.ok(ApiResponse.success(200, "Password changed successfully", data));
     }
 }

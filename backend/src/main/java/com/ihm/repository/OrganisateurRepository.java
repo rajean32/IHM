@@ -1,6 +1,6 @@
 package com.ihm.repository;
 
-import com.ihm.schemat.Organisateur;
+import com.ihm.model.Organisateur;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

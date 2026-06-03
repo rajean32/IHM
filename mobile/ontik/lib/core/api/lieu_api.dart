@@ -12,12 +12,17 @@ class LieuApi {
     return resp.data['data'] as Map<String, dynamic>;
   }
 
-  Future<void> deleteLieu(int id) async {
-    await dio.delete('${Endpoints.lieux}/$id');
+  Future<void> deleteLieu(String code) async {
+    await dio.delete('${Endpoints.lieux}/$code');
   }
 
   Future<List<dynamic>> getSalles() async {
     final resp = await dio.get(Endpoints.salles);
     return (resp.data['data'] as List?) ?? [];
+  }
+
+  Future<Map<String, dynamic>> createSalle(Map<String, dynamic> data) async {
+    final resp = await dio.post(Endpoints.salles, data: data);
+    return resp.data['data'] as Map<String, dynamic>;
   }
 }

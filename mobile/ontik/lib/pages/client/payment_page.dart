@@ -5,6 +5,7 @@ import '../../core/api/dio_config.dart';
 
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
+import '../../core/utils/error_helper.dart';
 
 class PaymentPage extends StatefulWidget {
   final int eventId;
@@ -77,7 +78,7 @@ class _PaymentPageState extends State<PaymentPage> {
       setState(() => _errorMessage = 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.');
     } catch (e) {
       if (!mounted) return;
-      final msg = e.toString().replaceAll('Exception: ', '');
+      final msg = apiErrorString(e);
 
       String displayMsg;
       if (msg.contains('409') || msg.contains('concurrence') || msg.contains('déjà réservée') || msg.contains('indisponible') || msg.contains('en attente')) {

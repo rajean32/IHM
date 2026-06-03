@@ -1,7 +1,7 @@
 package com.ihm.api;
 
-import com.ihm.model.ApiResponse;
-import com.ihm.model.dto.LieuDTO;
+import com.ihm.schema.ApiResponse;
+import com.ihm.schema.LieuDTO;
 import com.ihm.service.LieuService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -24,6 +24,7 @@ public class LieuController {
         this.lieuService = lieuService;
     }
 
+    // liste des lieux
     @GetMapping
     public ResponseEntity<ApiResponse<List<LieuDTO>>> getAll() {
         log.info("GET /api/lieux");
@@ -31,10 +32,10 @@ public class LieuController {
         return ResponseEntity.ok(ApiResponse.success(200, "Locations fetched successfully", data));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<LieuDTO>> getById(@PathVariable Integer id) {
-        log.info("GET /api/lieux/{}", id);
-        LieuDTO data = lieuService.getById(id);
+    @GetMapping("/{code}")
+    public ResponseEntity<ApiResponse<LieuDTO>> getByCode(@PathVariable String code) {
+        log.info("GET /api/lieux/{}", code);
+        LieuDTO data = lieuService.getById(code);
         return ResponseEntity.ok(ApiResponse.success(200, "Location fetched successfully", data));
     }
 
@@ -46,17 +47,17 @@ public class LieuController {
                 .body(ApiResponse.success(201, "Location created successfully", data));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<LieuDTO>> update(@PathVariable Integer id, @Valid @RequestBody LieuDTO dto) {
-        log.info("PUT /api/lieux/{}", id);
-        LieuDTO data = lieuService.update(id, dto);
+    @PutMapping("/{code}")
+    public ResponseEntity<ApiResponse<LieuDTO>> update(@PathVariable String code, @Valid @RequestBody LieuDTO dto) {
+        log.info("PUT /api/lieux/{}", code);
+        LieuDTO data = lieuService.update(code, dto);
         return ResponseEntity.ok(ApiResponse.success(200, "Location updated successfully", data));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Integer id) {
-        log.info("DELETE /api/lieux/{}", id);
-        lieuService.delete(id);
+    @DeleteMapping("/{code}")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String code) {
+        log.info("DELETE /api/lieux/{}", code);
+        lieuService.delete(code);
         return ResponseEntity.ok(ApiResponse.success(200, "Location deleted successfully"));
     }
 }

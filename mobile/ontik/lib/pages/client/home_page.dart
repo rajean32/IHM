@@ -10,6 +10,7 @@ import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
+import '../../core/utils/error_helper.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,7 +23,7 @@ class _HomePageState extends State<HomePage> {
   final _searchCtrl = TextEditingController();
   String? _selectedCategorie;
   String? _selectedStatut;
-  int? _selectedLieu;
+  String? _selectedLieu;
   DateTimeRange? _selectedDateRange;
   double? _prixMin;
   double? _prixMax;
@@ -85,7 +86,7 @@ class _HomePageState extends State<HomePage> {
       if (_searchCtrl.text.isNotEmpty) params['q'] = _searchCtrl.text;
       if (_selectedCategorie != null) params['categorie'] = _selectedCategorie;
       if (_selectedStatut != null) params['statut'] = _selectedStatut;
-      if (_selectedLieu != null) params['idLieu'] = _selectedLieu;
+      if (_selectedLieu != null) params['codeLieu'] = _selectedLieu;
       if (_prixMin != null) params['prixMin'] = _prixMin;
       if (_prixMax != null) params['prixMax'] = _prixMax;
 
@@ -104,7 +105,7 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = apiErrorString(e);
         _isLoading = false;
       });
     }
@@ -163,13 +164,13 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 16),
                 const Text('Venue', style: TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<int>(
+                DropdownButtonFormField<String>(
                   value: _selectedLieu,
                   decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
                   items: [
-                    const DropdownMenuItem(value: null, child: Text('All Venues')),
+                    const DropdownMenuItem<String>(value: null, child: Text('All Venues')),
                     ..._lieux.map((l) => DropdownMenuItem(
-                      value: l.idLieu,
+                      value: l.code,
                       child: Text(l.nomLieu),
                     )),
                   ],
@@ -358,11 +359,11 @@ class _HomePageState extends State<HomePage> {
           final event = _events[index];
           return EventCard(
             event: event,
-            onTap: () => Navigator.pushNamed(
-              context,
-              ClientRoutes.homeDetail,
-              arguments: event.idEvenement,
-            ),
+            onTap: () {
+              if (event.idEvenement != null) {
+                Navigator.pushNamed(context, ClientRoutes.homeDetail, arguments: {'id': event.idEvenement});
+              }
+            },
           );
         },
       ),

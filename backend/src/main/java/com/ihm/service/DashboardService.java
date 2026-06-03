@@ -1,17 +1,15 @@
 package com.ihm.service;
 
 import com.ihm.exception.ResourceNotFoundException;
-import com.ihm.model.dto.DailySalesDTO;
-import com.ihm.model.dto.DashboardStatsDTO;
-import com.ihm.model.dto.EvenementDTO;
-import com.ihm.model.dto.EventStatsDTO;
-import com.ihm.model.dto.OrganizerDashboardDTO;
+import com.ihm.schema.DashboardDTO;
+import com.ihm.schema.EvenementDTO;
+import com.ihm.schema.DashboardDTO;
 import com.ihm.repository.*;
-import com.ihm.schemat.Concerner;
-import com.ihm.schemat.CorrespondA;
-import com.ihm.schemat.Evenement;
-import com.ihm.schemat.Paiement;
-import com.ihm.schemat.Reservation;
+import com.ihm.model.Concerner;
+import com.ihm.model.CorrespondA;
+import com.ihm.model.Evenement;
+import com.ihm.model.Paiement;
+import com.ihm.model.Reservation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -63,12 +61,13 @@ public class DashboardService {
         this.placeRepository = placeRepository;
     }
 
+    // ventes journalieres d'un organisateur
     @Transactional(readOnly = true)
-    public List<DailySalesDTO> getDailySales(String codeOrg) {
+    public List<DashboardDTO.DailySales> getDailySales(String codeOrg) {
         List<Object[]> raw = paiementRepository.dailySalesByOrganizer(codeOrg);
-        List<DailySalesDTO> result = new ArrayList<>();
+        List<DashboardDTO.DailySales> result = new ArrayList<>();
         for (Object[] row : raw) {
-            result.add(new DailySalesDTO(
+            result.add(new DashboardDTO.DailySales(
                     ((java.sql.Date) row[0]).toLocalDate(),
                     row[1] != null ? (Long) row[1] : 0L,
                     row[2] != null ? ((BigDecimal) row[2]).doubleValue() : 0.0));
@@ -76,10 +75,11 @@ public class DashboardService {
         return result;
     }
 
+    // statistiques administrateur
     @Transactional(readOnly = true)
-    public DashboardStatsDTO getAdminStats() {
+    public DashboardDTO.AdminStats getAdminStats() {
         log.debug("Fetching admin dashboard stats");
-        DashboardStatsDTO stats = new DashboardStatsDTO();
+        DashboardDTO.AdminStats stats = new DashboardDTO.AdminStats();
 
         stats.setTotalEvents(evenementRepository.count());
         stats.setTotalClients(clientRepository.countAllClients());
@@ -122,12 +122,13 @@ public class DashboardService {
         return stats;
     }
 
+    // statistiques d'un organisateur
     @Transactional(readOnly = true)
-    public OrganizerDashboardDTO getOrganizerStats(String codeOrg) {
+    public DashboardDTO.OrganizerStats getOrganizerStats(String codeOrg) {
         log.debug("Fetching organizer stats for: {}", codeOrg);
         List<Evenement> myEvents = evenementRepository.findByOrganisateur_CodeUtilisateur(codeOrg);
 
-        OrganizerDashboardDTO stats = new OrganizerDashboardDTO();
+        DashboardDTO.OrganizerStats stats = new DashboardDTO.OrganizerStats();
         stats.setCodeOrganisateur(codeOrg);
         stats.setTotalEvents(myEvents.size());
         stats.setMyEvents(myEvents.stream().map(this::toDTO).collect(Collectors.toList()));
@@ -164,13 +165,14 @@ public class DashboardService {
         return stats;
     }
 
+    // statistiques d'un evenement
     @Transactional(readOnly = true)
-    public EventStatsDTO getEventStats(Integer idEvent) {
+    public DashboardDTO.EventStats getEventStats(Integer idEvent) {
         log.debug("Fetching stats for event: {}", idEvent);
         Evenement event = evenementRepository.findByIdEvenement(idEvent)
                 .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", idEvent));
 
-        EventStatsDTO stats = new EventStatsDTO();
+        DashboardDTO.EventStats stats = new DashboardDTO.EventStats();
         stats.setIdEvenement(event.getIdEvenement());
         stats.setTitre(event.getTitre());
         stats.setStatut(event.getStatut());
@@ -216,7 +218,7 @@ public class DashboardService {
         dto.setImage(event.getImage());
         dto.setStatut(event.getStatut());
         dto.setCodeCategorie(event.getCategorie() != null ? event.getCategorie().getCodeCategorie() : null);
-        dto.setIdLieu(event.getLieu() != null ? event.getLieu().getIdLieu() : null);
+        dto.setCodeLieu(event.getLieu() != null ? event.getLieu().getCode() : null);
         dto.setCodeOrganisateur(event.getOrganisateur().getCodeUtilisateur());
         return dto;
     }

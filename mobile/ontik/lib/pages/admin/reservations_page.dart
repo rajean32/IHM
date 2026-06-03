@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/reservation_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
+import '../../core/utils/error_helper.dart';
 
 import '../../models/reservation_model.dart';
 import '../../widgets/crud_list_view.dart';
@@ -33,7 +34,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = apiErrorString(e); _loading = false; });
     }
   }
 

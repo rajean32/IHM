@@ -1,7 +1,7 @@
 package com.ihm.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ihm.model.dto.LieuDTO;
+import com.ihm.schema.LieuDTO;
 import com.ihm.repository.LieuRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +38,7 @@ class LieuControllerTest {
     @Test
     void testCreateAndGetLieu() throws Exception {
         LieuDTO dto = new LieuDTO();
+        dto.setCode("PALAIS01");
         dto.setNomLieu("Palais des Sports");
         dto.setAdresse("123 Rue du Sport");
         dto.setVille("Paris");
@@ -51,9 +52,9 @@ class LieuControllerTest {
                 .andReturn();
 
         String response = result.getResponse().getContentAsString();
-        int id = objectMapper.readTree(response).get("data").get("idLieu").asInt();
+        String code = objectMapper.readTree(response).get("data").get("code").asText();
 
-        mockMvc.perform(get("/api/lieux/" + id))
+        mockMvc.perform(get("/api/lieux/" + code))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.nomLieu").value("Palais des Sports"));
     }
@@ -61,6 +62,7 @@ class LieuControllerTest {
     @Test
     void testGetAllLieux() throws Exception {
         LieuDTO dto1 = new LieuDTO();
+        dto1.setCode("PALAIS01");
         dto1.setNomLieu("Palais des Sports");
         dto1.setVille("Paris");
         mockMvc.perform(post("/api/lieux")
@@ -68,6 +70,7 @@ class LieuControllerTest {
                 .content(objectMapper.writeValueAsString(dto1)));
 
         LieuDTO dto2 = new LieuDTO();
+        dto2.setCode("STADE01");
         dto2.setNomLieu("Stade Municipal");
         dto2.setVille("Lyon");
         mockMvc.perform(post("/api/lieux")
@@ -82,6 +85,7 @@ class LieuControllerTest {
     @Test
     void testUpdateLieu() throws Exception {
         LieuDTO dto = new LieuDTO();
+        dto.setCode("OLD001");
         dto.setNomLieu("Old Name");
         dto.setVille("Paris");
 
@@ -91,11 +95,11 @@ class LieuControllerTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        int id = objectMapper.readTree(result.getResponse().getContentAsString())
-                .get("data").get("idLieu").asInt();
+        String code = objectMapper.readTree(result.getResponse().getContentAsString())
+                .get("data").get("code").asText();
 
         dto.setNomLieu("New Name");
-        mockMvc.perform(put("/api/lieux/" + id)
+        mockMvc.perform(put("/api/lieux/" + code)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -105,6 +109,7 @@ class LieuControllerTest {
     @Test
     void testDeleteLieu() throws Exception {
         LieuDTO dto = new LieuDTO();
+        dto.setCode("DELETE01");
         dto.setNomLieu("Place to Delete");
         dto.setVille("Marseille");
 
@@ -114,25 +119,26 @@ class LieuControllerTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        int id = objectMapper.readTree(result.getResponse().getContentAsString())
-                .get("data").get("idLieu").asInt();
+        String code = objectMapper.readTree(result.getResponse().getContentAsString())
+                .get("data").get("code").asText();
 
-        mockMvc.perform(delete("/api/lieux/" + id))
+        mockMvc.perform(delete("/api/lieux/" + code))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/lieux/" + id))
+        mockMvc.perform(get("/api/lieux/" + code))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void testGetNonExistentLieu() throws Exception {
-        mockMvc.perform(get("/api/lieux/99999"))
+        mockMvc.perform(get("/api/lieux/INEXISTANT"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void testCreateWithInvalidData() throws Exception {
         LieuDTO dto = new LieuDTO();
+        dto.setCode("INVAL");
         dto.setNomLieu("");
         mockMvc.perform(post("/api/lieux")
                         .contentType(MediaType.APPLICATION_JSON)

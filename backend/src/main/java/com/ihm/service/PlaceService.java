@@ -2,14 +2,13 @@ package com.ihm.service;
 
 import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
-import com.ihm.model.dto.BatchPlaceRequest;
-import com.ihm.model.dto.PlaceDTO;
+import com.ihm.schema.PlaceDTO;
 import com.ihm.repository.PlaceRepository;
 import com.ihm.repository.SalleRepository;
-import com.ihm.schemat.Lieu;
-import com.ihm.schemat.Place;
-import com.ihm.schemat.Salle;
-import com.ihm.schemat.StatutPlace;
+import com.ihm.model.Lieu;
+import com.ihm.model.Place;
+import com.ihm.model.Salle;
+import com.ihm.model.StatutPlace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,11 +33,11 @@ public class PlaceService {
 
     private String buildCombinedKey(Salle salle, String rang, String seatNumber) {
         Lieu lieu = salle.getLieu();
-        String lieuName = lieu != null ? lieu.getNomLieu().replace("-", " ") : "Inconnu";
-        String salleName = salle.getNomSalle().replace("-", " ");
-        return lieuName + " - " + salleName + " - " + rang + " - " + seatNumber;
+        String lieuId = lieu != null ? lieu.getCode() : "?";
+        return lieuId + "-" + salle.getNumeroSalle() + "-" + rang + "-" + seatNumber;
     }
 
+    // recuperation de toutes les places
     public List<PlaceDTO> getAll() {
         log.debug("Fetching all places");
         return placeRepository.findAll()
@@ -47,6 +46,7 @@ public class PlaceService {
                 .collect(Collectors.toList());
     }
 
+    // places d'une salle
     public List<PlaceDTO> getBySalle(String numeroSalle) {
         log.debug("Fetching places by salle: {}", numeroSalle);
         return placeRepository.findBySalle_NumeroSalle(numeroSalle)
@@ -55,6 +55,7 @@ public class PlaceService {
                 .collect(Collectors.toList());
     }
 
+    // recuperation d'une place par son numero
     public PlaceDTO getById(String numero) {
         log.debug("Fetching place by numero: {}", numero);
         Place place = placeRepository.findByNumeroPlace(numero)
@@ -62,6 +63,7 @@ public class PlaceService {
         return toDTO(place);
     }
 
+    // creation d'une place
     @Transactional
     public PlaceDTO create(PlaceDTO dto) {
         Salle salle = salleRepository.findByNumeroSalle(dto.getNumeroSalle())
@@ -89,8 +91,9 @@ public class PlaceService {
         return toDTO(saved);
     }
 
+    // creation par lot de places
     @Transactional
-    public List<PlaceDTO> createBatch(BatchPlaceRequest request) {
+    public List<PlaceDTO> createBatch(PlaceDTO.BatchPlaceRequest request) {
         log.debug("Batch creating places for salle: {}", request.getNumeroSalle());
         Salle salle = salleRepository.findByNumeroSalle(request.getNumeroSalle())
                 .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", request.getNumeroSalle()));
@@ -122,6 +125,7 @@ public class PlaceService {
         return created;
     }
 
+    // mise a jour d'une place
     @Transactional
     public PlaceDTO update(String numero, PlaceDTO dto) {
         log.debug("Updating place: {}", numero);
@@ -141,6 +145,7 @@ public class PlaceService {
         return toDTO(saved);
     }
 
+    // suppression d'une place
     @Transactional
     public void delete(String numero) {
         log.debug("Deleting place: {}", numero);

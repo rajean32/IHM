@@ -1,7 +1,7 @@
 package com.ihm.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ihm.model.dto.TicketDTO;
+import com.ihm.schema.TicketDTO;
 import com.ihm.repository.TicketRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

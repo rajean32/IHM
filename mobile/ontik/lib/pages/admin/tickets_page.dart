@@ -3,6 +3,7 @@ import '../../core/services/ticket_service.dart';
 import '../../core/assets/app_colors.dart';
 import '../../models/ticket_model.dart';
 import '../../widgets/crud_list_view.dart';
+import '../../core/utils/error_helper.dart';
 
 class TicketsPage extends StatefulWidget {
   const TicketsPage({super.key});
@@ -31,7 +32,7 @@ class _TicketsPageState extends State<TicketsPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() { _error = apiErrorString(e); _loading = false; });
     }
   }
 

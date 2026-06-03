@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/auth_routes.dart';
+import '../../core/utils/error_helper.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -72,7 +73,7 @@ class _RegisterPageState extends State<RegisterPage> {
       Navigator.pushReplacementNamed(context, AuthRoutes.login);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(() => _error = apiErrorString(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

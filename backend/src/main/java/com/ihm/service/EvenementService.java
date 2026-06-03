@@ -2,29 +2,25 @@ package com.ihm.service;
 
 import com.ihm.exception.BadRequestException;
 import com.ihm.exception.ResourceNotFoundException;
-import com.ihm.model.dto.EvenementDTO;
+import com.ihm.schema.EvenementDTO;
+import com.ihm.schema.SalleDTO;
 import com.ihm.repository.*;
-import com.ihm.schemat.*;
+import com.ihm.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class EvenementService {
 
     private static final Logger log = LoggerFactory.getLogger(EvenementService.class);
-
-    private final EvenementRepository evenementRepository;
-    private final CategorieRepository categorieRepository;
-    private final LieuRepository lieuRepository;
-    private final OrganisateurRepository organisateurRepository;
-    private final ConcernerRepository concernerRepository;
-    private final PlaceRepository placeRepository;
 
     private static final List<String> VALID_STATUSES = List.of("planifie", "en_cours", "termine", "annule", "suspendu", "valide");
 
@@ -37,20 +33,42 @@ public class EvenementService {
         "valide",    List.of("suspendu", "annule")
     );
 
+    private static final int POPULAR_LIMIT = 10;
+
+    private final EvenementRepository evenementRepository;
+    private final CategorieRepository categorieRepository;
+    private final LieuRepository lieuRepository;
+    private final OrganisateurRepository organisateurRepository;
+    private final ConcernerRepository concernerRepository;
+    private final PlaceRepository placeRepository;
+    private final TicketRepository ticketRepository;
+    private final CorrespondARepository correspondARepository;
+    private final SalleRepository salleRepository;
+    private final EvenementPlaceConfigurationRepository configRepository;
+
     public EvenementService(EvenementRepository evenementRepository,
                             CategorieRepository categorieRepository,
                             LieuRepository lieuRepository,
                             OrganisateurRepository organisateurRepository,
                             ConcernerRepository concernerRepository,
-                            PlaceRepository placeRepository) {
+                            PlaceRepository placeRepository,
+                            TicketRepository ticketRepository,
+                            CorrespondARepository correspondARepository,
+                            SalleRepository salleRepository,
+                            EvenementPlaceConfigurationRepository configRepository) {
         this.evenementRepository = evenementRepository;
         this.categorieRepository = categorieRepository;
         this.lieuRepository = lieuRepository;
         this.organisateurRepository = organisateurRepository;
         this.concernerRepository = concernerRepository;
         this.placeRepository = placeRepository;
+        this.ticketRepository = ticketRepository;
+        this.correspondARepository = correspondARepository;
+        this.salleRepository = salleRepository;
+        this.configRepository = configRepository;
     }
 
+    // recuperation de tous les evenements
     @Transactional(readOnly = true)
     public List<EvenementDTO> getAll() {
         log.debug("Fetching all events");
@@ -60,6 +78,7 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
+    // recuperation d'un evenement par ID
     @Transactional(readOnly = true)
     public EvenementDTO getById(Integer id) {
         log.debug("Fetching event by id: {}", id);
@@ -68,6 +87,7 @@ public class EvenementService {
         return toDTO(event);
     }
 
+    // recuperation par organisateur
     @Transactional(readOnly = true)
     public List<EvenementDTO> getByOrganisateur(String codeOrg) {
         log.debug("Fetching events by organizer: {}", codeOrg);
@@ -77,6 +97,7 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
+    // recuperation par categorie
     @Transactional(readOnly = true)
     public List<EvenementDTO> getByCategorie(String codeCat) {
         log.debug("Fetching events by category: {}", codeCat);
@@ -86,6 +107,7 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
+    // recuperation par statut
     @Transactional(readOnly = true)
     public List<EvenementDTO> getByStatut(String statut) {
         log.debug("Fetching events by status: {}", statut);
@@ -95,6 +117,7 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
+    // creation d'un evenement
     @Transactional
     public EvenementDTO create(EvenementDTO dto) {
         log.debug("Creating event: {}", dto.getTitre());
@@ -116,11 +139,11 @@ public class EvenementService {
                     .orElseThrow(() -> new ResourceNotFoundException("Categorie", "codeCategorie", dto.getCodeCategorie()));
             event.setCategorie(cat);
         }
-        if (dto.getIdLieu() == null) {
-            throw new BadRequestException("Lieu (idLieu) is required to create an event");
+        if (dto.getCodeLieu() == null) {
+            throw new BadRequestException("Lieu (codeLieu) is required to create an event");
         }
-        Lieu lieu = lieuRepository.findByIdLieu(dto.getIdLieu())
-                .orElseThrow(() -> new ResourceNotFoundException("Lieu", "idLieu", dto.getIdLieu()));
+        Lieu lieu = lieuRepository.findById(dto.getCodeLieu())
+                .orElseThrow(() -> new ResourceNotFoundException("Lieu", "codeLieu", dto.getCodeLieu()));
         event.setLieu(lieu);
         Organisateur org = organisateurRepository.findByCodeUtilisateur(dto.getCodeOrganisateur())
                 .orElseThrow(() -> new ResourceNotFoundException("Organisateur", "codeOrganisateur", dto.getCodeOrganisateur()));
@@ -131,6 +154,7 @@ public class EvenementService {
         return toDTO(saved);
     }
 
+    // mise a jour d'un evenement
     @Transactional
     public EvenementDTO update(Integer id, EvenementDTO dto) {
         log.debug("Updating event: {}", id);
@@ -157,9 +181,9 @@ public class EvenementService {
                     .orElseThrow(() -> new ResourceNotFoundException("Categorie", "codeCategorie", dto.getCodeCategorie()));
             event.setCategorie(cat);
         }
-        if (dto.getIdLieu() != null) {
-            Lieu lieu = lieuRepository.findByIdLieu(dto.getIdLieu())
-                    .orElseThrow(() -> new ResourceNotFoundException("Lieu", "idLieu", dto.getIdLieu()));
+        if (dto.getCodeLieu() != null) {
+            Lieu lieu = lieuRepository.findById(dto.getCodeLieu())
+                    .orElseThrow(() -> new ResourceNotFoundException("Lieu", "codeLieu", dto.getCodeLieu()));
             event.setLieu(lieu);
         }
         Evenement saved = evenementRepository.save(event);
@@ -167,6 +191,7 @@ public class EvenementService {
         return toDTO(saved);
     }
 
+    // suppression d'un evenement
     @Transactional
     public void delete(Integer id) {
         log.debug("Deleting event: {}", id);
@@ -177,6 +202,7 @@ public class EvenementService {
         log.info("Event deleted: id={}", id);
     }
 
+    // validation d'un evenement
     @Transactional
     public EvenementDTO validate(Integer id) {
         log.debug("Validating event: {}", id);
@@ -191,6 +217,7 @@ public class EvenementService {
         return toDTO(saved);
     }
 
+    // suspension d'un evenement
     @Transactional
     public EvenementDTO suspend(Integer id) {
         log.debug("Suspending event: {}", id);
@@ -205,6 +232,7 @@ public class EvenementService {
         return toDTO(saved);
     }
 
+    // reprise d'un evenement
     @Transactional
     public EvenementDTO resume(Integer id) {
         log.debug("Resuming event: {}", id);
@@ -219,6 +247,7 @@ public class EvenementService {
         return toDTO(saved);
     }
 
+    // annulation d'un evenement
     @Transactional
     public EvenementDTO cancel(Integer id, String motif) {
         log.debug("Cancelling event: {}", id);
@@ -234,6 +263,285 @@ public class EvenementService {
         return toDTO(saved);
     }
 
+    // recherche d'evenements
+    @Transactional(readOnly = true)
+    public List<EvenementDTO> searchEvents(EvenementDTO.EventSearchRequest request) {
+        log.debug("Searching events with query: {}, categorie: {}, ville: {}", request.getQ(), request.getCategorie(), request.getVille());
+
+        String query = request.getQ() != null ? request.getQ() : "";
+        LocalDate today = LocalDate.now();
+        List<Evenement> events;
+
+        boolean upcoming = request.getDateFrom() == null && request.getDateTo() == null;
+        LocalDate dateFrom = request.getDateFrom() != null ? request.getDateFrom() : today;
+        LocalDate dateTo = request.getDateTo() != null ? request.getDateTo() : today.plusYears(1);
+
+        if (query.isEmpty() && request.getCategorie() == null && request.getVille() == null) {
+            if (upcoming) {
+                events = evenementRepository.findUpcomingEvents(today);
+            } else {
+                events = evenementRepository.findByDateRange(dateFrom, dateTo);
+            }
+        } else if (query.isEmpty()) {
+            if (request.getCategorie() != null && request.getVille() != null) {
+                events = evenementRepository.searchFullWithDates("", request.getCategorie(), request.getVille(), dateFrom, dateTo);
+            } else if (request.getCategorie() != null) {
+                events = evenementRepository.searchByTitleCategorieDateRange("", request.getCategorie(), dateFrom, dateTo);
+            } else if (request.getVille() != null) {
+                events = evenementRepository.searchByTitleVilleDateRange("", request.getVille(), dateFrom, dateTo);
+            } else {
+                events = Collections.emptyList();
+            }
+        } else if (request.getCategorie() == null && request.getVille() == null) {
+            events = upcoming
+                    ? evenementRepository.searchUpcoming(today, query)
+                    : evenementRepository.searchByTitleAndDateRange(query, dateFrom, dateTo);
+        } else if (request.getCategorie() != null && request.getVille() != null) {
+            events = upcoming
+                    ? evenementRepository.searchUpcomingFull(today, query, request.getCategorie(), request.getVille())
+                    : evenementRepository.searchFullWithDates(query, request.getCategorie(), request.getVille(), dateFrom, dateTo);
+        } else if (request.getCategorie() != null) {
+            events = upcoming
+                    ? evenementRepository.searchUpcomingByCategorie(today, query, request.getCategorie())
+                    : evenementRepository.searchByTitleCategorieDateRange(query, request.getCategorie(), dateFrom, dateTo);
+        } else {
+            events = upcoming
+                    ? evenementRepository.searchUpcomingByVille(today, query, request.getVille())
+                    : evenementRepository.searchByTitleVilleDateRange(query, request.getVille(), dateFrom, dateTo);
+        }
+
+        if (request.getStatut() != null) {
+            events = events.stream()
+                    .filter(e -> request.getStatut().equals(e.getStatut()))
+                    .collect(Collectors.toList());
+        }
+
+        if (request.getCodeLieu() != null) {
+            events = events.stream()
+                    .filter(e -> e.getLieu() != null && request.getCodeLieu().equals(e.getLieu().getCode()))
+                    .collect(Collectors.toList());
+        }
+
+        if (request.getPrixMin() != null || request.getPrixMax() != null) {
+            Set<Integer> eventIds = events.stream().map(Evenement::getIdEvenement).collect(Collectors.toSet());
+            if (!eventIds.isEmpty()) {
+                Map<Integer, BigDecimal> minPrices = new HashMap<>();
+                for (Integer eid : eventIds) {
+                    BigDecimal minP = ticketRepository.findMinPriceByEvent(eid);
+                    if (minP != null) minPrices.put(eid, minP);
+                }
+                events = events.stream()
+                        .filter(e -> {
+                            BigDecimal ep = minPrices.get(e.getIdEvenement());
+                            if (ep == null) return false;
+                            if (request.getPrixMin() != null && ep.compareTo(request.getPrixMin()) < 0) return false;
+                            if (request.getPrixMax() != null && ep.compareTo(request.getPrixMax()) > 0) return false;
+                            return true;
+                        })
+                        .collect(Collectors.toList());
+            }
+        }
+
+        return events.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    // evenements a venir
+    @Transactional(readOnly = true)
+    public List<EvenementDTO> getUpcomingEvents() {
+        log.debug("Fetching upcoming events");
+        return evenementRepository.findUpcomingEvents(LocalDate.now())
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    // evenements populaires
+    @Transactional(readOnly = true)
+    public List<EvenementDTO> getPopularEvents() {
+        log.debug("Fetching popular events");
+        List<Evenement> upcoming = evenementRepository.findUpcomingEvents(LocalDate.now());
+        return upcoming.stream()
+                .sorted((a, b) -> {
+                    long countA = concernerRepository.findByEvenement_IdEvenement(a.getIdEvenement()).size();
+                    long countB = concernerRepository.findByEvenement_IdEvenement(b.getIdEvenement()).size();
+                    return Long.compare(countB, countA);
+                })
+                .limit(POPULAR_LIMIT)
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    // details d'un evenement
+    @Transactional(readOnly = true)
+    public EvenementDTO.EventDetail getEventDetail(Integer idEvent) {
+        log.debug("Fetching event detail: {}", idEvent);
+        Evenement event = evenementRepository.findByIdEvenement(idEvent)
+                .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", idEvent));
+
+        EvenementDTO.EventDetail dto = new EvenementDTO.EventDetail();
+        dto.setIdEvenement(event.getIdEvenement());
+        dto.setTitre(event.getTitre());
+        dto.setDescription(event.getDescription());
+        dto.setDateEvenement(event.getDateEvenement());
+        dto.setHeureEvenement(event.getHeureEvenement());
+        dto.setImage(event.getImage());
+        dto.setStatut(event.getStatut());
+        dto.setCodeCategorie(event.getCategorie() != null ? event.getCategorie().getCodeCategorie() : null);
+        dto.setCategorieNom(event.getCategorie() != null ? event.getCategorie().getNomCategorie() : null);
+        dto.setCodeLieu(event.getLieu() != null ? event.getLieu().getCode() : null);
+        dto.setLieuNom(event.getLieu() != null ? event.getLieu().getNomLieu() : null);
+        dto.setLieuAdresse(event.getLieu() != null ? event.getLieu().getAdresse() : null);
+        dto.setLieuVille(event.getLieu() != null ? event.getLieu().getVille() : null);
+        dto.setCodeOrganisateur(event.getOrganisateur().getCodeUtilisateur());
+        dto.setOrganisateurNom(event.getOrganisateur().getNom() + " " + event.getOrganisateur().getPrenoms());
+
+        List<Concerner> concerners = concernerRepository.findByEvenement_IdEvenement(idEvent);
+        Set<String> reservedPlaces = new HashSet<>();
+        for (Concerner c : concerners) {
+            reservedPlaces.add(c.getPlace().getNumeroPlace());
+        }
+
+        long totalPlaces = placeRepository.countPlacesForEventLocation(idEvent);
+        dto.setPlacesTotal(totalPlaces);
+        dto.setPlacesDisponibles(totalPlaces - reservedPlaces.size());
+
+        BigDecimal minPrice = ticketRepository.findMinPriceByEvent(idEvent);
+        BigDecimal maxPrice = ticketRepository.findMaxPriceByEvent(idEvent);
+        List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(idEvent);
+        Set<String> configuredPlaces = new HashSet<>();
+        for (EvenementPlaceConfiguration cfg : configs) {
+            configuredPlaces.add(cfg.getPlace().getNumeroPlace());
+            if (cfg.getPrixOverride() != null && cfg.getPrixOverride().compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal p = cfg.getPrixOverride();
+                if (minPrice == null || p.compareTo(minPrice) < 0) minPrice = p;
+                if (maxPrice == null || p.compareTo(maxPrice) > 0) maxPrice = p;
+            }
+        }
+        List<Salle> salles = salleRepository.findByLieu_Code(event.getLieu().getCode());
+        for (Salle salle : salles) {
+            List<Place> places = placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle());
+            for (Place place : places) {
+                if (!configuredPlaces.contains(place.getNumeroPlace()) && place.getPrix() != null && place.getPrix().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal p = place.getPrix();
+                    if (minPrice == null || p.compareTo(minPrice) < 0) minPrice = p;
+                    if (maxPrice == null || p.compareTo(maxPrice) > 0) maxPrice = p;
+                }
+            }
+        }
+        dto.setPrixMin(minPrice);
+        dto.setPrixMax(maxPrice);
+
+        return dto;
+    }
+
+    // places disponibles pour un evenement
+    @Transactional(readOnly = true)
+    public List<SalleDTO.SeatingDTO> getAvailableSeats(Integer idEvent) {
+        log.debug("Fetching available seats for event: {}", idEvent);
+        Evenement event = evenementRepository.findByIdEvenement(idEvent)
+                .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", idEvent));
+
+        if (event.getLieu() == null) {
+            return Collections.emptyList();
+        }
+
+        List<Concerner> concerners = concernerRepository.findByEvenement_IdEvenement(idEvent);
+        Set<String> reservedPlaces = new HashSet<>();
+        for (Concerner c : concerners) {
+            reservedPlaces.add(c.getPlace().getNumeroPlace());
+        }
+
+        List<Salle> salles = salleRepository.findByLieu_Code(event.getLieu().getCode());
+        List<Place> allPlaces = new ArrayList<>();
+        for (Salle salle : salles) {
+            allPlaces.addAll(placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle()));
+        }
+
+        List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(idEvent);
+        Map<String, EvenementPlaceConfiguration> configMap = new HashMap<>();
+        for (EvenementPlaceConfiguration cfg : configs) {
+            configMap.put(cfg.getPlace().getNumeroPlace(), cfg);
+        }
+
+        List<SalleDTO.SeatingDTO> seatingList = new ArrayList<>();
+        for (Place place : allPlaces) {
+            SalleDTO.SeatingDTO seating = new SalleDTO.SeatingDTO();
+            seating.setNumeroPlace(place.getNumeroPlace());
+            seating.setRang(place.getRange());
+            seating.setSalle(place.getSalle().getNumeroSalle());
+            seating.setStatut(place.getStatut() != null ? place.getStatut().name() : "DISPONIBLE");
+
+            EvenementPlaceConfiguration cfg = configMap.get(place.getNumeroPlace());
+            if (cfg != null && cfg.getTypePlaceOverride() != null) {
+                seating.setTypePlace(cfg.getTypePlaceOverride());
+            } else {
+                seating.setTypePlace(place.getTypePlace());
+            }
+
+            boolean estReservee = reservedPlaces.contains(place.getNumeroPlace());
+            if (StatutPlace.INDISPONIBLE.equals(place.getStatut())) {
+                seating.setDisponible(false);
+            } else {
+                seating.setDisponible(!estReservee);
+            }
+
+            BigDecimal prixPlace = place.getPrix();
+            if (cfg != null && cfg.getPrixOverride() != null && cfg.getPrixOverride().compareTo(BigDecimal.ZERO) > 0) {
+                seating.setPrix(cfg.getPrixOverride());
+            } else if (prixPlace != null && prixPlace.compareTo(BigDecimal.ZERO) > 0) {
+                seating.setPrix(prixPlace);
+            } else {
+                seating.setPrix(null);
+            }
+            seatingList.add(seating);
+        }
+
+        return seatingList;
+    }
+
+    // expiration automatique des evenements passes
+    @Transactional
+    @Scheduled(cron = "0 0 * * * *")
+    public void autoExpirePastEvents() {
+        LocalDate today = LocalDate.now();
+        List<Evenement> pastEvents = evenementRepository
+                .findByDateEvenementBeforeAndStatutNot(today, "termine");
+
+        int expired = 0;
+        for (Evenement event : pastEvents) {
+            String oldStatut = event.getStatut();
+            event.setStatut("termine");
+            evenementRepository.save(event);
+            log.info("Event '{}' (id={}) auto-expired: {} → termine", event.getTitre(), event.getIdEvenement(), oldStatut);
+            expired++;
+        }
+
+        if (expired > 0) {
+            log.info("Auto-expire: {} event(s) marqués termine", expired);
+        }
+    }
+
+    // demarrage automatique des evenements du jour
+    @Transactional
+    @Scheduled(cron = "0 0 6 * * *")
+    public void autoStartTodayEvents() {
+        LocalDate today = LocalDate.now();
+        List<Evenement> todayEvents = evenementRepository
+                .findByDateEvenementAndStatut(today, "planifie");
+
+        int started = 0;
+        for (Evenement event : todayEvents) {
+            event.setStatut("en_cours");
+            evenementRepository.save(event);
+            log.info("Event '{}' (id={}) auto-started: planifie → en_cours", event.getTitre(), event.getIdEvenement());
+            started++;
+        }
+
+        if (started > 0) {
+            log.info("Auto-start: {} event(s) marqués en_cours", started);
+        }
+    }
+
     private EvenementDTO toDTO(Evenement event) {
         EvenementDTO dto = new EvenementDTO();
         dto.setIdEvenement(event.getIdEvenement());
@@ -246,7 +554,7 @@ public class EvenementService {
         dto.setMotifAnnulation(event.getMotifAnnulation());
         dto.setCodeCategorie(event.getCategorie() != null ? event.getCategorie().getCodeCategorie() : null);
         dto.setCategorieNom(event.getCategorie() != null ? event.getCategorie().getNomCategorie() : null);
-        dto.setIdLieu(event.getLieu() != null ? event.getLieu().getIdLieu() : null);
+        dto.setCodeLieu(event.getLieu() != null ? event.getLieu().getCode() : null);
         dto.setLieuNom(event.getLieu() != null ? event.getLieu().getNomLieu() : null);
         dto.setCodeOrganisateur(event.getOrganisateur().getCodeUtilisateur());
         dto.setOrganisateurNom(event.getOrganisateur().getPrenoms() + " " + event.getOrganisateur().getNom());

@@ -1,7 +1,7 @@
 package com.ihm.repository;
 
-import com.ihm.schemat.Concerner;
-import com.ihm.schemat.ConcernerId;
+import com.ihm.model.Concerner;
+import com.ihm.model.ConcernerId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

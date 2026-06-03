@@ -10,6 +10,7 @@ import '../../models/lieu_model.dart';
 import '../../models/categorie_model.dart';
 import '../../core/assets/app_colors.dart';
 import 'pricing_page.dart';
+import '../../core/utils/error_helper.dart';
 
 class CreateEventPage extends StatefulWidget {
   final Evenement? event;
@@ -29,7 +30,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   DateTime? _selectedDate;
   String? _selectedTime;
   String? _selectedCategorie;
-  int? _selectedLieu;
+  String? _selectedLieu;
   List<Categorie> _categories = [];
   List<Lieu> _lieux = [];
   List<Map<String, dynamic>> _salles = [];
@@ -101,11 +102,11 @@ class _CreateEventPageState extends State<CreateEventPage> {
     }
   }
 
-  Future<void> _loadSalles(int lieuId) async {
+  Future<void> _loadSalles(String lieuCode) async {
     setState(() { _selectedSalle = null; _loadingSalles = true; });
     try {
       final allSalles = await _lieuService.getSalles();
-      final filtered = allSalles.where((s) => (s as Map<String, dynamic>)['idLieu'] == lieuId).cast<Map<String, dynamic>>().toList();
+      final filtered = allSalles.where((s) => (s as Map<String, dynamic>)['codeLieu'] == lieuCode).cast<Map<String, dynamic>>().toList();
       if (!mounted) return;
       setState(() { _salles = filtered; _loadingSalles = false; });
     } catch (e) {
@@ -140,9 +141,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
     _selectedDate = event.dateEvenement;
     _selectedTime = event.heureEvenement;
     _selectedCategorie = event.codeCategorie;
-    _selectedLieu = event.idLieu;
+    _selectedLieu = event.codeLieu;
     _selectedStatut = event.statut ?? 'planifie';
-    if (event.idLieu != null) _loadSalles(event.idLieu!);
+    if (event.codeLieu != null) _loadSalles(event.codeLieu!);
   }
 
   Widget _buildCreateTypePricingSection() {
@@ -580,7 +581,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
         image: _imageCtrl.text.isEmpty ? null : _imageCtrl.text,
         statut: _selectedStatut,
         codeCategorie: _selectedCategorie,
-        idLieu: _selectedLieu,
+        codeLieu: _selectedLieu,
         codeOrganisateur: orgCode,
       );
 
@@ -641,7 +642,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erreur: $e'),
+          content: Text(apiErrorString(e)),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -731,7 +732,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                     onChanged: (v) => setState(() => _selectedCategorie = v),
                   ),
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<int>(
+                  DropdownButtonFormField<String>(
                     value: _selectedLieu,
                     isExpanded: true,
                     decoration: const InputDecoration(
@@ -742,7 +743,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                     ),
                     items: _lieux
                         .map((l) => DropdownMenuItem(
-                              value: l.idLieu,
+                              value: l.code,
                               child: Text(l.nomLieu, style: const TextStyle(fontSize: 13)),
                             ))
                         .toList(),

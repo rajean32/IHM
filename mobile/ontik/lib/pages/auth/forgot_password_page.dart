@@ -6,6 +6,7 @@ import '../../core/routes/auth_routes.dart';
 import '../../core/routes/client_routes.dart';
 import '../../core/routes/organizer_routes.dart';
 import '../../core/routes/admin_routes.dart';
+import '../../core/utils/error_helper.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -47,7 +48,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _loading = true; _error = null; });
     try {
-      await AuthService().firstLogin(_newEmailCtrl.text.trim(), _newPasswordCtrl.text);
+      await AuthService().firstLogin(_codeCtrl.text.trim(), _newEmailCtrl.text.trim(), _newPasswordCtrl.text);
       if (!mounted) return;
       final role = userRole;
       if (role == 'ADMINISTRATEUR') {
@@ -59,7 +60,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(() => _error = apiErrorString(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

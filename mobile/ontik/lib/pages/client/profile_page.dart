@@ -9,6 +9,7 @@ import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
 import '../../widgets/error_state.dart';
+import '../../core/utils/error_helper.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -59,7 +60,7 @@ class _ProfilePageState extends State<ProfilePage>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = apiErrorString(e);
         _loading = false;
       });
     }
@@ -71,7 +72,7 @@ class _ProfilePageState extends State<ProfilePage>
       appBar: AppBar(
         title: const Text('My Reservations'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios),
           onPressed: () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
@@ -156,7 +157,7 @@ class _ProfilePageState extends State<ProfilePage>
               onTap: () => Navigator.pushNamed(
                 context,
                 ClientRoutes.ticket,
-                arguments: t.codeTicket,
+                arguments: {'code': t.codeTicket},
               ),
             ),
           );
