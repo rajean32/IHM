@@ -40,6 +40,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
   Widget build(BuildContext context) {
     return CrudListView(
       title: 'Paiements',
+      showAppBar: false,
       isLoading: _loading,
       error: _error,
       items: _payments.map((p) => CrudItem(

@@ -25,11 +25,11 @@ class _EventPageState extends State<EventPage> {
   @override
   void initState() { super.initState(); _loadData(); }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool showLoader = true}) async {
     final orgCode = userCode ?? '';
     if (orgCode.isEmpty) return;
 
-    setState(() => _loading = true);
+    if (showLoader) setState(() => _loading = true);
     try {
       final eventService = EvenementService();
       final data = await eventService.getEvents(orgCode: orgCode);
@@ -42,8 +42,9 @@ class _EventPageState extends State<EventPage> {
     }
   }
 
-  void _showPricingModal(Evenement event) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => PricingPage(eventId: event.idEvenement!)));
+  Future<void> _showPricingModal(Evenement event) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => PricingPage(eventId: event.idEvenement!)));
+    _loadData(showLoader: false);
   }
 
   Future<void> _deleteEvent(Evenement event) async {
@@ -219,10 +220,13 @@ class _EventPageState extends State<EventPage> {
                                         child: Text(event.statut ?? '', style: TextStyle(fontSize: 10, color: sc, fontWeight: FontWeight.w600)),
                                       ),
                                       PopupMenuButton<String>(
-                                        onSelected: (v) {
+                                        onSelected: (v) async {
                                           if (v == 'info') _showEventInfo(event);
-                                          if (v == 'edit') Navigator.push(context, MaterialPageRoute(builder: (_) => CreateEventPage(event: event)));
-                                          if (v == 'pricing') _showPricingModal(event);
+                                          if (v == 'edit') {
+                                            await Navigator.push(context, MaterialPageRoute(builder: (_) => CreateEventPage(event: event)));
+                                            _loadData(showLoader: false);
+                                          }
+                                          if (v == 'pricing') await _showPricingModal(event);
                                           if (v == 'delete') _deleteEvent(event);
                                         },
                                         itemBuilder: (ctx) => [
@@ -241,7 +245,10 @@ class _EventPageState extends State<EventPage> {
                   ),
                 ]),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateEventPage())),
+        onPressed: () async {
+          await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateEventPage()));
+          _loadData(showLoader: false);
+        },
         child: const Icon(Icons.add),
       ),
     );

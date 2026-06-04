@@ -61,6 +61,7 @@ class CrudListView extends StatefulWidget {
   final String? filterLabel;
   final String? emptyMessage;
   final Widget Function()? emptyBuilder;
+  final bool showAppBar;
 
   const CrudListView({
     super.key,
@@ -79,6 +80,7 @@ class CrudListView extends StatefulWidget {
     this.filterLabel,
     this.emptyMessage,
     this.emptyBuilder,
+    this.showAppBar = true,
   });
 
   @override
@@ -356,7 +358,7 @@ class _CrudListViewState extends State<CrudListView> {
     final showFab = widget.onAdd != null;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: widget.showAppBar ? AppBar(
         title: Text(widget.title),
         actions: [
           if (_bulkMode)
@@ -379,7 +381,7 @@ class _CrudListViewState extends State<CrudListView> {
           if (widget.onRefresh != null)
             IconButton(icon: const Icon(Icons.refresh), onPressed: widget.onRefresh),
         ],
-      ),
+      ) : null,
       body: Column(children: [
         if (widget.filterOptions != null || widget.formFields.isNotEmpty)
           Padding(

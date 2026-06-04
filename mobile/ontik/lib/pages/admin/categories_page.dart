@@ -52,6 +52,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
   Widget build(BuildContext context) {
     return CrudListView(
       title: 'Catégories',
+      showAppBar: false,
       isLoading: _loading,
       error: _error,
       items: _categories.map((c) => CrudItem(
@@ -59,11 +60,11 @@ class _CategoriesPageState extends State<CategoriesPage> {
         title: c.nomCategorie,
         subtitle: 'Code: ${c.codeCategorie}',
         leading: CircleAvatar(child: Text(c.codeCategorie.isNotEmpty ? c.codeCategorie[0].toUpperCase() : '?')),
-        data: {'code': c.codeCategorie, 'nom': c.nomCategorie},
+        data: {'codeCategorie': c.codeCategorie, 'nomCategorie': c.nomCategorie},
       )).toList(),
       formFields: [
-        CrudField(key: 'code', label: 'Code', hint: 'CAT01', required: true),
-        CrudField(key: 'nom', label: 'Nom', required: true),
+        CrudField(key: 'codeCategorie', label: 'Code', hint: 'CAT01', required: true),
+        CrudField(key: 'nomCategorie', label: 'Nom', required: true),
       ],
       onAdd: _add,
       onDelete: _delete,

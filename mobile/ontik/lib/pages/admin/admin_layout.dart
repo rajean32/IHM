@@ -55,13 +55,13 @@ class _AdminLayoutState extends State<AdminLayout> {
     ];
 
     final navDestinations = [
-      const NavigationRailDestination(icon: Icon(Icons.dashboard), label: Text('Dashboard')),
+      const NavigationRailDestination(icon: Icon(Icons.dashboard), label: Text('Tableau de bord')),
       const NavigationRailDestination(icon: Icon(Icons.people), label: Text('Utilisateurs')),
       const NavigationRailDestination(icon: Icon(Icons.event), label: Text('Événements')),
       const NavigationRailDestination(icon: Icon(Icons.category), label: Text('Catégories')),
       const NavigationRailDestination(icon: Icon(Icons.location_city), label: Text('Lieux')),
       const NavigationRailDestination(icon: Icon(Icons.meeting_room), label: Text('Places')),
-      const NavigationRailDestination(icon: Icon(Icons.confirmation_number), label: Text('Tickets')),
+      const NavigationRailDestination(icon: Icon(Icons.confirmation_number), label: Text('Billets')),
       const NavigationRailDestination(icon: Icon(Icons.book_online), label: Text('Réservations')),
       const NavigationRailDestination(icon: Icon(Icons.payment), label: Text('Paiements')),
       const NavigationRailDestination(icon: Icon(Icons.person), label: Text('Profil')),
@@ -72,12 +72,12 @@ class _AdminLayoutState extends State<AdminLayout> {
         title: Row(children: [
           Image.asset('lib/utils/logo_icon.png', height: 28, fit: BoxFit.contain, color: Colors.white),
           const SizedBox(width: 8),
-          const Text('Admin Panel'),
+          const Text('Panneau d\'administration'),
         ]),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+            tooltip: 'Déconnexion',
             onPressed: _logout,
           ),
         ],

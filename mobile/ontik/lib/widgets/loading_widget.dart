@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/assets/app_colors.dart';
 
 class LoadingWidget extends StatelessWidget {
   final String? message;
@@ -14,7 +15,7 @@ class LoadingWidget extends StatelessWidget {
           const CircularProgressIndicator(),
           if (message != null) ...[
             const SizedBox(height: 16),
-            Text(message!, style: const TextStyle(color: Colors.grey)),
+            Text(message!, style: const TextStyle(color: AppColors.textSecondary)),
           ],
         ],
       ),

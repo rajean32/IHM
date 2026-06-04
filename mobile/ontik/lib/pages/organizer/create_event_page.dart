@@ -103,7 +103,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }
 
   Future<void> _loadSalles(String lieuCode) async {
-    setState(() { _selectedSalle = null; _loadingSalles = true; });
+    setState(() {
+      if (!_isEditing) _selectedSalle = null;
+      _loadingSalles = true;
+    });
     try {
       final allSalles = await _lieuService.getSalles();
       final filtered = allSalles.where((s) => (s as Map<String, dynamic>)['codeLieu'] == lieuCode).cast<Map<String, dynamic>>().toList();
@@ -119,12 +122,23 @@ class _CreateEventPageState extends State<CreateEventPage> {
     if (_selectedSalle == null) return;
     setState(() => _loadingPlaces = true);
     try {
-      final data = await _placeService.getPlacesBySalle(_selectedSalle!);
-      final places = data.map((e) => EventPlaceConfig.fromJson(e as Map<String, dynamic>)).toList();
+      final List<dynamic> raw;
+      if (_isEditing && widget.event?.idEvenement != null) {
+        raw = await _placeService.getPlacesConfig(widget.event!.idEvenement!, _selectedSalle!);
+      } else {
+        raw = await _placeService.getPlacesBySalle(_selectedSalle!);
+      }
+      final places = raw.map((e) => EventPlaceConfig.fromJson(e as Map<String, dynamic>)).toList();
       if (!mounted) return;
-      final distinctTypes = places.map((p) => p.typePlace ?? 'Standard').toSet().toList()..sort();
+      final distinctTypes = places.map((p) => p.effectiveType).toSet().toList()..sort();
       for (final t in distinctTypes) {
-        _typePrices.putIfAbsent(t, () => TextEditingController());
+        final existing = _typePrices[t];
+        if (existing == null) {
+          final prix = places.any((p) => p.effectiveType == t && p.effectivePrice > 0)
+              ? places.firstWhere((p) => p.effectiveType == t).effectivePrice.toString()
+              : '';
+          _typePrices[t] = TextEditingController(text: prix);
+        }
         if (!_typeOrder.contains(t)) _typeOrder.add(t);
       }
       setState(() { _places = places; _loadingPlaces = false; });
@@ -143,7 +157,26 @@ class _CreateEventPageState extends State<CreateEventPage> {
     _selectedCategorie = event.codeCategorie;
     _selectedLieu = event.codeLieu;
     _selectedStatut = event.statut ?? 'planifie';
-    if (event.codeLieu != null) _loadSalles(event.codeLieu!);
+    if (event.codeLieu != null && _isEditing && event.idEvenement != null) {
+      _loadSalles(event.codeLieu!).then((_) async {
+        String? salle;
+        if (_salles.isNotEmpty) {
+          salle = _salles.first['numeroSalle'] as String?;
+          setState(() => _selectedSalle = salle);
+          _loadPlaces();
+        }
+        try {
+          final eventSalles = await _placeService.getOrganizerEventSalles(event.idEvenement!);
+          if (eventSalles.isNotEmpty && mounted) {
+            final exact = (eventSalles.first as Map<String, dynamic>)['numeroSalle'] as String?;
+            if (exact != null && exact != salle) {
+              setState(() => _selectedSalle = exact);
+              _loadPlaces();
+            }
+          }
+        } catch (_) {}
+      });
+    }
   }
 
   Widget _buildCreateTypePricingSection() {
@@ -587,6 +620,35 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
       if (_isEditing) {
         await _eventService.updateEvent(widget.event!.idEvenement!, event.toJson());
+        if (widget.event!.idEvenement != null) {
+          try {
+            for (final entry in _typePrices.entries) {
+              final prixText = entry.value.text;
+              final prix = prixText.isNotEmpty ? double.tryParse(prixText) : null;
+              if (prix != null) {
+                await _placeService.setTypePricing(widget.event!.idEvenement!, entry.key, prix);
+              }
+            }
+            final rowGroups = <String, List<String>>{};
+            for (final entry in _pendingRowAssignments.entries) {
+              rowGroups.putIfAbsent(entry.value, () => []);
+              rowGroups[entry.value]!.add(entry.key);
+            }
+            final placeGroups = <String, List<String>>{};
+            for (final entry in _pendingPlaceAssignments.entries) {
+              placeGroups.putIfAbsent(entry.value, () => []);
+              placeGroups[entry.value]!.add(entry.key);
+            }
+            final allTypes = {...rowGroups.keys, ...placeGroups.keys};
+            for (final type in allTypes) {
+              await _placeService.assignTypes(widget.event!.idEvenement!, {
+                'typePlace': type,
+                'placeIds': placeGroups[type] ?? [],
+                'rows': rowGroups[type] ?? [],
+              });
+            }
+          } catch (_) {}
+        }
       } else {
         final createdData = await _eventService.createEvent(event.toJson());
         final created = Evenement.fromJson(createdData);
@@ -654,7 +716,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Modifier l\'événement' : 'Create Event')),
+      appBar: AppBar(title: Text(_isEditing ? 'Modifier l\'événement' : 'Créer un événement')),
       body: _dataLoading
           ? const Center(child: CircularProgressIndicator())
           : Form(
@@ -665,10 +727,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
                   TextFormField(
                     controller: _titreCtrl,
                     decoration: const InputDecoration(
-                      labelText: 'Event Title',
+                      labelText: 'Titre de l\'événement',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                    validator: (v) => v == null || v.isEmpty ? 'Obligatoire' : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -683,7 +745,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                   TextFormField(
                     controller: _imageCtrl,
                     decoration: const InputDecoration(
-                      labelText: 'Image URL (optional)',
+                      labelText: 'URL de l\'image (optionnel)',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -698,7 +760,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                       child: Text(
                         _selectedDate != null
                             ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                            : 'Select date',
+                            : 'Sélectionner une date',
                       ),
                     ),
                   ),
@@ -710,7 +772,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         labelText: 'Time',
                         border: OutlineInputBorder(),
                       ),
-                      child: Text(_selectedTime ?? 'Select time'),
+                      child: Text(_selectedTime ?? 'Sélectionner l\'heure'),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -718,7 +780,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                     value: _selectedCategorie,
                     isExpanded: true,
                     decoration: const InputDecoration(
-                      labelText: 'Category',
+                      labelText: 'Catégorie',
                       border: OutlineInputBorder(),
                       isDense: true,
                       contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
@@ -800,7 +862,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                     value: _selectedStatut,
                     isExpanded: true,
                     decoration: const InputDecoration(
-                      labelText: 'Status',
+                      labelText: 'Statut',
                       border: OutlineInputBorder(),
                       isDense: true,
                       contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
@@ -824,7 +886,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Text(_isEditing ? 'Modifier' : 'Create Event'),
+                          : Text(_isEditing ? 'Modifier' : 'Créer l\'événement'),
                     ),
                   ),
                 ],

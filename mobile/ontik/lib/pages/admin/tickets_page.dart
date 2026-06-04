@@ -39,7 +39,8 @@ class _TicketsPageState extends State<TicketsPage> {
   @override
   Widget build(BuildContext context) {
     return CrudListView(
-      title: 'Tickets',
+      title: 'Réservations',
+      showAppBar: false,
       isLoading: _loading,
       error: _error,
       items: _tickets.map((t) => CrudItem(

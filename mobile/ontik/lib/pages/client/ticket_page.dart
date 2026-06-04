@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../core/services/ticket_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
@@ -60,7 +62,7 @@ class _TicketPageState extends State<TicketPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ticket')),
+      appBar: AppBar(title: const Text('Billet')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -74,13 +76,13 @@ class _TicketPageState extends State<TicketPage> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadTicket,
-                        child: const Text('Retry'),
+                        child: const Text('Réessayer'),
                       ),
                     ],
                   ),
                 )
               : _qrData == null
-                  ? const Center(child: Text('Ticket not found'))
+                  ? const Center(child: Text('Billet non trouvé'))
                   : _buildTicket(),
     );
   }
@@ -113,7 +115,7 @@ class _TicketPageState extends State<TicketPage> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    isValid ? 'VALID' : 'INVALID',
+                    isValid ? 'VALIDE' : 'INVALIDE',
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -128,16 +130,16 @@ class _TicketPageState extends State<TicketPage> {
                 ),
                 const SizedBox(height: 12),
                 const Divider(),
-                _infoRow('Event', _qrData!['evenementTitre'] ?? 'N/A'),
-                _infoRow('Seat', _qrData!['placeNumero'] ?? 'N/A'),
+                _infoRow('Événement', _qrData!['evenementTitre'] ?? 'N/A'),
+                _infoRow('Place', _qrData!['placeNumero'] ?? 'N/A'),
                 if (_qrData!['rang'] != null)
-                  _infoRow('Row', _qrData!['rang']),
+                  _infoRow('Rangée', _qrData!['rang']),
                 if (_qrData!['typePlace'] != null)
                   _infoRow('Type', _qrData!['typePlace']),
                 if (_qrData!['prix'] != null)
-                  _infoRow('Price', 'Ar ${_qrData!['prix']}'),
+                  _infoRow('Prix', 'Ar ${_qrData!['prix']}'),
                 if (_qrData!['clientNom'] != null)
-                  _infoRow('Holder', _qrData!['clientNom']),
+                  _infoRow('Titulaire', _qrData!['clientNom']),
                 const Divider(),
                 Text(
                   _qrData!['codeTicket'] ?? '',
@@ -153,18 +155,21 @@ class _TicketPageState extends State<TicketPage> {
 
   Future<void> _downloadPDF() async {
     try {
-      await dio.get(
+      final response = await dio.get(
         '${Endpoints.tickets}/${widget.ticketCode}/pdf',
         options: Options(responseType: ResponseType.bytes),
       );
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/billet_${widget.ticketCode}.pdf');
+      await file.writeAsBytes(response.data as List<int>);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PDF téléchargé'), backgroundColor: AppColors.secondary),
+        SnackBar(content: Text('PDF enregistré dans ${file.path}'), backgroundColor: AppColors.secondary),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Download failed: $e'), backgroundColor: AppColors.error),
+        SnackBar(content: Text('Échec du téléchargement : $e'), backgroundColor: AppColors.error),
       );
     }
   }

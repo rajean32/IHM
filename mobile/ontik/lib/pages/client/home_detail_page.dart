@@ -52,13 +52,13 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Event Details')),
+      appBar: AppBar(title: const Text('Détails')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? Center(child: Text(_error!))
               : _event == null
-                  ? const Center(child: Text('Event not found'))
+                  ? const Center(child: Text('Événement non trouvé'))
                   : _buildContent(),
     );
   }
@@ -95,7 +95,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
           ),
           const SizedBox(height: 16),
           if (event.dateEvenement != null)
-            _buildInfoRow(Icons.calendar_today, DateFormat('EEEE, MMMM d, yyyy').format(event.dateEvenement!)),
+            _buildInfoRow(Icons.calendar_today, DateFormat('EEEE d MMMM yyyy', 'fr').format(event.dateEvenement!)),
           if (event.heureEvenement != null) _buildInfoRow(Icons.access_time, event.heureEvenement!),
           if (event.lieuNom != null) _buildInfoRow(Icons.location_on, event.lieuNom!),
           if (event.lieuAdresse != null) _buildInfoRow(Icons.map, event.lieuAdresse!),
@@ -108,10 +108,10 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
           ],
           const SizedBox(height: 16),
           if (_availableSeats.isNotEmpty) ...[
-            Text('Available Seats: ${_availableSeats.where((s) => s.disponible).length}/${_availableSeats.length}',
+            Text('Places disponibles : ${_availableSeats.where((s) => s.disponible).length}/${_availableSeats.length}',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             if (event.prixMin != null && event.prixMax != null)
-              Text('Price: ${AppConstants.currency}${event.prixMin} - ${AppConstants.currency}${event.prixMax}', style: const TextStyle(fontSize: 16, color: AppColors.secondary)),
+              Text('Prix : ${AppConstants.currency}${event.prixMin} - ${AppConstants.currency}${event.prixMax}', style: const TextStyle(fontSize: 16, color: AppColors.secondary)),
             const SizedBox(height: 8),
           ],
           const SizedBox(height: 24),
@@ -122,7 +122,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   ? () => Navigator.pushNamed(context, ClientRoutes.reservation, arguments: {'eventId': event.idEvenement})
                   : null,
               icon: const Icon(Icons.confirmation_number),
-              label: const Text('Reserve Tickets', style: TextStyle(fontSize: 16)),
+              label: const Text('Réserver', style: TextStyle(fontSize: 16)),
             ),
           ),
         ],

@@ -70,7 +70,7 @@ class _ProfilePageState extends State<ProfilePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Reservations'),
+        title: const Text('Mes Réservations'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () {
@@ -84,8 +84,8 @@ class _ProfilePageState extends State<ProfilePage>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(icon: Icon(Icons.receipt_long), text: 'Reservations'),
-            Tab(icon: Icon(Icons.confirmation_number), text: 'Tickets'),
+            Tab(icon: Icon(Icons.receipt_long), text: 'Réservations'),
+            Tab(icon: Icon(Icons.confirmation_number), text: 'Billets'),
           ],
         ),
       ),
@@ -105,7 +105,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   Widget _buildReservationsList() {
     if (_reservations.isEmpty) {
-      return const Center(child: Text('No reservations yet'));
+      return const Center(child: Text('Aucune réservation'));
     }
     return RefreshIndicator(
       onRefresh: _loadData,
@@ -120,9 +120,9 @@ class _ProfilePageState extends State<ProfilePage>
               leading: const CircleAvatar(
                 child: Icon(Icons.event),
               ),
-              title: Text('Reservation #${r.idReservation}'),
+              title: Text('Réservation #${r.idReservation}'),
               subtitle: r.dateReservation != null
-                  ? Text(DateFormat('MMM d, yyyy').format(r.dateReservation!))
+                  ? Text(DateFormat('d MMM yyyy', 'fr').format(r.dateReservation!))
                   : null,
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _tabController.animateTo(1),
@@ -135,7 +135,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   Widget _buildTicketsList() {
     if (_tickets.isEmpty) {
-      return const Center(child: Text('No tickets yet'));
+      return const Center(child: Text('Aucune réservation'));
     }
     return RefreshIndicator(
       onRefresh: _loadData,

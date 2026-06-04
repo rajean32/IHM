@@ -116,6 +116,9 @@ class _PlacesPageState extends State<PlacesPage> {
     try {
       await dio.delete('${Endpoints.salles}/$id');
       if (_selectedSalle?.numeroSalle == id) _selectedSalle = null;
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Salle supprimée'), backgroundColor: AppColors.secondary),
+      );
       _loadData();
       return true;
     } catch (_) { return false; }
@@ -124,15 +127,22 @@ class _PlacesPageState extends State<PlacesPage> {
   Future<void> _deletePlace(String id) async {
     try {
       await _placeService.deletePlace(id);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Place supprimée'), backgroundColor: AppColors.secondary),
+      );
       _loadData();
     } catch (_) {}
   }
 
   Future<void> _bulkDeletePlaces() async {
+    final count = _selectedPlaceIds.length;
     for (final id in _selectedPlaceIds) {
       await _placeService.deletePlace(id);
     }
     setState(() { _selectedPlaceIds.clear(); _bulkMode = false; });
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$count place(s) supprimée(s)'), backgroundColor: AppColors.secondary),
+    );
     _loadData();
   }
 
@@ -279,32 +289,30 @@ class _PlacesPageState extends State<PlacesPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (_error != null) return Scaffold(body: ErrorState(message: _error!, onRetry: _loadData));
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) return ErrorState(message: _error!, onRetry: _loadData);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Salles & Places'),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildLieuFilter(),
-            const SizedBox(height: 8),
-            _buildSearchBar(_salleSearchCtrl, 'Rechercher une salle...', () => setState(() {})),
-            const SizedBox(height: 8),
-            _buildSallesSection(),
-            if (_selectedSalle != null) ...[
-              const Divider(height: 32),
-              _buildPlacesSection(),
-            ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            const Text('Salles & Places', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Spacer(),
+            IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
+          ]),
+          const SizedBox(height: 8),
+          _buildLieuFilter(),
+          const SizedBox(height: 8),
+          _buildSearchBar(_salleSearchCtrl, 'Rechercher une salle...', () => setState(() {})),
+          const SizedBox(height: 8),
+          _buildSallesSection(),
+          if (_selectedSalle != null) ...[
+            const Divider(height: 32),
+            _buildPlacesSection(),
           ],
-        ),
+        ],
       ),
     );
   }

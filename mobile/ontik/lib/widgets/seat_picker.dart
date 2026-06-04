@@ -100,7 +100,7 @@ class _SeatPickerState extends State<SeatPicker> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Row $row', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                    Text('Rangée $row', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
                     const SizedBox(height: 4),
                     Wrap(spacing: 4, runSpacing: 4, children: seats.map((seat) {
                       final avail = _seatAvailableStatuses.contains(seat.statut);
@@ -113,10 +113,10 @@ class _SeatPickerState extends State<SeatPicker> {
                           width: 34,
                           height: 28,
                           decoration: BoxDecoration(
-                            color: sel ? color : (avail ? color.withValues(alpha: 0.12) : Colors.grey.shade200),
+                            color: sel ? color : (avail ? color.withValues(alpha: 0.12) : AppColors.textSecondary.withValues(alpha: 0.12)),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: sel ? color : (avail ? color.withValues(alpha: 0.3) : Colors.grey.shade300),
+                              color: sel ? color : (avail ? color.withValues(alpha: 0.3) : AppColors.textSecondary.withValues(alpha: 0.25)),
                               width: sel ? 2 : 1,
                             ),
                           ),
@@ -126,7 +126,7 @@ class _SeatPickerState extends State<SeatPicker> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: sel ? Colors.white : (avail ? color : Colors.grey),
+                                color: sel ? Colors.white : (avail ? color : AppColors.textSecondary),
                               ),
                             ),
                           ),

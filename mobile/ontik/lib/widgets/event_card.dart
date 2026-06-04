@@ -79,7 +79,7 @@ class EventCard extends StatelessWidget {
                     const Icon(Icons.calendar_today, size: 16, color: AppTheme.textSecondary),
                     const SizedBox(width: 4),
                     Text(
-                      DateFormat('MMM d, yyyy').format(event.dateEvenement!),
+                        DateFormat('d MMM yyyy', 'fr').format(event.dateEvenement!),
                       style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                     ),
                   ],

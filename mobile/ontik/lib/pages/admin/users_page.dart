@@ -48,7 +48,7 @@ class _UsersPageState extends State<UsersPage> {
       _loadData();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
     }
   }
 
@@ -69,7 +69,7 @@ class _UsersPageState extends State<UsersPage> {
       _loadData();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
     }
   }
 
@@ -119,7 +119,7 @@ class _UsersPageState extends State<UsersPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
     }
   }
 
@@ -141,49 +141,54 @@ class _UsersPageState extends State<UsersPage> {
       _loadData();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gestion utilisateurs'),
-        actions: [
-          TextButton.icon(
-            onPressed: () => setState(() => _showAudit = !_showAudit),
-            icon: Icon(_showAudit ? Icons.people : Icons.history),
-            label: Text(_showAudit ? 'Users' : 'Audit'),
-          ),
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _loadData)
-              : _showAudit
-                  ? _buildAuditLog()
-                  : RefreshIndicator(
-                      onRefresh: _loadData,
-                      child: _users.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.people_outline, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
-                                  const SizedBox(height: 12),
-                                  const Text('Aucun utilisateur trouvé', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-                                ],
-                              ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(8),
-                              itemCount: _users.length,
-                              itemBuilder: (ctx, i) => _buildUserCard(_users[i]),
-                            ),
-                    ),
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) return ErrorState(message: _error!, onRetry: _loadData);
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+          child: Row(children: [
+            const Text('Gestion utilisateurs', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: () => setState(() => _showAudit = !_showAudit),
+              icon: Icon(_showAudit ? Icons.people : Icons.history, size: 18),
+              label: Text(_showAudit ? 'Utilisateurs' : 'Audit', style: const TextStyle(fontSize: 12)),
+            ),
+            IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
+          ]),
+        ),
+        Expanded(
+          child: _showAudit
+              ? _buildAuditLog()
+              : RefreshIndicator(
+                  onRefresh: _loadData,
+                  child: _users.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.people_outline, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
+                              const SizedBox(height: 12),
+                              const Text('Aucun utilisateur trouvé', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(8),
+                          itemCount: _users.length,
+                          itemBuilder: (ctx, i) => _buildUserCard(_users[i]),
+                        ),
+                ),
+        ),
+      ],
     );
   }
 

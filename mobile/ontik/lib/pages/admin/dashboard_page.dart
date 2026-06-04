@@ -244,7 +244,7 @@ class _DashboardPageState extends State<DashboardPage> {
         leading: const Icon(Icons.event),
         title: Text(event.titre),
         subtitle: event.dateEvenement != null
-            ? Text(DateFormat('MMM d, yyyy').format(event.dateEvenement!))
+            ? Text(DateFormat('d MMM yyyy', 'fr').format(event.dateEvenement!))
             : null,
         trailing: event.statut != null
             ? Container(

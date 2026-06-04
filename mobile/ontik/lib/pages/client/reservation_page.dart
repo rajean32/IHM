@@ -87,13 +87,13 @@ class _ReservationPageState extends State<ReservationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Select Seats')),
+      appBar: AppBar(title: const Text('Choisir les places')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? ErrorState(message: _error!, onRetry: _loadDetail)
               : _event == null
-                  ? const Center(child: Text('Event not found'))
+                  ? const Center(child: Text('Événement non trouvé'))
                   : Column(
                       children: [
                         Padding(
@@ -111,7 +111,7 @@ class _ReservationPageState extends State<ReservationPage> {
                                   const Icon(Icons.event_seat, size: 16),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '${_selectedSeats.length} seat(s) selected',
+                                    '${_selectedSeats.length} place(s) sélectionnée(s)',
                                     style: const TextStyle(fontSize: 14),
                                   ),
                                   const Spacer(),
@@ -127,8 +127,8 @@ class _ReservationPageState extends State<ReservationPage> {
                         const Divider(),
                         Expanded(
                           child: _availableSeats.isEmpty
-                              ? const Center(child: Text('No seats available'))
-                              : SingleChildScrollView(
+                              ? const Center(child: Text('Aucune place disponible'))
+                              : Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: SeatPicker(
                                     seats: _availableSeats,
@@ -143,7 +143,7 @@ class _ReservationPageState extends State<ReservationPage> {
                               width: double.infinity,
                               child: ElevatedButton(
                                 onPressed: (_selectedSeats.isEmpty) ? null : _proceedToPayment,
-                                child: Text('Proceed to Payment (Ar ${_totalAmount.toStringAsFixed(2)})'),
+                                child: Text('Payer (Ar ${_totalAmount.toStringAsFixed(2)})'),
                               ),
                             ),
                           ),

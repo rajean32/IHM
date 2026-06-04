@@ -50,6 +50,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
   Widget build(BuildContext context) {
     return CrudListView(
       title: 'Réservations',
+      showAppBar: false,
       isLoading: _loading,
       error: _error,
       items: _reservations.map((r) => CrudItem(

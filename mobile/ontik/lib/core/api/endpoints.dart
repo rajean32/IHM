@@ -17,7 +17,7 @@ class Endpoints {
   static const reservations = '$base/reservations';
   static String reservationById(int id) => '$base/reservations/$id';
 
-  static const payments = '$base/paiements';
+  static const payments = '$base/achat';
 
   static const tickets = '$base/tickets';
   static String ticketByCode(String code) => '$base/tickets/$code';

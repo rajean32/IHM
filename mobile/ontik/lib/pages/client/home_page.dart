@@ -134,7 +134,7 @@ class _HomePageState extends State<HomePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Filters', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Text('Filtres', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     TextButton(
                       onPressed: () {
                         setSheetState(() {
@@ -145,30 +145,30 @@ class _HomePageState extends State<HomePage> {
                           _prixMax = null;
                         });
                       },
-                      child: const Text('Reset'),
+                      child: const Text('Réinitialiser'),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Status', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text('Statut', style: TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _selectedStatut,
                   decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
                   items: _statusOptions.map((s) => DropdownMenuItem(
                     value: s == 'Tous' ? null : s,
-                    child: Text(s == 'Tous' ? 'All' : s),
+                    child: Text(s),
                   )).toList(),
                   onChanged: (v) => setSheetState(() => _selectedStatut = v),
                 ),
                 const SizedBox(height: 16),
-                const Text('Venue', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text('Lieu', style: TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _selectedLieu,
                   decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
                   items: [
-                    const DropdownMenuItem<String>(value: null, child: Text('All Venues')),
+                    const DropdownMenuItem<String>(value: null, child: Text('Tous les lieux')),
                     ..._lieux.map((l) => DropdownMenuItem(
                       value: l.code,
                       child: Text(l.nomLieu),
@@ -194,7 +194,7 @@ class _HomePageState extends State<HomePage> {
                     child: Text(
                       _selectedDateRange != null
                           ? '${_selectedDateRange!.start.toIso8601String().split('T').first} \u2014 ${_selectedDateRange!.end.toIso8601String().split('T').first}'
-                          : 'Select date range',
+                          : 'Sélectionner une plage',
                     ),
                   ),
                 ),
@@ -237,7 +237,7 @@ class _HomePageState extends State<HomePage> {
                     Navigator.pop(ctx);
                     _applyFilters();
                   },
-                  child: const Text('Apply Filters'),
+                  child: const Text('Appliquer'),
                 ),
               ],
             ),
@@ -283,7 +283,7 @@ class _HomePageState extends State<HomePage> {
                   child: TextField(
                     controller: _searchCtrl,
                     decoration: const InputDecoration(
-                      hintText: 'Search events...',
+                      hintText: 'Rechercher...',
                       prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(),
                       isDense: true,
@@ -309,7 +309,7 @@ class _HomePageState extends State<HomePage> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               children: [
-                _buildCategoryChip('All', null),
+                _buildCategoryChip('Tous', null),
                 ..._categories.map((c) => _buildCategoryChip(c.nomCategorie, c.codeCategorie)),
               ],
             ),
@@ -321,9 +321,9 @@ class _HomePageState extends State<HomePage> {
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.event), label: 'Events'),
-          NavigationDestination(icon: Icon(Icons.receipt_long), label: 'My Tickets'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(icon: Icon(Icons.event), label: 'Événements'),
+          NavigationDestination(icon: Icon(Icons.receipt_long), label: 'Réservations'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profil'),
         ],
       ),
     );
@@ -347,7 +347,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildEventList() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (_error != null) return Center(child: Text(_error!));
-    if (_events.isEmpty) return const Center(child: Text('No events found'));
+    if (_events.isEmpty) return const Center(child: Text('Aucun événement trouvé'));
 
     return RefreshIndicator(
       onRefresh: _loadEvents,
@@ -377,12 +377,12 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Icon(Icons.receipt_long, size: 64, color: AppColors.textSecondary),
           const SizedBox(height: 16),
-          const Text('View your tickets and reservations'),
+          const Text('Voir vos réservations'),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () => Navigator.pushNamed(context, ClientRoutes.profile),
             icon: const Icon(Icons.receipt_long),
-            label: const Text('My Tickets'),
+            label: const Text('Mes Réservations'),
           ),
         ],
       ),
@@ -399,7 +399,7 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 16),
         Text(
-          userNom ?? 'User',
+          userNom ?? 'Utilisateur',
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
@@ -412,14 +412,14 @@ class _HomePageState extends State<HomePage> {
         const Divider(),
         ListTile(
           leading: const Icon(Icons.receipt_long),
-          title: const Text('My Reservations'),
+          title: const Text('Mes Réservations'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => Navigator.pushNamed(context, ClientRoutes.profile),
         ),
         const Divider(),
         ListTile(
           leading: const Icon(Icons.logout, color: AppColors.error),
-          title: const Text('Logout', style: TextStyle(color: AppColors.error)),
+          title: const Text('Déconnexion', style: TextStyle(color: AppColors.error)),
           onTap: () async {
             await clearSession();
             if (!mounted) return;

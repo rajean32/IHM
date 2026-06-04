@@ -355,83 +355,87 @@ class _EventsPageState extends State<EventsPage> {
       e.titre.toLowerCase().contains(_filter.toLowerCase())
     ).toList();
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Événements')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _loadData)
-              : Column(children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: TextField(
-                      decoration: const InputDecoration(
-                        hintText: 'Rechercher...',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      onChanged: (v) => setState(() => _filter = v),
-                    ),
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) return ErrorState(message: _error!, onRetry: _loadData);
+
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: Row(children: [
+          const Text('Événements', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Spacer(),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
+        ]),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: TextField(
+          decoration: const InputDecoration(
+            hintText: 'Rechercher...',
+            prefixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(),
+            isDense: true,
+          ),
+          onChanged: (v) => setState(() => _filter = v),
+        ),
+      ),
+      Expanded(
+        child: RefreshIndicator(
+          onRefresh: _loadData,
+          child: filtered.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.event_busy, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
+                      const SizedBox(height: 12),
+                      const Text('Aucun événement trouvé', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                    ],
                   ),
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: _loadData,
-                      child: filtered.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.event_busy, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
-                                  const SizedBox(height: 12),
-                                  const Text('Aucun événement trouvé', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-                                ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: filtered.length,
+                  itemBuilder: (ctx, i) {
+                    final event = filtered[i];
+                    final statusColor = AppConstants.statutColors[event.statut] ?? AppColors.textSecondary;
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: statusColor.withValues(alpha: 0.2),
+                          child: Icon(AppConstants.statutIcons[event.statut] ?? Icons.event, color: statusColor),
+                        ),
+                        title: Text(event.titre, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        subtitle: Text(
+                          '${event.dateEvenement?.toIso8601String().split('T').first ?? ''}  •  ${event.organisateurNom ?? event.codeOrganisateur}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(8),
-                              itemCount: filtered.length,
-                              itemBuilder: (ctx, i) {
-                                final event = filtered[i];
-                                final statusColor = AppConstants.statutColors[event.statut] ?? AppColors.textSecondary;
-                                return Card(
-                                  margin: const EdgeInsets.symmetric(vertical: 4),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: statusColor.withValues(alpha: 0.2),
-                                      child: Icon(AppConstants.statutIcons[event.statut] ?? Icons.event, color: statusColor),
-                                    ),
-                                    title: Text(event.titre, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                    subtitle: Text(
-                                      '${event.dateEvenement?.toIso8601String().split('T').first ?? ''}  •  ${event.organisateurNom ?? event.codeOrganisateur}',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: statusColor.withValues(alpha: 0.2),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Text(event.statut ?? '', style: TextStyle(fontSize: 11, color: statusColor)),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        IconButton(
-                                          icon: const Icon(Icons.info_outline, size: 20),
-                                          tooltip: 'Détails',
-                                          onPressed: () => _showInfoModal(event),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
+                              child: Text(event.statut ?? '', style: TextStyle(fontSize: 11, color: statusColor)),
                             ),
-                    ),
-                  ),
-                ]),
-    );
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: const Icon(Icons.info_outline, size: 20),
+                              tooltip: 'Détails',
+                              onPressed: () => _showInfoModal(event),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ),
+    ]);
   }
 }

@@ -213,6 +213,7 @@ class _LieuxPageState extends State<LieuxPage> {
   Widget build(BuildContext context) {
     return CrudListView(
       title: 'Lieux',
+      showAppBar: false,
       isLoading: _loading,
       error: _error,
       items: _lieux.map((l) => CrudItem(

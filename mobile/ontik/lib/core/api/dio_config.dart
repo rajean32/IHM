@@ -21,6 +21,18 @@ Future<void> init() async {
   if (_token != null) {
     dio.options.headers['Authorization'] = 'Bearer $_token';
   }
+  dio.interceptors.add(_authInterceptor());
+}
+
+Interceptor _authInterceptor() {
+  return InterceptorsWrapper(
+    onError: (error, handler) async {
+      if (error.response?.statusCode == 401) {
+        await clearSession();
+      }
+      handler.next(error);
+    },
+  );
 }
 
 Future<void> setToken(String? token) async {

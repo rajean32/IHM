@@ -67,7 +67,7 @@ class _ScanPageState extends State<ScanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan Ticket'),
+        title: const Text('Scanner un billet'),
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on),
@@ -105,7 +105,7 @@ class _ScanPageState extends State<ScanPage> {
               child: ElevatedButton.icon(
                 onPressed: _resetScanner,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Scan Next'),
+                label: const Text('Scanner suivant'),
               ),
             ),
         ],
@@ -133,7 +133,7 @@ class _ScanPageState extends State<ScanPage> {
                 Icon(Icons.qr_code_scanner, size: 64, color: Colors.white70),
                 SizedBox(height: 8),
                 Text(
-                  'Align QR code within frame',
+                  'Alignez le code QR dans le cadre',
                   style: TextStyle(color: Colors.white70),
                 ),
               ],
@@ -159,7 +159,7 @@ class _ScanPageState extends State<ScanPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            isValid ? 'Valid Ticket' : 'Invalid Ticket',
+            isValid ? 'Billet valide' : 'Billet invalide',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -200,11 +200,11 @@ class _ScanPageState extends State<ScanPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Code: ${r.codeTicket}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Code : ${r.codeTicket}', style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            if (r.evenementTitre.isNotEmpty) Text('Event: ${r.evenementTitre}'),
-            if (r.placeNumero.isNotEmpty) Text('Place: ${r.placeNumero}'),
-            if (r.clientNom != null) Text('Client: ${r.clientNom}'),
+            if (r.evenementTitre.isNotEmpty) Text('Événement : ${r.evenementTitre}'),
+            if (r.placeNumero.isNotEmpty) Text('Place : ${r.placeNumero}'),
+            if (r.clientNom != null) Text('Client : ${r.clientNom}'),
           ],
         ),
       ),
