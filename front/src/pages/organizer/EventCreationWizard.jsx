@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getAll, getById, create, update } from '../../api/entityApi'
+import { getAll, getById, create, update, getUserInfo } from '../../api/entityApi'
 
 const STEPS = ['Informations', 'Média', 'Lieu & Salle', 'Tarification', 'Récapitulatif']
 
@@ -8,6 +8,7 @@ export default function EventCreationWizard() {
   const navigate = useNavigate()
   const { id } = useParams()
   const isEdit = Boolean(id)
+  const user = getUserInfo()
 
   const [step, setStep] = useState(0)
   const [categories, setCategories] = useState([])
@@ -95,8 +96,17 @@ export default function EventCreationWizard() {
     setLoading(true)
     setError('')
     try {
-      const payload = { ...form }
-      delete payload.numeroSalle
+      const payload = {
+        titre: form.titre,
+        description: form.description || undefined,
+        codeCategorie: form.codeCategorie,
+        dateEvenement: form.dateEvenement,
+        heureEvenement: form.heureEvenement || undefined,
+        statut: form.statut,
+        image: form.image || undefined,
+        codeLieu: form.idLieu,
+        codeOrganisateur: user?.codeUtilisateur,
+      }
       if (isEdit) {
         await update('/api/evenements', id, payload)
       } else {

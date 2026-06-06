@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -166,6 +167,15 @@ public class EvenementController {
         log.info("PUT /api/evenements/{}/resume", id);
         EvenementDTO data = evenementService.resume(id);
         return ResponseEntity.ok(ApiResponse.success(200, "Event resumed successfully", data));
+    }
+
+    // upload d'image
+    @PostMapping("/{id}/image")
+    public ResponseEntity<ApiResponse<Void>> uploadImage(@PathVariable Integer id,
+                                                          @RequestParam("file") MultipartFile file) {
+        log.info("POST /api/evenements/{}/image", id);
+        evenementService.uploadImage(id, file);
+        return ResponseEntity.ok(ApiResponse.success(200, "Image uploaded successfully"));
     }
 
     // annulation d'un événement

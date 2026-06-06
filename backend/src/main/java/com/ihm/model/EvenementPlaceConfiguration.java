@@ -2,6 +2,7 @@ package com.ihm.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+
 @Entity
 @Table(name = "EVENEMENT_PLACE_CONFIG",
        uniqueConstraints = @UniqueConstraint(columnNames = {"idEvenement", "NumeroPlace"}))
@@ -16,12 +17,14 @@ public class EvenementPlaceConfiguration {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "NumeroPlace", referencedColumnName = "NumeroPlace", nullable = false)
     private Place place;
-    @Column(name = "typePlaceOverride", length = 50)
-    private String typePlaceOverride;
-    @Column(name = "prixOverride", precision = 10, scale = 2)
-    private BigDecimal prixOverride;
-    @Column(name = "statutPlace", length = 20)
-    private String statutPlace = "LIBRE";
+    @Column(name = "typePlace", length = 50, nullable = false)
+    private String typePlace;
+    @Column(name = "prix", precision = 10, scale = 2, nullable = false)
+    private BigDecimal prix;
+    @Column(name = "range", length = 10, nullable = false)
+    private String range;
+    @Column(name = "statut", length = 20, nullable = false)
+    private String statut = "DISPONIBLE";
     public EvenementPlaceConfiguration() {}
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -29,10 +32,12 @@ public class EvenementPlaceConfiguration {
     public void setEvenement(Evenement evenement) { this.evenement = evenement; }
     public Place getPlace() { return place; }
     public void setPlace(Place place) { this.place = place; }
-    public String getTypePlaceOverride() { return typePlaceOverride; }
-    public void setTypePlaceOverride(String typePlaceOverride) { this.typePlaceOverride = typePlaceOverride; }
-    public BigDecimal getPrixOverride() { return prixOverride; }
-    public void setPrixOverride(BigDecimal prixOverride) { this.prixOverride = prixOverride; }
-    public String getStatutPlace() { return statutPlace; }
-    public void setStatutPlace(String statutPlace) { this.statutPlace = statutPlace; }
+    public String getTypePlace() { return typePlace; }
+    public void setTypePlace(String typePlace) { this.typePlace = typePlace; }
+    public BigDecimal getPrix() { return prix; }
+    public void setPrix(BigDecimal prix) { this.prix = prix; }
+    public String getRange() { return range; }
+    public void setRange(String range) { this.range = range; }
+    public String getStatut() { return statut; }
+    public void setStatut(String statut) { this.statut = statut; }
 }

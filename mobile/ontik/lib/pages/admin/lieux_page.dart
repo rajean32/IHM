@@ -114,8 +114,8 @@ class _LieuxPageState extends State<LieuxPage> {
                                   backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                                   child: Text('$nPlaces', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary)),
                                 ),
-                                title: Text(s.nomSalle),
-                                subtitle: Text('N° ${s.numeroSalle}  •  $nPlaces place(s)'),
+                                title: Text('${s.nomSalle} — ${lieu.nomLieu}'),
+                                subtitle: Text('$nPlaces place(s)'),
                                 trailing: TextButton(
                                   onPressed: () {
                                     Navigator.pop(ctx);
@@ -156,7 +156,6 @@ class _LieuxPageState extends State<LieuxPage> {
 
   void _showAddSalleDialog(Lieu lieu) {
     final nomCtrl = TextEditingController();
-    final numCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -164,11 +163,6 @@ class _LieuxPageState extends State<LieuxPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: numCtrl,
-              decoration: const InputDecoration(labelText: 'Numéro de salle', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 12),
             TextField(
               controller: nomCtrl,
               decoration: const InputDecoration(labelText: 'Nom de la salle', border: OutlineInputBorder()),
@@ -179,10 +173,9 @@ class _LieuxPageState extends State<LieuxPage> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
           ElevatedButton(
             onPressed: () async {
-              if (numCtrl.text.trim().isEmpty || nomCtrl.text.trim().isEmpty) return;
+              if (nomCtrl.text.trim().isEmpty) return;
               try {
                 await _api.createSalle({
-                  'numeroSalle': numCtrl.text.trim(),
                   'nomSalle': nomCtrl.text.trim(),
                   'codeLieu': lieu.code,
                 });

@@ -9,11 +9,12 @@ import java.util.List;
 public class Salle {
     @Id
     @Column(name = "NumeroSalle", length = 50)
-    @NotBlank(message = "Room number is required")
     private String numeroSalle;
     @Column(name = "NomSalle", length = 100, nullable = false)
     @NotBlank(message = "Room name is required")
     private String nomSalle;
+    @Column(name = "RangePlace", length = 50)
+    private String range;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "codeLieu", referencedColumnName = "code", nullable = false)
     private Lieu lieu;
@@ -25,6 +26,8 @@ public class Salle {
     public void setNumeroSalle(String numeroSalle) { this.numeroSalle = numeroSalle; }
     public String getNomSalle() { return nomSalle; }
     public void setNomSalle(String nomSalle) { this.nomSalle = nomSalle; }
+    public String getRange() { return range; }
+    public void setRange(String range) { this.range = range; }
     public Lieu getLieu() { return lieu; }
     public void setLieu(Lieu lieu) { this.lieu = lieu; }
     public List<Place> getPlaces() { return places; }

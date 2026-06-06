@@ -25,19 +25,22 @@ public class ClientService {
     private final PasswordEncoder passwordEncoder;
     private final TicketRepository ticketRepository;
     private final ConcernerRepository concernerRepository;
+    private final EvenementPlaceConfigurationRepository configRepository;
 
     public ClientService(ClientRepository clientRepository,
                          UtilisateurRepository utilisateurRepository,
                          AdministrateurRepository administrateurRepository,
                          PasswordEncoder passwordEncoder,
                          TicketRepository ticketRepository,
-                         ConcernerRepository concernerRepository) {
+                         ConcernerRepository concernerRepository,
+                         EvenementPlaceConfigurationRepository configRepository) {
         this.clientRepository = clientRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.administrateurRepository = administrateurRepository;
         this.passwordEncoder = passwordEncoder;
         this.ticketRepository = ticketRepository;
         this.concernerRepository = concernerRepository;
+        this.configRepository = configRepository;
     }
 
     // recuperation de tous les clients
@@ -140,9 +143,13 @@ public class ClientService {
                 dto.setDateEvenement(c.getEvenement().getDateEvenement());
                 dto.setHeureEvenement(c.getEvenement().getHeureEvenement());
                 dto.setNumeroPlace(c.getPlace().getNumeroPlace());
-                dto.setRang(c.getPlace().getRange());
-                dto.setTypePlace(c.getPlace().getTypePlace());
-                dto.setStatut(c.getPlace().getStatut().name());
+                EvenementPlaceConfiguration cfg = configRepository
+                        .findByEvenement_IdEvenementAndPlace_NumeroPlace(
+                                c.getEvenement().getIdEvenement(), c.getPlace().getNumeroPlace())
+                        .orElse(null);
+                dto.setRang(cfg != null ? cfg.getRange() : "");
+                dto.setTypePlace(cfg != null ? cfg.getTypePlace() : "");
+                dto.setStatut(cfg != null ? cfg.getStatut() : "");
                 if (c.getEvenement().getLieu() != null) {
                     dto.setLieuNom(c.getEvenement().getLieu().getNomLieu());
                 }

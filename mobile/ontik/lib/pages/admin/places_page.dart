@@ -230,7 +230,6 @@ class _PlacesPageState extends State<PlacesPage> {
   }
 
   void _showSalleForm({Salle? salle}) {
-    final numCtrl = TextEditingController(text: salle?.numeroSalle ?? '');
     final nomCtrl = TextEditingController(text: salle?.nomSalle ?? '');
     String? lieuCode = salle?.codeLieu;
     final formKey = GlobalKey<FormState>();
@@ -246,12 +245,6 @@ class _PlacesPageState extends State<PlacesPage> {
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Text(salle != null ? 'Modifier la salle' : 'Ajouter une salle', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: numCtrl,
-              decoration: const InputDecoration(labelText: 'Numéro', border: OutlineInputBorder()),
-              validator: (v) => v == null || v.trim().isEmpty ? 'Requis' : null,
-            ),
-            const SizedBox(height: 12),
             TextFormField(
               controller: nomCtrl,
               decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()),
@@ -269,7 +262,7 @@ class _PlacesPageState extends State<PlacesPage> {
             ElevatedButton(
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
-                final data = {'numeroSalle': numCtrl.text.trim(), 'nomSalle': nomCtrl.text.trim(), 'codeLieu': lieuCode};
+                final data = {'nomSalle': nomCtrl.text.trim(), 'codeLieu': lieuCode};
                 if (salle != null) {
                   await dio.delete('${Endpoints.salles}/${salle.numeroSalle}');
                 }
@@ -397,7 +390,7 @@ class _PlacesPageState extends State<PlacesPage> {
                 ),
               ),
               title: Text(s.nomSalle, style: const TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text('N° ${s.numeroSalle}  •  ${lieuMap[s.codeLieu]?.nomLieu ?? '-'}'),
+              subtitle: Text('${lieuMap[s.codeLieu]?.nomLieu ?? '-'}  •  ${_placeCount(s.numeroSalle)} place(s)'),
               selected: _selectedSalle?.numeroSalle == s.numeroSalle,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,

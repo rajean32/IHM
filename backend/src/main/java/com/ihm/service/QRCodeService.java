@@ -41,7 +41,7 @@ public class QRCodeService {
             byte[] imageBytes = outputStream.toByteArray();
             return Base64.getEncoder().encodeToString(imageBytes);
         } catch (WriterException | IOException e) {
-            log.error("Failed to generate QR code: {}", e.getMessage());
+            log.error("Error: {}", e.getMessage());
             throw new RuntimeException("Failed to generate QR code", e);
         }
     }
@@ -53,7 +53,7 @@ public class QRCodeService {
             ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
             return ImageIO.read(bais);
         } catch (IOException e) {
-            log.error("Failed to decode base64 image: {}", e.getMessage());
+            log.error("Error: {}", e.getMessage());
             throw new RuntimeException("Failed to decode QR code image", e);
         }
     }

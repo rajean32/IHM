@@ -8,8 +8,10 @@ import com.ihm.repository.*;
 import com.ihm.model.Concerner;
 import com.ihm.model.CorrespondA;
 import com.ihm.model.Evenement;
+import com.ihm.model.EvenementPlaceConfiguration;
 import com.ihm.model.Paiement;
 import com.ihm.model.Reservation;
+import com.ihm.util.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +38,7 @@ public class DashboardService {
     private final ConcernerRepository concernerRepository;
     private final CorrespondARepository correspondARepository;
     private final PlaceRepository placeRepository;
+    private final EvenementPlaceConfigurationRepository configRepository;
 
     public DashboardService(EvenementRepository evenementRepository,
                             ClientRepository clientRepository,
@@ -47,7 +50,8 @@ public class DashboardService {
                             SalleRepository salleRepository,
                             ConcernerRepository concernerRepository,
                             CorrespondARepository correspondARepository,
-                            PlaceRepository placeRepository) {
+                            PlaceRepository placeRepository,
+                            EvenementPlaceConfigurationRepository configRepository) {
         this.evenementRepository = evenementRepository;
         this.clientRepository = clientRepository;
         this.organisateurRepository = organisateurRepository;
@@ -59,6 +63,7 @@ public class DashboardService {
         this.concernerRepository = concernerRepository;
         this.correspondARepository = correspondARepository;
         this.placeRepository = placeRepository;
+        this.configRepository = configRepository;
     }
 
     // ventes journalieres d'un organisateur
@@ -200,7 +205,10 @@ public class DashboardService {
 
         Map<String, Long> ticketsByType = new HashMap<>();
         for (Concerner c : concerners) {
-            String type = c.getPlace().getTypePlace() != null ? c.getPlace().getTypePlace() : "Standard";
+            EvenementPlaceConfiguration cfg = configRepository
+                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(idEvent, c.getPlace().getNumeroPlace())
+                    .orElse(null);
+            String type = cfg != null && cfg.getTypePlace() != null ? cfg.getTypePlace() : "Standard";
             ticketsByType.merge(type, 1L, Long::sum);
         }
         stats.setTicketsByType(ticketsByType);
@@ -215,7 +223,7 @@ public class DashboardService {
         dto.setDescription(event.getDescription());
         dto.setDateEvenement(event.getDateEvenement());
         dto.setHeureEvenement(event.getHeureEvenement());
-        dto.setImage(event.getImage());
+        dto.setImage(ImageUtils.toDataUrl(event.getImage()));
         dto.setStatut(event.getStatut());
         dto.setCodeCategorie(event.getCategorie() != null ? event.getCategorie().getCodeCategorie() : null);
         dto.setCodeLieu(event.getLieu() != null ? event.getLieu().getCode() : null);

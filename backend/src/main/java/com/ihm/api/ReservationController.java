@@ -7,6 +7,7 @@ import com.ihm.schema.TicketDTO;
 import com.ihm.repository.CorrespondARepository;
 import com.ihm.repository.ConcernerRepository;
 import com.ihm.repository.EvenementRepository;
+import com.ihm.repository.EvenementPlaceConfigurationRepository;
 import com.ihm.repository.PlaceRepository;
 import com.ihm.repository.ReservationRepository;
 import com.ihm.repository.TicketRepository;
@@ -40,15 +41,17 @@ public class ReservationController {
     private final TicketRepository ticketRepository;
     private final PlaceRepository placeRepository;
     private final ReservationRepository reservationRepository;
+    private final EvenementPlaceConfigurationRepository configRepository;
 
     public ReservationController(ReservationService reservationService,
-                                 TicketService ticketService,
-                                 CorrespondARepository correspondARepository,
-                                 ConcernerRepository concernerRepository,
-                                 EvenementRepository evenementRepository,
-                                 TicketRepository ticketRepository,
-                                 PlaceRepository placeRepository,
-                                 ReservationRepository reservationRepository) {
+                                  TicketService ticketService,
+                                  CorrespondARepository correspondARepository,
+                                  ConcernerRepository concernerRepository,
+                                  EvenementRepository evenementRepository,
+                                  TicketRepository ticketRepository,
+                                  PlaceRepository placeRepository,
+                                  ReservationRepository reservationRepository,
+                                  EvenementPlaceConfigurationRepository configRepository) {
         this.reservationService = reservationService;
         this.ticketService = ticketService;
         this.correspondARepository = correspondARepository;
@@ -57,6 +60,7 @@ public class ReservationController {
         this.ticketRepository = ticketRepository;
         this.placeRepository = placeRepository;
         this.reservationRepository = reservationRepository;
+        this.configRepository = configRepository;
     }
 
     // liste des réservations
@@ -203,8 +207,13 @@ public class ReservationController {
         concerner.setPlace(place);
         Concerner saved = concernerRepository.save(concerner);
 
-        place.setStatut(StatutPlace.RESERVEE);
-        placeRepository.save(place);
+        EvenementPlaceConfiguration config = configRepository
+                .findByEvenement_IdEvenementAndPlace_NumeroPlace(dto.getIdEvenement(), dto.getNumeroPlace())
+                .orElse(null);
+        if (config != null) {
+            config.setStatut("RESERVEE");
+            configRepository.save(config);
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(201, "Concerner mapping created successfully", toConcernerDTO(saved)));
@@ -219,11 +228,12 @@ public class ReservationController {
         log.info("DELETE /api/concerner - event: {}, ticket: {}, place: {}", idEvenement, codeTicket, numeroPlace);
         ConcernerId id = new ConcernerId(idEvenement, codeTicket, numeroPlace);
 
-        Place place = placeRepository.findByNumeroPlace(numeroPlace)
+        EvenementPlaceConfiguration config = configRepository
+                .findByEvenement_IdEvenementAndPlace_NumeroPlace(idEvenement, numeroPlace)
                 .orElse(null);
-        if (place != null) {
-            place.setStatut(StatutPlace.DISPONIBLE);
-            placeRepository.save(place);
+        if (config != null) {
+            config.setStatut("DISPONIBLE");
+            configRepository.save(config);
         }
 
         concernerRepository.deleteById(id);

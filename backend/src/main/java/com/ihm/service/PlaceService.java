@@ -8,7 +8,6 @@ import com.ihm.repository.SalleRepository;
 import com.ihm.model.Lieu;
 import com.ihm.model.Place;
 import com.ihm.model.Salle;
-import com.ihm.model.StatutPlace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -69,8 +68,11 @@ public class PlaceService {
         Salle salle = salleRepository.findByNumeroSalle(dto.getNumeroSalle())
                 .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", dto.getNumeroSalle()));
 
-        String rang = dto.getRange() != null ? dto.getRange() : "?";
-        String seatNum = dto.getNumeroPlace() != null ? dto.getNumeroPlace().replaceAll(".*-", "") : "?";
+        String rawNumero = dto.getNumeroPlace() != null ? dto.getNumeroPlace() : "";
+        String rang = dto.getRange() != null ? dto.getRange() : rawNumero.replaceAll("\\d.*$", "");
+        String seatNum = rawNumero.replaceAll("^\\D+", "");
+        if (rang.isEmpty()) rang = "?";
+        if (seatNum.isEmpty()) seatNum = "?";
         String combinedKey = buildCombinedKey(salle, rang, seatNum);
 
         if (placeRepository.existsByNumeroPlace(combinedKey)) {
@@ -81,10 +83,7 @@ public class PlaceService {
         log.debug("Creating place with combined key: {}", combinedKey);
         Place place = new Place();
         place.setNumeroPlace(combinedKey);
-        place.setRange(rang);
-        place.setTypePlace(dto.getTypePlace());
-        place.setPrix(dto.getPrix());
-        place.setStatut(dto.getStatut() != null ? StatutPlace.valueOf(dto.getStatut()) : StatutPlace.DISPONIBLE);
+        place.setRangePlace(rang);
         place.setSalle(salle);
         Place saved = placeRepository.save(place);
         log.info("Place created: {}", saved.getNumeroPlace());
@@ -112,10 +111,7 @@ public class PlaceService {
                 }
                 Place place = new Place();
                 place.setNumeroPlace(combinedKey);
-                place.setRange(rang);
-                place.setTypePlace(request.getTypePlace());
-                place.setPrix(request.getPrix());
-                place.setStatut(StatutPlace.DISPONIBLE);
+                place.setRangePlace(rang);
                 place.setSalle(salle);
                 Place saved = placeRepository.save(place);
                 created.add(toDTO(saved));
@@ -131,14 +127,13 @@ public class PlaceService {
         log.debug("Updating place: {}", numero);
         Place place = placeRepository.findByNumeroPlace(numero)
                 .orElseThrow(() -> new ResourceNotFoundException("Place", "numeroPlace", numero));
-        if (dto.getRange() != null) place.setRange(dto.getRange());
-        if (dto.getTypePlace() != null) place.setTypePlace(dto.getTypePlace());
-        if (dto.getPrix() != null) place.setPrix(dto.getPrix());
-        if (dto.getStatut() != null) place.setStatut(StatutPlace.valueOf(dto.getStatut()));
         if (dto.getNumeroSalle() != null) {
             Salle salle = salleRepository.findByNumeroSalle(dto.getNumeroSalle())
                     .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", dto.getNumeroSalle()));
             place.setSalle(salle);
+        }
+        if (dto.getRange() != null) {
+            place.setRangePlace(dto.getRange());
         }
         Place saved = placeRepository.save(place);
         log.info("Place updated: {}", numero);
@@ -159,10 +154,7 @@ public class PlaceService {
     private PlaceDTO toDTO(Place place) {
         PlaceDTO dto = new PlaceDTO();
         dto.setNumeroPlace(place.getNumeroPlace());
-        dto.setRange(place.getRange());
-        dto.setTypePlace(place.getTypePlace());
-        dto.setPrix(place.getPrix());
-        dto.setStatut(place.getStatut() != null ? place.getStatut().name() : StatutPlace.DISPONIBLE.name());
+        dto.setRange(place.getRangePlace());
         dto.setNumeroSalle(place.getSalle() != null ? place.getSalle().getNumeroSalle() : null);
         return dto;
     }

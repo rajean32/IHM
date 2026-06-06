@@ -2,7 +2,7 @@ package com.ihm.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import java.math.BigDecimal;
+// import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -23,8 +23,8 @@ public class Evenement {
     private LocalDate dateEvenement;
     @Column(name = "heureEvenement")
     private LocalTime heureEvenement;
-    @Column(name = "image", length = 255)
-    private String image;
+    @Column(name = "image", columnDefinition = "BYTEA")
+    private byte[] image;
     @Column(name = "statut", length = 50)
     private String statut;
     @Column(name = "motifAnnulation", columnDefinition = "TEXT")
@@ -51,8 +51,8 @@ public class Evenement {
     public void setDateEvenement(LocalDate dateEvenement) { this.dateEvenement = dateEvenement; }
     public LocalTime getHeureEvenement() { return heureEvenement; }
     public void setHeureEvenement(LocalTime heureEvenement) { this.heureEvenement = heureEvenement; }
-    public String getImage() { return image; }
-    public void setImage(String image) { this.image = image; }
+    public byte[] getImage() { return image; }
+    public void setImage(byte[] image) { this.image = image; }
     public String getStatut() { return statut; }
     public void setStatut(String statut) { this.statut = statut; }
     public String getMotifAnnulation() { return motifAnnulation; }

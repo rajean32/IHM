@@ -6,13 +6,18 @@ import com.ihm.schema.EvenementDTO;
 import com.ihm.schema.SalleDTO;
 import com.ihm.repository.*;
 import com.ihm.model.*;
+import com.ihm.util.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,6 +51,9 @@ public class EvenementService {
     private final SalleRepository salleRepository;
     private final EvenementPlaceConfigurationRepository configRepository;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     public EvenementService(EvenementRepository evenementRepository,
                             CategorieRepository categorieRepository,
                             LieuRepository lieuRepository,
@@ -68,7 +76,6 @@ public class EvenementService {
         this.configRepository = configRepository;
     }
 
-    // recuperation de tous les evenements
     @Transactional(readOnly = true)
     public List<EvenementDTO> getAll() {
         log.debug("Fetching all events");
@@ -78,7 +85,6 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
-    // recuperation d'un evenement par ID
     @Transactional(readOnly = true)
     public EvenementDTO getById(Integer id) {
         log.debug("Fetching event by id: {}", id);
@@ -87,7 +93,6 @@ public class EvenementService {
         return toDTO(event);
     }
 
-    // recuperation par organisateur
     @Transactional(readOnly = true)
     public List<EvenementDTO> getByOrganisateur(String codeOrg) {
         log.debug("Fetching events by organizer: {}", codeOrg);
@@ -97,7 +102,6 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
-    // recuperation par categorie
     @Transactional(readOnly = true)
     public List<EvenementDTO> getByCategorie(String codeCat) {
         log.debug("Fetching events by category: {}", codeCat);
@@ -107,7 +111,6 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
-    // recuperation par statut
     @Transactional(readOnly = true)
     public List<EvenementDTO> getByStatut(String statut) {
         log.debug("Fetching events by status: {}", statut);
@@ -117,7 +120,6 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
-    // creation d'un evenement
     @Transactional
     public EvenementDTO create(EvenementDTO dto) {
         log.debug("Creating event: {}", dto.getTitre());
@@ -131,7 +133,6 @@ public class EvenementService {
         event.setDescription(dto.getDescription());
         event.setDateEvenement(dto.getDateEvenement());
         event.setHeureEvenement(dto.getHeureEvenement());
-        event.setImage(dto.getImage());
         event.setStatut(dto.getStatut() != null ? dto.getStatut() : "planifie");
 
         if (dto.getCodeCategorie() != null) {
@@ -150,11 +151,30 @@ public class EvenementService {
         event.setOrganisateur(org);
 
         Evenement saved = evenementRepository.save(event);
+
+        // auto-generate EvenementPlaceConfiguration for all places in the venue
+        List<Salle> salles = salleRepository.findByLieu_Code(lieu.getCode());
+        for (Salle salle : salles) {
+            List<Place> places = placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle());
+            for (Place place : places) {
+                if (!configRepository.existsByEvenement_IdEvenementAndPlace_NumeroPlace(saved.getIdEvenement(), place.getNumeroPlace())) {
+                    String rang = "?";
+                    EvenementPlaceConfiguration config = new EvenementPlaceConfiguration();
+                    config.setEvenement(saved);
+                    config.setPlace(place);
+                    config.setRange(rang);
+                    config.setTypePlace("Standard");
+                    config.setPrix(BigDecimal.ZERO);
+                    config.setStatut("DISPONIBLE");
+                    configRepository.save(config);
+                }
+            }
+        }
+
         log.info("Event created: id={}", saved.getIdEvenement());
         return toDTO(saved);
     }
 
-    // mise a jour d'un evenement
     @Transactional
     public EvenementDTO update(Integer id, EvenementDTO dto) {
         log.debug("Updating event: {}", id);
@@ -164,7 +184,6 @@ public class EvenementService {
         if (dto.getDescription() != null) event.setDescription(dto.getDescription());
         if (dto.getDateEvenement() != null) event.setDateEvenement(dto.getDateEvenement());
         if (dto.getHeureEvenement() != null) event.setHeureEvenement(dto.getHeureEvenement());
-        if (dto.getImage() != null) event.setImage(dto.getImage());
         if (dto.getStatut() != null) {
             if (!VALID_STATUSES.contains(dto.getStatut())) {
                 throw new BadRequestException("Invalid status. Valid values: " + VALID_STATUSES);
@@ -191,18 +210,19 @@ public class EvenementService {
         return toDTO(saved);
     }
 
-    // suppression d'un evenement
     @Transactional
     public void delete(Integer id) {
         log.debug("Deleting event: {}", id);
         if (!evenementRepository.existsByIdEvenement(id)) {
             throw new ResourceNotFoundException("Evenement", "idEvenement", id);
         }
+        entityManager.createQuery("DELETE FROM EvenementPlaceConfiguration e WHERE e.evenement.idEvenement = :id")
+            .setParameter("id", id)
+            .executeUpdate();
         evenementRepository.deleteById(id);
         log.info("Event deleted: id={}", id);
     }
 
-    // validation d'un evenement
     @Transactional
     public EvenementDTO validate(Integer id) {
         log.debug("Validating event: {}", id);
@@ -217,7 +237,6 @@ public class EvenementService {
         return toDTO(saved);
     }
 
-    // suspension d'un evenement
     @Transactional
     public EvenementDTO suspend(Integer id) {
         log.debug("Suspending event: {}", id);
@@ -232,7 +251,6 @@ public class EvenementService {
         return toDTO(saved);
     }
 
-    // reprise d'un evenement
     @Transactional
     public EvenementDTO resume(Integer id) {
         log.debug("Resuming event: {}", id);
@@ -247,7 +265,6 @@ public class EvenementService {
         return toDTO(saved);
     }
 
-    // annulation d'un evenement
     @Transactional
     public EvenementDTO cancel(Integer id, String motif) {
         log.debug("Cancelling event: {}", id);
@@ -263,7 +280,6 @@ public class EvenementService {
         return toDTO(saved);
     }
 
-    // recherche d'evenements
     @Transactional(readOnly = true)
     public List<EvenementDTO> searchEvents(EvenementDTO.EventSearchRequest request) {
         log.debug("Searching events with query: {}, categorie: {}, ville: {}", request.getQ(), request.getCategorie(), request.getVille());
@@ -345,7 +361,6 @@ public class EvenementService {
         return events.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
-    // evenements a venir
     @Transactional(readOnly = true)
     public List<EvenementDTO> getUpcomingEvents() {
         log.debug("Fetching upcoming events");
@@ -355,7 +370,6 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
-    // evenements populaires
     @Transactional(readOnly = true)
     public List<EvenementDTO> getPopularEvents() {
         log.debug("Fetching popular events");
@@ -371,7 +385,6 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
-    // details d'un evenement
     @Transactional(readOnly = true)
     public EvenementDTO.EventDetail getEventDetail(Integer idEvent) {
         log.debug("Fetching event detail: {}", idEvent);
@@ -384,7 +397,7 @@ public class EvenementService {
         dto.setDescription(event.getDescription());
         dto.setDateEvenement(event.getDateEvenement());
         dto.setHeureEvenement(event.getHeureEvenement());
-        dto.setImage(event.getImage());
+        dto.setImage(ImageUtils.toDataUrl(event.getImage()));
         dto.setStatut(event.getStatut());
         dto.setCodeCategorie(event.getCategorie() != null ? event.getCategorie().getCodeCategorie() : null);
         dto.setCategorieNom(event.getCategorie() != null ? event.getCategorie().getNomCategorie() : null);
@@ -405,27 +418,15 @@ public class EvenementService {
         dto.setPlacesTotal(totalPlaces);
         dto.setPlacesDisponibles(totalPlaces - reservedPlaces.size());
 
-        BigDecimal minPrice = ticketRepository.findMinPriceByEvent(idEvent);
-        BigDecimal maxPrice = ticketRepository.findMaxPriceByEvent(idEvent);
+        // read min/max prices from EPC only
         List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(idEvent);
-        Set<String> configuredPlaces = new HashSet<>();
+        BigDecimal minPrice = null;
+        BigDecimal maxPrice = null;
         for (EvenementPlaceConfiguration cfg : configs) {
-            configuredPlaces.add(cfg.getPlace().getNumeroPlace());
-            if (cfg.getPrixOverride() != null && cfg.getPrixOverride().compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal p = cfg.getPrixOverride();
+            BigDecimal p = cfg.getPrix();
+            if (p != null && p.compareTo(BigDecimal.ZERO) > 0) {
                 if (minPrice == null || p.compareTo(minPrice) < 0) minPrice = p;
                 if (maxPrice == null || p.compareTo(maxPrice) > 0) maxPrice = p;
-            }
-        }
-        List<Salle> salles = salleRepository.findByLieu_Code(event.getLieu().getCode());
-        for (Salle salle : salles) {
-            List<Place> places = placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle());
-            for (Place place : places) {
-                if (!configuredPlaces.contains(place.getNumeroPlace()) && place.getPrix() != null && place.getPrix().compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal p = place.getPrix();
-                    if (minPrice == null || p.compareTo(minPrice) < 0) minPrice = p;
-                    if (maxPrice == null || p.compareTo(maxPrice) > 0) maxPrice = p;
-                }
             }
         }
         dto.setPrixMin(minPrice);
@@ -434,7 +435,6 @@ public class EvenementService {
         return dto;
     }
 
-    // places disponibles pour un evenement
     @Transactional(readOnly = true)
     public List<SalleDTO.SeatingDTO> getAvailableSeats(Integer idEvent) {
         log.debug("Fetching available seats for event: {}", idEvent);
@@ -451,55 +451,44 @@ public class EvenementService {
             reservedPlaces.add(c.getPlace().getNumeroPlace());
         }
 
-        List<Salle> salles = salleRepository.findByLieu_Code(event.getLieu().getCode());
-        List<Place> allPlaces = new ArrayList<>();
-        for (Salle salle : salles) {
-            allPlaces.addAll(placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle()));
-        }
-
+        // get all EPC configs for this event
         List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(idEvent);
         Map<String, EvenementPlaceConfiguration> configMap = new HashMap<>();
         for (EvenementPlaceConfiguration cfg : configs) {
             configMap.put(cfg.getPlace().getNumeroPlace(), cfg);
         }
 
+        List<Salle> salles = salleRepository.findByLieu_Code(event.getLieu().getCode());
         List<SalleDTO.SeatingDTO> seatingList = new ArrayList<>();
-        for (Place place : allPlaces) {
-            SalleDTO.SeatingDTO seating = new SalleDTO.SeatingDTO();
-            seating.setNumeroPlace(place.getNumeroPlace());
-            seating.setRang(place.getRange());
-            seating.setSalle(place.getSalle().getNumeroSalle());
-            seating.setStatut(place.getStatut() != null ? place.getStatut().name() : "DISPONIBLE");
+        for (Salle salle : salles) {
+            List<Place> places = placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle());
+            for (Place place : places) {
+                SalleDTO.SeatingDTO seating = new SalleDTO.SeatingDTO();
+                seating.setNumeroPlace(place.getNumeroPlace());
+                seating.setSalle(place.getSalle().getNumeroSalle());
 
-            EvenementPlaceConfiguration cfg = configMap.get(place.getNumeroPlace());
-            if (cfg != null && cfg.getTypePlaceOverride() != null) {
-                seating.setTypePlace(cfg.getTypePlaceOverride());
-            } else {
-                seating.setTypePlace(place.getTypePlace());
+                EvenementPlaceConfiguration cfg = configMap.get(place.getNumeroPlace());
+                if (cfg != null) {
+                    seating.setRang(cfg.getRange());
+                    seating.setTypePlace(cfg.getTypePlace());
+                    seating.setPrix(cfg.getPrix());
+                    seating.setStatut(cfg.getStatut());
+                    boolean estReservee = reservedPlaces.contains(place.getNumeroPlace());
+                    seating.setDisponible("DISPONIBLE".equals(cfg.getStatut()) && !estReservee);
+                } else {
+                    seating.setRang("?");
+                    seating.setTypePlace("Standard");
+                    seating.setPrix(null);
+                    seating.setStatut("DISPONIBLE");
+                    seating.setDisponible(false);
+                }
+                seatingList.add(seating);
             }
-
-            boolean estReservee = reservedPlaces.contains(place.getNumeroPlace());
-            if (StatutPlace.INDISPONIBLE.equals(place.getStatut())) {
-                seating.setDisponible(false);
-            } else {
-                seating.setDisponible(!estReservee);
-            }
-
-            BigDecimal prixPlace = place.getPrix();
-            if (cfg != null && cfg.getPrixOverride() != null && cfg.getPrixOverride().compareTo(BigDecimal.ZERO) > 0) {
-                seating.setPrix(cfg.getPrixOverride());
-            } else if (prixPlace != null && prixPlace.compareTo(BigDecimal.ZERO) > 0) {
-                seating.setPrix(prixPlace);
-            } else {
-                seating.setPrix(null);
-            }
-            seatingList.add(seating);
         }
 
         return seatingList;
     }
 
-    // expiration automatique des evenements passes
     @Transactional
     @Scheduled(cron = "0 0 * * * *")
     public void autoExpirePastEvents() {
@@ -521,7 +510,6 @@ public class EvenementService {
         }
     }
 
-    // demarrage automatique des evenements du jour
     @Transactional
     @Scheduled(cron = "0 0 6 * * *")
     public void autoStartTodayEvents() {
@@ -542,6 +530,20 @@ public class EvenementService {
         }
     }
 
+    @Transactional
+    public void uploadImage(Integer id, MultipartFile file) {
+        log.debug("Uploading image for event: {}", id);
+        Evenement event = evenementRepository.findByIdEvenement(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", id));
+        try {
+            event.setImage(file.getBytes());
+            evenementRepository.save(event);
+            log.info("Image uploaded for event: {}", id);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read uploaded image file", e);
+        }
+    }
+
     private EvenementDTO toDTO(Evenement event) {
         EvenementDTO dto = new EvenementDTO();
         dto.setIdEvenement(event.getIdEvenement());
@@ -549,7 +551,7 @@ public class EvenementService {
         dto.setDescription(event.getDescription());
         dto.setDateEvenement(event.getDateEvenement());
         dto.setHeureEvenement(event.getHeureEvenement());
-        dto.setImage(event.getImage());
+        dto.setImage(ImageUtils.toDataUrl(event.getImage()));
         dto.setStatut(event.getStatut());
         dto.setMotifAnnulation(event.getMotifAnnulation());
         dto.setCodeCategorie(event.getCategorie() != null ? event.getCategorie().getCodeCategorie() : null);

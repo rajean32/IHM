@@ -8,11 +8,11 @@ import com.ihm.repository.*;
 import com.ihm.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,8 +25,6 @@ public class ReservationService {
 
     private static final Logger log = LoggerFactory.getLogger(ReservationService.class);
 
-    private static final long EXPIRATION_MINUTES = 10;
-
     private final ReservationRepository reservationRepository;
     private final ClientRepository clientRepository;
     private final TicketRepository ticketRepository;
@@ -34,6 +32,8 @@ public class ReservationService {
     private final PaiementRepository paiementRepository;
     private final ConcernerRepository concernerRepository;
     private final PlaceRepository placeRepository;
+    private final EvenementRepository evenementRepository;
+    private final EvenementPlaceConfigurationRepository configRepository;
 
     public ReservationService(ReservationRepository reservationRepository,
                               ClientRepository clientRepository,
@@ -41,7 +41,9 @@ public class ReservationService {
                               CorrespondARepository correspondARepository,
                               PaiementRepository paiementRepository,
                               ConcernerRepository concernerRepository,
-                              PlaceRepository placeRepository) {
+                              PlaceRepository placeRepository,
+                              EvenementRepository evenementRepository,
+                              EvenementPlaceConfigurationRepository configRepository) {
         this.reservationRepository = reservationRepository;
         this.clientRepository = clientRepository;
         this.ticketRepository = ticketRepository;
@@ -49,9 +51,10 @@ public class ReservationService {
         this.paiementRepository = paiementRepository;
         this.concernerRepository = concernerRepository;
         this.placeRepository = placeRepository;
+        this.evenementRepository = evenementRepository;
+        this.configRepository = configRepository;
     }
 
-    // recuperation de toutes les reservations
     @Transactional(readOnly = true)
     public List<ReservationDTO> getAll() {
         log.debug("Fetching all reservations");
@@ -61,7 +64,6 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
-    // recuperation d'une reservation
     @Transactional(readOnly = true)
     public ReservationDTO getById(Integer id) {
         log.debug("Fetching reservation by id: {}", id);
@@ -70,7 +72,6 @@ public class ReservationService {
         return toDTO(reservation);
     }
 
-    // reservations d'un client
     @Transactional(readOnly = true)
     public List<ReservationDTO> getByClient(String codeClient) {
         log.debug("Fetching reservations by client: {}", codeClient);
@@ -80,7 +81,6 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
-    // creation d'une reservation
     @Transactional
     public ReservationDTO create(ReservationDTO dto) {
         log.debug("Creating reservation for client: {}", dto.getCodeClient());
@@ -91,6 +91,16 @@ public class ReservationService {
             for (String codeTicket : dto.getCodeTickets()) {
                 if (!correspondARepository.findByTicket_CodeTicket(codeTicket).isEmpty()) {
                     throw new BadRequestException("Ticket " + codeTicket + " is already used in another reservation");
+                }
+                List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(codeTicket);
+                for (Concerner c : concerners) {
+                    Evenement event = c.getEvenement();
+                    if (event.getDateEvenement() != null && event.getDateEvenement().isBefore(LocalDate.now())) {
+                        throw new BadRequestException("Cannot reserve: event '" + event.getTitre() + "' is already finished");
+                    }
+                    if ("termine".equals(event.getStatut()) || "annule".equals(event.getStatut())) {
+                        throw new BadRequestException("Cannot reserve: event '" + event.getTitre() + "' is " + event.getStatut());
+                    }
                 }
             }
         }
@@ -118,7 +128,6 @@ public class ReservationService {
         return toDTO(saved);
     }
 
-    // mise a jour d'une reservation
     @Transactional
     public ReservationDTO update(Integer id, ReservationDTO dto) {
         log.debug("Updating reservation: {}", id);
@@ -154,7 +163,6 @@ public class ReservationService {
         return toDTO(saved);
     }
 
-    // annulation d'une reservation
     @Transactional
     public void cancel(Integer id) {
         log.debug("Cancelling reservation: {}", id);
@@ -165,10 +173,13 @@ public class ReservationService {
         for (CorrespondA ca : correspondances) {
             List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(ca.getTicket().getCodeTicket());
             for (Concerner c : concerners) {
-                Place place = c.getPlace();
-                if (place != null) {
-                    place.setStatut(StatutPlace.DISPONIBLE);
-                    placeRepository.save(place);
+                EvenementPlaceConfiguration config = configRepository
+                        .findByEvenement_IdEvenementAndPlace_NumeroPlace(
+                                c.getEvenement().getIdEvenement(), c.getPlace().getNumeroPlace())
+                        .orElse(null);
+                if (config != null) {
+                    config.setStatut("DISPONIBLE");
+                    configRepository.save(config);
                 }
             }
         }
@@ -181,7 +192,6 @@ public class ReservationService {
         log.info("Reservation cancelled: id={}", id);
     }
 
-    // suppression d'une reservation
     @Transactional
     public void delete(Integer id) {
         log.debug("Deleting reservation: {}", id);
@@ -192,7 +202,6 @@ public class ReservationService {
         log.info("Reservation deleted: id={}", id);
     }
 
-    // traitement d'un achat
     @Transactional
     public Map<String, Object> processPurchase(ReservationDTO.PurchaseRequest request) {
         log.info("Processing purchase for client: {} ({} tickets)", request.getCodeClient(),
@@ -212,6 +221,19 @@ public class ReservationService {
         String modePaiement = request.getModePaiement() != null ? request.getModePaiement() : "GRATUIT";
         BigDecimal montant = request.getMontant() != null ? request.getMontant() : BigDecimal.ZERO;
 
+        for (PurchaseTicketItem item : request.getTickets()) {
+            if (item.getIdEvenement() != null) {
+                Evenement event = evenementRepository.findByIdEvenement(item.getIdEvenement())
+                        .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", item.getIdEvenement()));
+                if (event.getDateEvenement() != null && event.getDateEvenement().isBefore(LocalDate.now())) {
+                    throw new BadRequestException("Cannot purchase: event '" + event.getTitre() + "' is already finished");
+                }
+                if ("termine".equals(event.getStatut()) || "annule".equals(event.getStatut())) {
+                    throw new BadRequestException("Cannot purchase: event '" + event.getTitre() + "' is " + event.getStatut());
+                }
+            }
+        }
+
         List<Ticket> tickets = new ArrayList<>();
         for (PurchaseTicketItem item : request.getTickets()) {
             Ticket ticket = new Ticket();
@@ -219,6 +241,29 @@ public class ReservationService {
             ticket.setPrix(item.getPrix() != null ? item.getPrix() : BigDecimal.ZERO);
             Ticket saved = ticketRepository.save(ticket);
             tickets.add(saved);
+
+            if (item.getIdEvenement() != null && item.getNumeroPlace() != null) {
+                Place place = placeRepository.findByNumeroPlace(item.getNumeroPlace())
+                        .orElse(null);
+                if (place != null) {
+                    ConcernerId concernerId = new ConcernerId(item.getIdEvenement(), item.getCodeTicket(), item.getNumeroPlace());
+                    Concerner concerner = new Concerner();
+                    concerner.setId(concernerId);
+                    concerner.setEvenement(evenementRepository.findByIdEvenement(item.getIdEvenement())
+                            .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", item.getIdEvenement())));
+                    concerner.setTicket(saved);
+                    concerner.setPlace(place);
+                    concernerRepository.save(concerner);
+
+                    EvenementPlaceConfiguration config = configRepository
+                            .findByEvenement_IdEvenementAndPlace_NumeroPlace(item.getIdEvenement(), item.getNumeroPlace())
+                            .orElse(null);
+                    if (config != null) {
+                        config.setStatut("RESERVEE");
+                        configRepository.save(config);
+                    }
+                }
+            }
         }
 
         Reservation reservation = new Reservation();
@@ -254,23 +299,6 @@ public class ReservationService {
         result.put("codeClient", savedReservation.getClient().getCodeUtilisateur());
         result.put("status", "CONFIRMED");
         return result;
-    }
-
-    // liberation des places en attente expirees
-    @Scheduled(fixedRate = 60_000)
-    @Transactional
-    public void releaseExpiredPendingPlaces() {
-        LocalDateTime expiry = LocalDateTime.now().minusMinutes(EXPIRATION_MINUTES);
-        List<Place> expired = placeRepository.findExpiredPending(expiry);
-
-        if (!expired.isEmpty()) {
-            for (Place place : expired) {
-                place.setStatut(StatutPlace.DISPONIBLE);
-                place.setDateMiseEnAttente(null);
-                placeRepository.save(place);
-            }
-            log.info("Released {} expired EN_ATTENTE places", expired.size());
-        }
     }
 
     private ReservationDTO toDTO(Reservation reservation) {

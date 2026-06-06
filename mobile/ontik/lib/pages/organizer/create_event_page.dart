@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/services/evenement_service.dart';
 import '../../core/services/lieu_service.dart';
@@ -9,6 +11,7 @@ import '../../models/evenement_model.dart';
 import '../../models/lieu_model.dart';
 import '../../models/categorie_model.dart';
 import '../../core/assets/app_colors.dart';
+import '../../widgets/event_image_widget.dart';
 import 'pricing_page.dart';
 import '../../core/utils/error_helper.dart';
 
@@ -26,7 +29,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
   final _formKey = GlobalKey<FormState>();
   final _titreCtrl = TextEditingController();
   final _descriptionCtrl = TextEditingController();
-  final _imageCtrl = TextEditingController();
+  final _imagePicker = ImagePicker();
+  String? _selectedImagePath;
+  bool get _hasNewImage => _selectedImagePath != null;
   DateTime? _selectedDate;
   String? _selectedTime;
   String? _selectedCategorie;
@@ -74,7 +79,6 @@ class _CreateEventPageState extends State<CreateEventPage> {
   void dispose() {
     _titreCtrl.dispose();
     _descriptionCtrl.dispose();
-    _imageCtrl.dispose();
     _newTypeNameCtrl.dispose();
     _newTypePriceCtrl.dispose();
     for (final ctrl in _typePrices.values) {
@@ -151,7 +155,6 @@ class _CreateEventPageState extends State<CreateEventPage> {
   void _populateFromEvent(Evenement event) {
     _titreCtrl.text = event.titre;
     if (event.description != null) _descriptionCtrl.text = event.description!;
-    if (event.image != null) _imageCtrl.text = event.image!;
     _selectedDate = event.dateEvenement;
     _selectedTime = event.heureEvenement;
     _selectedCategorie = event.codeCategorie;
@@ -592,6 +595,13 @@ class _CreateEventPageState extends State<CreateEventPage> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final picked = await _imagePicker.pickImage(source: ImageSource.gallery, maxWidth: 1920, maxHeight: 1080);
+    if (picked != null) {
+      setState(() => _selectedImagePath = picked.path);
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedDate == null) {
@@ -611,7 +621,6 @@ class _CreateEventPageState extends State<CreateEventPage> {
         description: _descriptionCtrl.text.isEmpty ? null : _descriptionCtrl.text,
         dateEvenement: _selectedDate,
         heureEvenement: _selectedTime,
-        image: _imageCtrl.text.isEmpty ? null : _imageCtrl.text,
         statut: _selectedStatut,
         codeCategorie: _selectedCategorie,
         codeLieu: _selectedLieu,
@@ -620,6 +629,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
       if (_isEditing) {
         await _eventService.updateEvent(widget.event!.idEvenement!, event.toJson());
+        if (_hasNewImage) {
+          await _eventService.uploadImage(widget.event!.idEvenement!, File(_selectedImagePath!));
+        }
         if (widget.event!.idEvenement != null) {
           try {
             for (final entry in _typePrices.entries) {
@@ -683,6 +695,12 @@ class _CreateEventPageState extends State<CreateEventPage> {
           } catch (_) {}
         }
 
+        if (_hasNewImage && created.idEvenement != null) {
+          try {
+            await _eventService.uploadImage(created.idEvenement!, File(_selectedImagePath!));
+          } catch (_) {}
+        }
+
         if (!mounted) return;
         if (_selectedSalle != null && created.idEvenement != null) {
           Navigator.pushReplacement(context, MaterialPageRoute(
@@ -742,11 +760,35 @@ class _CreateEventPageState extends State<CreateEventPage> {
                     maxLines: 3,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _imageCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'URL de l\'image (optionnel)',
-                      border: OutlineInputBorder(),
+                  InkWell(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 160,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.textSecondary.withValues(alpha: 0.3)),
+                      ),
+                      child: _hasNewImage
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(File(_selectedImagePath!), height: 160, width: double.infinity, fit: BoxFit.cover),
+                            )
+                          : (_isEditing && widget.event?.image != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: eventImageWidget(widget.event!.image, height: 160),
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_photo_alternate, size: 48, color: AppTheme.textSecondary),
+                                    const SizedBox(height: 8),
+                                    Text('Ajouter une image', style: TextStyle(color: AppTheme.textSecondary)),
+                                    Text('(optionnel)', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                                  ],
+                                )),
                     ),
                   ),
                   const SizedBox(height: 16),

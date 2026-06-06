@@ -44,6 +44,7 @@ public class SalleController {
     @PostMapping
     public ResponseEntity<ApiResponse<SalleDTO>> create(@Valid @RequestBody SalleDTO dto) {
         log.info("POST /api/salles - numero: {}", dto.getNumeroSalle());
+
         SalleDTO data = salleService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(201, "Room created successfully", data));
@@ -52,8 +53,7 @@ public class SalleController {
     // modification de salle
     @PutMapping("/{numero}")
     public ResponseEntity<ApiResponse<SalleDTO>> update(@PathVariable String numero, @Valid @RequestBody SalleDTO dto) {
-        log.info("PUT /api/salles/{}", numero);
-        SalleDTO data = salleService.update(numero, dto);
+        log.debug("Recherche utilisateur");        SalleDTO data = salleService.update(numero, dto);
         return ResponseEntity.ok(ApiResponse.success(200, "Room updated successfully", data));
     }
 
@@ -63,5 +63,13 @@ public class SalleController {
         log.info("DELETE /api/salles/{}", numero);
         salleService.delete(numero);
         return ResponseEntity.ok(ApiResponse.success(200, "Room deleted successfully"));
+    }
+
+    // suppression multiple de salles
+    @PostMapping("/batch-delete")
+    public ResponseEntity<ApiResponse<Integer>> deleteBatch(@RequestBody List<String> numeros) {
+        log.info("POST /api/salles/batch-delete - {} rooms", numeros.size());
+        int deleted = salleService.deleteBatch(numeros);
+        return ResponseEntity.ok(ApiResponse.success(200, deleted + " rooms deleted successfully", deleted));
     }
 }

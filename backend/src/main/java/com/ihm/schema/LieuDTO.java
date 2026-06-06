@@ -14,6 +14,8 @@ public class LieuDTO {
     public LieuDTO() {}
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
+    public String getIdLieu() { return code; }
+    public void setIdLieu(String idLieu) { this.code = idLieu; }
     public String getNomLieu() { return nomLieu; }
     public void setNomLieu(String nomLieu) { this.nomLieu = nomLieu; }
     public String getAdresse() { return adresse; }

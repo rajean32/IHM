@@ -19,6 +19,7 @@ import com.lowagie.text.pdf.PdfWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -38,18 +39,22 @@ public class PDFTicketService {
     private final ConcernerRepository concernerRepository;
     private final CorrespondARepository correspondARepository;
     private final QRCodeService qrCodeService;
+    private final EvenementPlaceConfigurationRepository configRepository;
 
     public PDFTicketService(TicketRepository ticketRepository,
                             ConcernerRepository concernerRepository,
                             CorrespondARepository correspondARepository,
-                            QRCodeService qrCodeService) {
+                            QRCodeService qrCodeService,
+                            EvenementPlaceConfigurationRepository configRepository) {
         this.ticketRepository = ticketRepository;
         this.concernerRepository = concernerRepository;
         this.correspondARepository = correspondARepository;
         this.qrCodeService = qrCodeService;
+        this.configRepository = configRepository;
     }
 
     // generation du PDF d'un ticket
+    @Transactional(readOnly = true)
     public byte[] generateTicketPDF(String codeTicket) {
         log.debug("Generating PDF for ticket: {}", codeTicket);
         Ticket ticket = ticketRepository.findByCodeTicket(codeTicket)
@@ -106,8 +111,13 @@ public class PDFTicketService {
             }
             addRow(table, "Lieu", evenement.getLieu() != null ? evenement.getLieu().getNomLieu() : "-", labelFont, valueFont);
             addRow(table, "Siege", place.getNumeroPlace(), labelFont, valueFont);
-            addRow(table, "Rangee", place.getRange() != null ? place.getRange() : "-", labelFont, valueFont);
-            addRow(table, "Type", place.getTypePlace() != null ? place.getTypePlace() : "-", labelFont, valueFont);
+            EvenementPlaceConfiguration pdfConfig = configRepository
+                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(evenement.getIdEvenement(), place.getNumeroPlace())
+                    .orElse(null);
+            String rangee = pdfConfig != null && pdfConfig.getRange() != null ? pdfConfig.getRange() : "-";
+            String type = pdfConfig != null && pdfConfig.getTypePlace() != null ? pdfConfig.getTypePlace() : "-";
+            addRow(table, "Rangee", rangee, labelFont, valueFont);
+            addRow(table, "Type", type, labelFont, valueFont);
             if (!clientNom.isEmpty()) {
                 addRow(table, "Client", clientNom, labelFont, valueFont);
             }
@@ -138,7 +148,7 @@ public class PDFTicketService {
 
             document.close();
         } catch (DocumentException | IOException e) {
-            log.error("Failed to generate PDF for ticket {}: {}", codeTicket, e.getMessage());
+            log.error("Error: {}", e.getMessage());
             throw new RuntimeException("Failed to generate ticket PDF", e);
         }
 

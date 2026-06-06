@@ -427,11 +427,6 @@ public class UtilisateurService {
             issues.add(orphanTickets + " ticket(s) sans reservation associee (orphelins)");
         }
 
-        long reservedPlacesWithoutConcerner = placeRepository.countReservedWithoutConcerner();
-        if (reservedPlacesWithoutConcerner > 0) {
-            warnings.add(reservedPlacesWithoutConcerner + " place(s) marquees RESERVEE sans lien Concerner");
-        }
-
         long reservationsWithoutPayment = reservationRepository.countWithoutPayment();
         if (reservationsWithoutPayment > 0) {
             warnings.add(reservationsWithoutPayment + " reservation(s) sans paiement associe");

@@ -5,18 +5,22 @@ import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SalleDTO {
-    @NotBlank(message = "Room number is required")
     private String numeroSalle;
     @NotBlank(message = "Room name is required")
     private String nomSalle;
+    private String range;
     private String codeLieu;
     public SalleDTO() {}
     public String getNumeroSalle() { return numeroSalle; }
     public void setNumeroSalle(String numeroSalle) { this.numeroSalle = numeroSalle; }
     public String getNomSalle() { return nomSalle; }
     public void setNomSalle(String nomSalle) { this.nomSalle = nomSalle; }
+    public String getRange() { return range; }
+    public void setRange(String range) { this.range = range; }
     public String getCodeLieu() { return codeLieu; }
     public void setCodeLieu(String codeLieu) { this.codeLieu = codeLieu; }
+    public String getIdLieu() { return codeLieu; }
+    public void setIdLieu(String idLieu) { this.codeLieu = idLieu; }
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class SeatingDTO {
         private String numeroPlace;

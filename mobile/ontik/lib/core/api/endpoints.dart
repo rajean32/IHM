@@ -1,5 +1,5 @@
 class Endpoints {
-  static const base = 'http://localhost:8080/api';
+  static const base = 'http://localhost:8081/api';
 
   static const login = '$base/auth/login';
   static const register = '$base/auth/register';
@@ -10,6 +10,7 @@ class Endpoints {
   static String eventById(int id) => '$base/evenements/$id';
   static String eventValidate(int id) => '$base/evenements/$id/validate';
   static String eventAvailablePlaces(int id) => '$base/evenements/$id/places/available';
+  static String eventImage(int id) => '$base/evenements/$id/image';
 
   static const places = '$base/places';
   static String placeBySalle(String salle) => '$base/places?salle=$salle';

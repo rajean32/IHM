@@ -15,4 +15,9 @@ class CategorieApi {
   Future<void> deleteCategory(String code) async {
     await dio.delete('${Endpoints.categories}/$code');
   }
+  // Future<void> editCategory(Map<String,dynamic> data) async {
+  //   await dio.delete('${Endpoints.categories}/$code');
+  // }
+
+  
 }

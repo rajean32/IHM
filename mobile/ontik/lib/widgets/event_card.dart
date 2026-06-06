@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/evenement_model.dart';
 import '../core/assets/app_colors.dart';
+import 'event_image_widget.dart';
 
 class EventCard extends StatelessWidget {
   final Evenement event;
@@ -23,13 +24,7 @@ class EventCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (event.image != null)
-          Image.network(
-            event.image!,
-            height: 160,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildPlaceholder(),
-          )
+          eventImageWidget(event.image!, height: 160)
         else
           _buildPlaceholder(),
         Padding(
@@ -101,11 +96,6 @@ class EventCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Container(
-      height: 160,
-      width: double.infinity,
-      color: AppTheme.surfaceColor,
-      child: const Icon(Icons.event, size: 64, color: AppTheme.textSecondary),
-    );
+    return eventImageWidget(null, height: 160);
   }
 }

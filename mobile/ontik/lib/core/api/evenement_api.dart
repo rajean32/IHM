@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'dio_config.dart';
 import 'endpoints.dart';
 
@@ -35,5 +37,12 @@ class EvenementApi {
   Future<Map<String, dynamic>> validateEvent(int id) async {
     final resp = await dio.put(Endpoints.eventValidate(id));
     return resp.data['data'] as Map<String, dynamic>;
+  }
+
+  Future<void> uploadImage(int eventId, File file) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(file.path, filename: file.path.split('/').last),
+    });
+    await dio.post(Endpoints.eventImage(eventId), data: formData);
   }
 }

@@ -1,11 +1,14 @@
 package com.ihm.service;
 
-import com.ihm.exception.DuplicateResourceException;
 import com.ihm.exception.ResourceNotFoundException;
 import com.ihm.schema.SalleDTO;
+import com.ihm.repository.ConcernerRepository;
+import com.ihm.repository.EvenementPlaceConfigurationRepository;
 import com.ihm.repository.LieuRepository;
+import com.ihm.repository.PlaceRepository;
 import com.ihm.repository.SalleRepository;
 import com.ihm.model.Lieu;
+import com.ihm.model.Place;
 import com.ihm.model.Salle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,13 +25,20 @@ public class SalleService {
 
     private final SalleRepository salleRepository;
     private final LieuRepository lieuRepository;
+    private final PlaceRepository placeRepository;
+    private final ConcernerRepository concernerRepository;
+    private final EvenementPlaceConfigurationRepository configRepository;
 
-    public SalleService(SalleRepository salleRepository, LieuRepository lieuRepository) {
+    public SalleService(SalleRepository salleRepository, LieuRepository lieuRepository,
+                        PlaceRepository placeRepository, ConcernerRepository concernerRepository,
+                        EvenementPlaceConfigurationRepository configRepository) {
         this.salleRepository = salleRepository;
         this.lieuRepository = lieuRepository;
+        this.placeRepository = placeRepository;
+        this.concernerRepository = concernerRepository;
+        this.configRepository = configRepository;
     }
 
-    // recuperation de toutes les salles
     public List<SalleDTO> getAll() {
         log.debug("Fetching all rooms");
         return salleRepository.findAll()
@@ -37,7 +47,6 @@ public class SalleService {
                 .collect(Collectors.toList());
     }
 
-    // recuperation d'une salle par son numero
     public SalleDTO getById(String numero) {
         log.debug("Fetching room by numero: {}", numero);
         Salle salle = salleRepository.findByNumeroSalle(numero)
@@ -45,25 +54,38 @@ public class SalleService {
         return toDTO(salle);
     }
 
-    // creation d'une salle
     @Transactional
     public SalleDTO create(SalleDTO dto) {
-        log.debug("Creating room: {}", dto.getNumeroSalle());
-        if (salleRepository.existsByNumeroSalle(dto.getNumeroSalle())) {
-            throw new DuplicateResourceException("Salle", "numeroSalle", dto.getNumeroSalle());
+        String lieuId = dto.getCodeLieu() != null ? dto.getCodeLieu() : dto.getIdLieu();
+        log.info("--- Création salle --- nom={}, lieuId={}, range={}", dto.getNomSalle(), lieuId, dto.getRange());
+        Lieu lieu = lieuRepository.findById(lieuId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lieu", "codeLieu", lieuId));
+        log.info("Lieu trouvé: code={}, nom={}", lieu.getCode(), lieu.getNomLieu());
+        String base = generateNumeroSalle(lieu.getCode(), dto.getNomSalle());
+        String numeroSalle = base;
+        int counter = 1;
+        while (salleRepository.existsByNumeroSalle(numeroSalle)) {
+            numeroSalle = base + "_" + counter++;
         }
-        Lieu lieu = lieuRepository.findById(dto.getCodeLieu())
-                .orElseThrow(() -> new ResourceNotFoundException("Lieu", "codeLieu", dto.getCodeLieu()));
+        log.info("NumeroSalle généré: {}", numeroSalle);
         Salle salle = new Salle();
-        salle.setNumeroSalle(dto.getNumeroSalle());
+        salle.setNumeroSalle(numeroSalle);
         salle.setNomSalle(dto.getNomSalle());
+        salle.setRange(dto.getRange());
         salle.setLieu(lieu);
         Salle saved = salleRepository.save(salle);
-        log.info("Room created: {}", saved.getNumeroSalle());
+        log.info("Salle créée avec succès: numeroSalle={}, nom={}, lieu={}, range={}",
+                saved.getNumeroSalle(), saved.getNomSalle(), saved.getLieu().getNomLieu(), saved.getRange());
         return toDTO(saved);
     }
 
-    // mise a jour d'une salle
+    private String generateNumeroSalle(String codeLieu, String nomSalle) {
+        String slug = nomSalle.toUpperCase()
+                .replaceAll("\\s+", "_")
+                .replaceAll("[^A-Z0-9_]", "");
+        return codeLieu + "_" + slug;
+    }
+
     @Transactional
     public SalleDTO update(String numero, SalleDTO dto) {
         log.debug("Updating room: {}", numero);
@@ -80,22 +102,54 @@ public class SalleService {
         return toDTO(saved);
     }
 
-    // suppression d'une salle
     @Transactional
     public void delete(String numero) {
         log.debug("Deleting room: {}", numero);
-        if (!salleRepository.existsByNumeroSalle(numero)) {
-            throw new ResourceNotFoundException("Salle", "numeroSalle", numero);
+        Salle salle = salleRepository.findByNumeroSalle(numero)
+                .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", numero));
+        List<Place> places = placeRepository.findBySalle_NumeroSalle(numero);
+        List<String> placeIds = places.stream().map(Place::getNumeroPlace).collect(Collectors.toList());
+        if (!placeIds.isEmpty()) {
+            concernerRepository.deleteByPlaceNumeroPlaceIn(placeIds);
+            configRepository.deleteByPlaceNumeroPlaceIn(placeIds);
+            placeRepository.deleteAll(places);
         }
-        salleRepository.deleteById(numero);
+        salleRepository.delete(salle);
         log.info("Room deleted: {}", numero);
+    }
+
+    @Transactional
+    public int deleteBatch(List<String> numeros) {
+        log.debug("Deleting {} rooms", numeros.size());
+        int deleted = 0;
+        for (String numero : numeros) {
+            if (!salleRepository.existsByNumeroSalle(numero)) {
+                log.warn("Room not found, skipping: {}", numero);
+                continue;
+            }
+            List<Place> places = placeRepository.findBySalle_NumeroSalle(numero);
+            List<String> placeIds = places.stream().map(Place::getNumeroPlace).collect(Collectors.toList());
+            if (!placeIds.isEmpty()) {
+                concernerRepository.deleteByPlaceNumeroPlaceIn(placeIds);
+                configRepository.deleteByPlaceNumeroPlaceIn(placeIds);
+                placeRepository.deleteAll(places);
+            }
+            salleRepository.deleteById(numero);
+            deleted++;
+        }
+        log.info("{} rooms deleted successfully", deleted);
+        return deleted;
     }
 
     private SalleDTO toDTO(Salle salle) {
         SalleDTO dto = new SalleDTO();
         dto.setNumeroSalle(salle.getNumeroSalle());
         dto.setNomSalle(salle.getNomSalle());
-        dto.setCodeLieu(salle.getLieu() != null ? salle.getLieu().getCode() : null);
+        dto.setRange(salle.getRange());
+        if (salle.getLieu() != null) {
+            dto.setCodeLieu(salle.getLieu().getCode());
+            dto.setIdLieu(salle.getLieu().getCode());
+        }
         return dto;
     }
 }

@@ -1,3 +1,4 @@
+// famatisation des erreurs
 import 'package:dio/dio.dart';
 
 String apiErrorString(dynamic e) {

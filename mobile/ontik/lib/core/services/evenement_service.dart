@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../api/evenement_api.dart';
 
 class EvenementService {
@@ -10,4 +11,5 @@ class EvenementService {
   Future<Map<String, dynamic>> updateEvent(int id, Map<String, dynamic> data) => _api.updateEvent(id, data);
   Future<void> deleteEvent(int id) => _api.deleteEvent(id);
   Future<Map<String, dynamic>> validateEvent(int id) => _api.validateEvent(id);
+  Future<void> uploadImage(int eventId, File file) => _api.uploadImage(eventId, file);
 }

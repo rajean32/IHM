@@ -65,7 +65,6 @@ public class OrganisateurService {
 
     // ========== Organisateur CRUD ==========
 
-    // recuperation de tous les organisateurs
     public List<OrganisateurDTO> getAll() {
         log.debug("Fetching all organisateurs");
         return organisateurRepository.findAll()
@@ -74,7 +73,6 @@ public class OrganisateurService {
                 .collect(Collectors.toList());
     }
 
-    // recuperation d'un organisateur
     public OrganisateurDTO getById(String code) {
         log.debug("Fetching organisateur by code: {}", code);
         Organisateur org = organisateurRepository.findByCodeUtilisateur(code)
@@ -82,7 +80,6 @@ public class OrganisateurService {
         return toOrganisateurDTO(org);
     }
 
-    // creation d'un organisateur
     @Transactional
     public OrganisateurDTO create(OrganisateurDTO dto) {
         log.debug("Creating organisateur: {}", dto.getEmail());
@@ -111,7 +108,6 @@ public class OrganisateurService {
         return toOrganisateurDTO(saved);
     }
 
-    // mise a jour d'un organisateur
     @Transactional
     public OrganisateurDTO update(String code, OrganisateurDTO dto) {
         log.debug("Updating organisateur: {}", code);
@@ -138,7 +134,6 @@ public class OrganisateurService {
         return toOrganisateurDTO(saved);
     }
 
-    // suppression d'un organisateur
     @Transactional
     public void delete(String code) {
         log.debug("Deleting organisateur: {}", code);
@@ -151,7 +146,6 @@ public class OrganisateurService {
 
     // ========== Event-related venue and salle queries ==========
 
-    // salles d'un evenement
     @Transactional(readOnly = true)
     public List<Salle> getSallesForEvent(Integer eventId) {
         Evenement event = evenementRepository.findByIdEvenement(eventId)
@@ -162,131 +156,52 @@ public class OrganisateurService {
         return salleRepository.findByLieu_Code(event.getLieu().getCode());
     }
 
-    // rangs distincts d'une salle
     @Transactional(readOnly = true)
-    public List<String> getDistinctRangsForSalle(String numeroSalle) {
-        return placeRepository.findBySalle_NumeroSalle(numeroSalle)
+    public List<String> getDistinctRangsForEvent(Integer eventId, String numeroSalle) {
+        return configRepository.findByEvenement_IdEvenement(eventId)
                 .stream()
-                .map(Place::getRange)
+                .filter(c -> c.getPlace().getSalle().getNumeroSalle().equals(numeroSalle))
+                .map(EvenementPlaceConfiguration::getRange)
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
     }
 
-    // places avec configuration
     @Transactional(readOnly = true)
     public List<EvenementDTO.EventPlaceConfig> getPlacesWithConfig(Integer eventId, String numeroSalle) {
-        Evenement event = evenementRepository.findByIdEvenement(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", eventId));
-
-        List<Place> places;
-        if (numeroSalle != null && !numeroSalle.isBlank()) {
-            places = placeRepository.findBySalle_NumeroSalle(numeroSalle);
-        } else {
-            places = placeRepository.findPlacesForEventLocation(eventId);
-        }
-
-        Map<String, EvenementPlaceConfiguration> configMap = configRepository
-                .findByEvenement_IdEvenement(eventId)
-                .stream()
-                .collect(Collectors.toMap(c -> c.getPlace().getNumeroPlace(), c -> c));
-
-        List<EvenementDTO.EventPlaceConfig> result = new ArrayList<>();
-        for (Place place : places) {
-            EvenementPlaceConfiguration config = configMap.get(place.getNumeroPlace());
-            result.add(toEventPlaceConfigDTO(place, config));
-        }
-        return result;
-    }
-
-    // ========== Direct place pricing (modifies Place entity) ==========
-
-    // tarification directe par rangee
-    @Transactional
-    public int applyRowPricingDirect(Integer eventId, PlaceDTO.RowPricingRequest request) {
-        log.debug("Applying row pricing for event {} rang '{}': type={}, prix={}",
-                eventId, request.getRang(), request.getTypePlace(), request.getPrix());
-
         evenementRepository.findByIdEvenement(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", eventId));
 
-        List<Place> places = placeRepository.findPlacesForEventLocation(eventId);
-        int updated = 0;
+        List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(eventId);
 
-        for (Place place : places) {
-            if (request.getRang().equals(place.getRange())) {
-                place.setTypePlace(request.getTypePlace());
-                if (request.getPrix() != null) {
-                    place.setPrix(request.getPrix());
-                }
-                placeRepository.save(place);
-                updated++;
-            }
+        if (numeroSalle != null && !numeroSalle.isBlank()) {
+            configs = configs.stream()
+                    .filter(c -> numeroSalle.equals(c.getPlace().getSalle().getNumeroSalle()))
+                    .collect(Collectors.toList());
         }
 
-        log.info("Row pricing applied: {} places updated for rang '{}'", updated, request.getRang());
-        return updated;
-    }
-
-    // mise a jour directe du prix d'une place
-    @Transactional
-    public PlaceDTO updatePlacePricingDirect(String numeroPlace, String typePlace, BigDecimal prix) {
-        log.debug("Updating pricing for place {}: type={}, prix={}", numeroPlace, typePlace, prix);
-
-        Place place = placeRepository.findByNumeroPlace(numeroPlace)
-                .orElseThrow(() -> new ResourceNotFoundException("Place", "numeroPlace", numeroPlace));
-
-        if (typePlace != null) place.setTypePlace(typePlace);
-        if (prix != null) place.setPrix(prix);
-
-        Place saved = placeRepository.save(place);
-        log.info("Place pricing updated: {}", numeroPlace);
-        return toPlaceDTO(saved);
-    }
-
-    // places d'un evenement
-    @Transactional(readOnly = true)
-    public List<PlaceDTO> getPlacesForEvent(Integer eventId) {
-        return placeRepository.findPlacesForEventLocation(eventId)
-                .stream()
-                .map(this::toPlaceDTO)
+        return configs.stream()
+                .map(this::toEventPlaceConfigDTO)
                 .collect(Collectors.toList());
     }
 
     // ========== Event-specific pricing (via EvenementPlaceConfiguration) ==========
 
-    // tarification par rangee avec configuration
     @Transactional
     public int applyRowPricingWithConfig(Integer eventId, String rang, String typePlace, BigDecimal prix) {
-        Evenement event = evenementRepository.findByIdEvenement(eventId)
+        evenementRepository.findByIdEvenement(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", eventId));
 
-        List<Place> places;
-        if (event.getLieu() != null) {
-            places = placeRepository.findPlacesForEventLocation(eventId);
-        } else {
-            throw new BadRequestException("Event has no associated venue");
-        }
-
-        List<Place> rowPlaces = places.stream()
-                .filter(p -> rang.equals(p.getRange()))
+        List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(eventId)
+                .stream()
+                .filter(c -> rang.equals(c.getRange()))
                 .collect(Collectors.toList());
 
         int updated = 0;
-        Evenement finalEvent = event;
-        for (Place place : rowPlaces) {
-            EvenementPlaceConfiguration config = configRepository
-                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(eventId, place.getNumeroPlace())
-                    .orElseGet(() -> {
-                        EvenementPlaceConfiguration newConfig = new EvenementPlaceConfiguration();
-                        newConfig.setEvenement(finalEvent);
-                        newConfig.setPlace(place);
-                        return newConfig;
-                    });
-
-            config.setTypePlaceOverride(typePlace);
+        for (EvenementPlaceConfiguration config : configs) {
+            config.setTypePlace(typePlace);
             if (prix != null) {
-                config.setPrixOverride(prix);
+                config.setPrix(prix);
             }
             configRepository.save(config);
             updated++;
@@ -295,54 +210,43 @@ public class OrganisateurService {
         return updated;
     }
 
-    // mise a jour du prix avec configuration
     @Transactional
     public EvenementDTO.EventPlaceConfig updatePlacePricingWithConfig(Integer eventId, String numeroPlace,
                                                    String typePlace, BigDecimal prix) {
-        Evenement event = evenementRepository.findByIdEvenement(eventId)
+        evenementRepository.findByIdEvenement(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", eventId));
-
-        Place place = placeRepository.findByNumeroPlace(numeroPlace)
-                .orElseThrow(() -> new ResourceNotFoundException("Place", "numeroPlace", numeroPlace));
 
         EvenementPlaceConfiguration config = configRepository
                 .findByEvenement_IdEvenementAndPlace_NumeroPlace(eventId, numeroPlace)
-                .orElseGet(() -> {
-                    EvenementPlaceConfiguration newConfig = new EvenementPlaceConfiguration();
-                    newConfig.setEvenement(event);
-                    newConfig.setPlace(place);
-                    return newConfig;
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("EvenementPlaceConfiguration", "place", numeroPlace));
 
-        if (typePlace != null) config.setTypePlaceOverride(typePlace);
-        if (prix != null) config.setPrixOverride(prix);
+        if (typePlace != null) config.setTypePlace(typePlace);
+        if (prix != null) config.setPrix(prix);
         configRepository.save(config);
 
         log.info("Place pricing updated for event {} place {}", eventId, numeroPlace);
-        return toEventPlaceConfigDTO(place, config);
+        return toEventPlaceConfigDTO(config);
     }
 
-    // recherche de places
     @Transactional(readOnly = true)
     public List<EvenementDTO.EventPlaceConfig> searchPlaces(Integer eventId, String query, String typeFilter) {
         if (typeFilter != null && !typeFilter.isBlank()) {
             List<EvenementPlaceConfiguration> configs = configRepository
                     .findByEventAndTypePlace(eventId, typeFilter);
             return configs.stream()
-                    .map(c -> toEventPlaceConfigDTO(c.getPlace(), c))
+                    .map(this::toEventPlaceConfigDTO)
                     .collect(Collectors.toList());
         }
         if (query != null && !query.isBlank()) {
             List<EvenementPlaceConfiguration> configs = configRepository
                     .searchByEventAndQuery(eventId, query);
             return configs.stream()
-                    .map(c -> toEventPlaceConfigDTO(c.getPlace(), c))
+                    .map(this::toEventPlaceConfigDTO)
                     .collect(Collectors.toList());
         }
         return getPlacesWithConfig(eventId, null);
     }
 
-    // tarification par type de place
     @Transactional
     public int applyTypePricing(Integer eventId, String typePlace, BigDecimal prix) {
         evenementRepository.findByIdEvenement(eventId)
@@ -358,7 +262,7 @@ public class OrganisateurService {
 
         int updated = 0;
         for (EvenementPlaceConfiguration config : configs) {
-            config.setPrixOverride(prix);
+            config.setPrix(prix);
             configRepository.save(config);
             updated++;
         }
@@ -366,59 +270,54 @@ public class OrganisateurService {
         return updated;
     }
 
-    // affectation du type aux places
     @Transactional
     public int assignTypeToPlaces(Integer eventId, String typePlace,
                                    List<String> placeIds, List<String> rows) {
-        Evenement event = evenementRepository.findByIdEvenement(eventId)
+        evenementRepository.findByIdEvenement(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", eventId));
 
-        List<Place> allPlaces;
-        if (event.getLieu() != null) {
-            allPlaces = placeRepository.findPlacesForEventLocation(eventId);
-        } else {
-            throw new BadRequestException("Event has no associated venue");
-        }
+        List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(eventId);
 
-        List<Place> targetPlaces = allPlaces.stream()
-                .filter(p -> {
-                    boolean matchPlace = placeIds != null && placeIds.contains(p.getNumeroPlace());
-                    boolean matchRow = rows != null && rows.contains(p.getRange());
+        List<EvenementPlaceConfiguration> targetConfigs = configs.stream()
+                .filter(c -> {
+                    boolean matchPlace = placeIds != null && placeIds.contains(c.getPlace().getNumeroPlace());
+                    boolean matchRow = rows != null && rows.contains(c.getRange());
                     return matchPlace || matchRow;
                 })
                 .collect(Collectors.toList());
 
-        if (targetPlaces.isEmpty()) {
+        if (targetConfigs.isEmpty()) {
             log.warn("No places match the selection for event {}", eventId);
             return 0;
         }
 
         int updated = 0;
-        for (Place place : targetPlaces) {
-            EvenementPlaceConfiguration config = configRepository
-                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(eventId, place.getNumeroPlace())
-                    .orElseGet(() -> {
-                        EvenementPlaceConfiguration newConfig = new EvenementPlaceConfiguration();
-                        newConfig.setEvenement(event);
-                        newConfig.setPlace(place);
-                        return newConfig;
-                    });
-            config.setTypePlaceOverride(typePlace);
+        for (EvenementPlaceConfiguration config : targetConfigs) {
+            config.setTypePlace(typePlace);
             configRepository.save(config);
             updated++;
         }
-        log.info("Type assigned for event {}: {} places → '{}'", eventId, updated, typePlace);
+        log.info("Type assigned for event {}: {} places -> '{}'", eventId, updated, typePlace);
         return updated;
     }
 
-    // types distincts pour un evenement
     @Transactional(readOnly = true)
     public List<String> getDistinctTypesForEvent(Integer eventId) {
         return configRepository.findByEvenement_IdEvenement(eventId)
                 .stream()
-                .map(EvenementPlaceConfiguration::getTypePlaceOverride)
+                .map(EvenementPlaceConfiguration::getTypePlace)
                 .distinct()
                 .sorted()
+                .collect(Collectors.toList());
+    }
+
+    // ========== Basic place queries ==========
+
+    @Transactional(readOnly = true)
+    public List<PlaceDTO> getPlacesForEvent(Integer eventId) {
+        return placeRepository.findPlacesForEventLocation(eventId)
+                .stream()
+                .map(this::toPlaceDTO)
                 .collect(Collectors.toList());
     }
 
@@ -442,28 +341,19 @@ public class OrganisateurService {
     private PlaceDTO toPlaceDTO(Place place) {
         PlaceDTO dto = new PlaceDTO();
         dto.setNumeroPlace(place.getNumeroPlace());
-        dto.setRange(place.getRange());
-        dto.setTypePlace(place.getTypePlace());
-        dto.setPrix(place.getPrix());
         dto.setNumeroSalle(place.getSalle().getNumeroSalle());
-        dto.setStatut(place.getStatut().name());
         return dto;
     }
 
-    private EvenementDTO.EventPlaceConfig toEventPlaceConfigDTO(Place place, EvenementPlaceConfiguration config) {
+    private EvenementDTO.EventPlaceConfig toEventPlaceConfigDTO(EvenementPlaceConfiguration config) {
         EvenementDTO.EventPlaceConfig dto = new EvenementDTO.EventPlaceConfig();
-        dto.setNumeroPlace(place.getNumeroPlace());
-        dto.setRange(place.getRange());
-        dto.setTypePlace(place.getTypePlace());
-        dto.setPrix(place.getPrix());
-        dto.setStatut(place.getStatut().name());
-        dto.setNumeroSalle(place.getSalle().getNumeroSalle());
-        dto.setNomSalle(place.getSalle().getNomSalle());
-        if (config != null) {
-            dto.setTypePlaceOverride(config.getTypePlaceOverride());
-            dto.setPrixOverride(config.getPrixOverride());
-            dto.setStatutPlace(config.getStatutPlace());
-        }
+        dto.setNumeroPlace(config.getPlace().getNumeroPlace());
+        dto.setRange(config.getRange());
+        dto.setTypePlace(config.getTypePlace());
+        dto.setPrix(config.getPrix());
+        dto.setStatut(config.getStatut());
+        dto.setNumeroSalle(config.getPlace().getSalle().getNumeroSalle());
+        dto.setNomSalle(config.getPlace().getSalle().getNomSalle());
         return dto;
     }
 }

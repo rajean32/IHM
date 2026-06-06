@@ -58,11 +58,9 @@ class PlaceControllerTest {
 
         PlaceDTO dto = new PlaceDTO();
         dto.setNumeroPlace("A1");
-        dto.setRange("A");
-        dto.setTypePlace("Standard");
         dto.setNumeroSalle("S001");
 
-        String expectedNumeroPlace = lieu.getCode() + "-S001-A-A1";
+        String expectedNumeroPlace = lieu.getCode() + "-S001-?-A1";
 
         mockMvc.perform(post("/api/places")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -111,7 +111,7 @@ public class OrganisateurController {
             @PathVariable Integer eventId,
             @RequestParam String salle) {
         log.info("GET /api/organisateur/evenements/{}/rangs?salle={}", eventId, salle);
-        List<String> rangs = organisateurService.getDistinctRangsForSalle(salle);
+        List<String> rangs = organisateurService.getDistinctRangsForEvent(eventId, salle);
         return ResponseEntity.ok(ApiResponse.success(200, "Rangs fetched successfully", rangs));
     }
 
@@ -161,19 +161,21 @@ public class OrganisateurController {
                 Map.of("updated", updated, "rang", request.getRang(), "typePlace", request.getTypePlace())));
     }
 
-    // tarification directe d'une place
+    // tarification directe d'une place (nécessite eventId)
     @PutMapping("/organisateur/places/{numeroPlace}/pricing")
     @PreAuthorize("hasRole('ORGANISATEUR')")
-    public ResponseEntity<ApiResponse<PlaceDTO>> updatePlacePricing(
+    public ResponseEntity<ApiResponse<EvenementDTO.EventPlaceConfig>> updatePlacePricing(
             @PathVariable String numeroPlace,
+            @RequestParam Integer eventId,
             @RequestParam(required = false) String typePlace,
             @RequestParam(required = false) BigDecimal prix) {
-        log.info("PUT /api/organisateur/places/{}/pricing - type: {}, prix: {}", numeroPlace, typePlace, prix);
+        log.info("PUT /api/organisateur/places/{}/pricing?eventId={} - type: {}, prix: {}", numeroPlace, eventId, typePlace, prix);
         if (typePlace == null && prix == null) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error(400, "Bad Request", "At least typePlace or prix must be provided"));
         }
-        PlaceDTO result = organisateurService.updatePlacePricingDirect(numeroPlace, typePlace, prix);
+        EvenementDTO.EventPlaceConfig result = organisateurService.updatePlacePricingWithConfig(
+                eventId, numeroPlace, typePlace, prix);
         return ResponseEntity.ok(ApiResponse.success(200, "Place pricing updated", result));
     }
 
@@ -236,7 +238,7 @@ public class OrganisateurController {
 
     // modification d'un lieu
     @PutMapping("/organisateur/venues/lieux/{id}")
-    public ResponseEntity<ApiResponse<LieuDTO>> updateLieu(@PathVariable Integer id, @Valid @RequestBody LieuDTO dto) {
+    public ResponseEntity<ApiResponse<LieuDTO>> updateLieu(@PathVariable String id, @Valid @RequestBody LieuDTO dto) {
         log.info("PUT /api/organisateur/venues/lieux/{}", id);
         LieuDTO data = lieuService.update(id, dto);
         return ResponseEntity.ok(ApiResponse.success(200, "Lieu updated", data));
@@ -244,7 +246,7 @@ public class OrganisateurController {
 
     // suppression d'un lieu
     @DeleteMapping("/organisateur/venues/lieux/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteLieu(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Void>> deleteLieu(@PathVariable String id) {
         log.info("DELETE /api/organisateur/venues/lieux/{}", id);
         lieuService.delete(id);
         return ResponseEntity.ok(ApiResponse.success(200, "Lieu deleted"));

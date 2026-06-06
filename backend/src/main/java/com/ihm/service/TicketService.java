@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,22 +27,24 @@ public class TicketService {
     private final PlaceRepository placeRepository;
     private final CorrespondARepository correspondARepository;
     private final QRCodeService qrCodeService;
+    private final EvenementPlaceConfigurationRepository configRepository;
 
     public TicketService(TicketRepository ticketRepository,
                          ConcernerRepository concernerRepository,
                          EvenementRepository evenementRepository,
                          PlaceRepository placeRepository,
                          CorrespondARepository correspondARepository,
-                         QRCodeService qrCodeService) {
+                         QRCodeService qrCodeService,
+                         EvenementPlaceConfigurationRepository configRepository) {
         this.ticketRepository = ticketRepository;
         this.concernerRepository = concernerRepository;
         this.evenementRepository = evenementRepository;
         this.placeRepository = placeRepository;
         this.correspondARepository = correspondARepository;
         this.qrCodeService = qrCodeService;
+        this.configRepository = configRepository;
     }
 
-    // recuperation de tous les tickets
     @Transactional(readOnly = true)
     public List<TicketDTO> getAll() {
         log.debug("Fetching all tickets");
@@ -59,13 +62,24 @@ public class TicketService {
         return toDTO(ticket);
     }
 
-    // creation d'un ticket
     @Transactional
     public TicketDTO create(TicketDTO dto) {
         log.debug("Creating ticket: {}", dto.getCodeTicket());
         if (ticketRepository.existsByCodeTicket(dto.getCodeTicket())) {
             throw new DuplicateResourceException("Ticket", "codeTicket", dto.getCodeTicket());
         }
+
+        if (dto.getIdEvenement() != null) {
+            Evenement event = evenementRepository.findByIdEvenement(dto.getIdEvenement())
+                    .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", dto.getIdEvenement()));
+            if (event.getDateEvenement() != null && event.getDateEvenement().isBefore(LocalDate.now())) {
+                throw new BadRequestException("Cannot create ticket: event '" + event.getTitre() + "' is already finished");
+            }
+            if ("termine".equals(event.getStatut()) || "annule".equals(event.getStatut())) {
+                throw new BadRequestException("Cannot create ticket: event '" + event.getTitre() + "' is " + event.getStatut());
+            }
+        }
+
         Ticket ticket = new Ticket();
         ticket.setCodeTicket(dto.getCodeTicket());
         ticket.setPrix(dto.getPrix());
@@ -90,8 +104,12 @@ public class TicketService {
             concerner.setPlace(place);
             concernerRepository.save(concerner);
 
-            place.setStatut(StatutPlace.RESERVEE);
-            placeRepository.save(place);
+            EvenementPlaceConfiguration config = configRepository
+                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(dto.getIdEvenement(), dto.getNumeroPlace())
+                    .orElseThrow(() -> new ResourceNotFoundException("EvenementPlaceConfiguration",
+                            "event+place", dto.getIdEvenement() + "+" + dto.getNumeroPlace()));
+            config.setStatut("RESERVEE");
+            configRepository.save(config);
 
             log.info("Concerner created for ticket {} and place {} (status: RESERVEE)", dto.getCodeTicket(), dto.getNumeroPlace());
         }
@@ -100,7 +118,6 @@ public class TicketService {
         return toDTO(saved);
     }
 
-    // mise a jour d'un ticket
     @Transactional
     public TicketDTO update(String code, TicketDTO dto) {
         log.debug("Updating ticket: {}", code);
@@ -112,7 +129,6 @@ public class TicketService {
         return toDTO(saved);
     }
 
-    // suppression d'un ticket
     @Transactional
     public void delete(String code) {
         log.debug("Deleting ticket: {}", code);
@@ -122,10 +138,13 @@ public class TicketService {
 
         List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(code);
         for (Concerner c : concerners) {
-            Place place = c.getPlace();
-            if (place != null) {
-                place.setStatut(StatutPlace.DISPONIBLE);
-                placeRepository.save(place);
+            EvenementPlaceConfiguration config = configRepository
+                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(
+                            c.getEvenement().getIdEvenement(), c.getPlace().getNumeroPlace())
+                    .orElse(null);
+            if (config != null) {
+                config.setStatut("DISPONIBLE");
+                configRepository.save(config);
             }
         }
 
@@ -149,8 +168,15 @@ public class TicketService {
             Concerner concerner = concerners.get(0);
             evenementTitre = concerner.getEvenement().getTitre();
             placeNumero = concerner.getPlace().getNumeroPlace();
-            rang = concerner.getPlace().getRange() != null ? concerner.getPlace().getRange() : "";
-            typePlace = concerner.getPlace().getTypePlace() != null ? concerner.getPlace().getTypePlace() : "";
+
+            EvenementPlaceConfiguration config = configRepository
+                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(
+                            concerner.getEvenement().getIdEvenement(), placeNumero)
+                    .orElse(null);
+            if (config != null) {
+                rang = config.getRange() != null ? config.getRange() : "";
+                typePlace = config.getTypePlace() != null ? config.getTypePlace() : "";
+            }
         }
 
         String ticketData = qrCodeService.generateTicketData(codeTicket, evenementTitre, placeNumero);
@@ -169,7 +195,6 @@ public class TicketService {
         return response;
     }
 
-    // validation d'un ticket
     @Transactional(readOnly = true)
     public TicketDTO.ValidationResponse validateTicket(String codeTicket) {
         log.debug("Validating ticket: {}", codeTicket);

@@ -6,6 +6,7 @@ import '../../core/services/evenement_service.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
 import '../../core/utils/error_helper.dart';
+import '../../widgets/event_image_widget.dart';
 
 class HomeDetailPage extends StatefulWidget {
   final int eventId;
@@ -73,7 +74,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
           if (event.image != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(event.image!, height: 200, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox(height: 200, child: Center(child: Icon(Icons.image, size: 64)))),
+              child: eventImageWidget(event.image, height: 200),
             ),
           const SizedBox(height: 16),
           Text(event.titre, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),

@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { loginAdmin, setAuthToken, setUserInfo } from '../../api/entityApi'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from?.pathname || '/'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [email, setEmail] = useState('')
@@ -21,7 +23,7 @@ export default function LoginPage() {
       if (data.isFirstLogin) {
         navigate('/first-login')
       } else {
-        navigate('/')
+        navigate(from, { replace: true })
       }
     } catch (err) {
       setError(err.message)
