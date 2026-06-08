@@ -91,7 +91,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
   Future<void> _logout() async {
     await AuthService().logout();
     if (!mounted) return;
-    Navigator.pushReplacementNamed(context, AuthRoutes.login);
+    Navigator.of(context).pushNamedAndRemoveUntil(AuthRoutes.login, (route) => false);
   }
 
   @override

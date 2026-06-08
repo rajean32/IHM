@@ -69,6 +69,10 @@ Future<void> setUserInfo(Map<String, dynamic> data) async {
   if (userNom != null) await prefs.setString('userNom', userNom!);
 }
 
+bool get isLoggedInSync => _token != null && _token!.isNotEmpty;
+
+bool get hasRoleSync => userRole != null && userRole!.isNotEmpty;
+
 Future<void> clearSession() async {
   await setToken(null);
   userCode = null;

@@ -37,6 +37,10 @@ class Endpoints {
   static String typePricing(int eventId) => '$base/organisateur/evenements/$eventId/places/type/pricing';
   static String assignType(int eventId) => '$base/organisateur/evenements/$eventId/places/assign-type';
 
+  static String organizerEventTickets(int eventId) => '$base/organisateur/evenements/$eventId/tickets';
+  static String organizerEventReservations(int eventId) => '$base/organisateur/evenements/$eventId/reservations';
+  static String organizerReservationDetail(int id) => '$base/organisateur/reservations/$id';
+
   static String organizerProfile(String code) => '$base/organisateurs/$code';
   static String organizerEventSalles(int eventId) => '$base/organisateur/evenements/$eventId/salles';
   static String organizerEventPlacesConfig(int eventId, String salle) => '$base/organisateur/evenements/$eventId/places/config?salle=$salle';

@@ -21,4 +21,19 @@ class ReservationApi {
     final resp = await dio.get(Endpoints.reservations);
     return (resp.data['data'] as List?) ?? [];
   }
+
+  Future<List<dynamic>> getEventReservations(int eventId) async {
+    final resp = await dio.get(Endpoints.organizerEventReservations(eventId));
+    return (resp.data['data'] as List?) ?? [];
+  }
+
+  Future<Map<String, dynamic>> getReservationDetail(int id) async {
+    final resp = await dio.get(Endpoints.organizerReservationDetail(id));
+    return resp.data['data'] as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> cancelReservation(int id) async {
+    final resp = await dio.post('${Endpoints.reservations}/$id/cancel');
+    return resp.data['data'] as Map<String, dynamic>;
+  }
 }

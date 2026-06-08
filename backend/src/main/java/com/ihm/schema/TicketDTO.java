@@ -83,6 +83,31 @@ public class TicketDTO {
         public void setMessage(String message) { this.message = message; }
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class GateScanResponse {
+        private String statut;
+        private String message;
+        private String codeTicket;
+        private String evenementTitre;
+        private String placeNumero;
+        private String clientNom;
+
+        public GateScanResponse() {}
+
+        public String getStatut() { return statut; }
+        public void setStatut(String statut) { this.statut = statut; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+        public String getCodeTicket() { return codeTicket; }
+        public void setCodeTicket(String codeTicket) { this.codeTicket = codeTicket; }
+        public String getEvenementTitre() { return evenementTitre; }
+        public void setEvenementTitre(String evenementTitre) { this.evenementTitre = evenementTitre; }
+        public String getPlaceNumero() { return placeNumero; }
+        public void setPlaceNumero(String placeNumero) { this.placeNumero = placeNumero; }
+        public String getClientNom() { return clientNom; }
+        public void setClientNom(String clientNom) { this.clientNom = clientNom; }
+    }
+
     public static class Concerner {
         @NotNull(message = "Event ID is required")
         private Integer idEvenement;

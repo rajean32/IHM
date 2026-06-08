@@ -9,7 +9,10 @@ import 'pricing_page.dart';
 import '../../core/utils/error_helper.dart';
 
 class EventPage extends StatefulWidget {
-  const EventPage({super.key});
+  final Function(int eventId)? onViewTickets;
+  final Function(int eventId)? onViewReservations;
+
+  const EventPage({super.key, this.onViewTickets, this.onViewReservations});
 
   @override
   State<EventPage> createState() => _EventPageState();
@@ -79,13 +82,61 @@ class _EventPageState extends State<EventPage> {
     }
   }
 
+  String _eventStatusLabel(Evenement event) {
+    if (event.dateEvenement == null) return 'UPCOMING';
+    final now = DateTime.now();
+    final diff = event.dateEvenement!.difference(now);
+    if (diff.isNegative && diff.inDays > -1) return 'ONGOING';
+    if (diff.isNegative) return 'TERMINATED';
+    return 'UPCOMING';
+  }
+
+  String _eventCountdown(Evenement event) {
+    if (event.dateEvenement == null) return '';
+    final now = DateTime.now();
+    final diff = event.dateEvenement!.difference(now);
+    if (diff.isNegative) {
+      final past = -diff;
+      if (past.inMinutes < 60) return 'Terminé il y a ${past.inMinutes} min';
+      if (past.inHours < 24) return 'Terminé il y a ${past.inHours}h';
+      if (past.inDays < 30) return 'Terminé il y a ${past.inDays}j';
+      if (past.inDays < 365) return 'Terminé il y a ${(past.inDays / 30).round()} mois';
+      return 'Terminé il y a ${(past.inDays / 365).round()} an(s)';
+    }
+    if (diff.inMinutes < 60) return 'Commence dans ${diff.inMinutes} min';
+    if (diff.inHours < 24) return 'Commence dans ${diff.inHours}h';
+    return 'Commence dans ${diff.inDays}j';
+  }
+
+  Color _eventStatusColor(String status) {
+    switch (status) {
+      case 'UPCOMING': return AppColors.statusPlanned;
+      case 'ONGOING': return AppColors.statusInProgress;
+      case 'TERMINATED': return AppColors.statusDone;
+      default: return AppTheme.textSecondary;
+    }
+  }
+
+  Color _eventBadgeBg(String status) {
+    return _eventStatusColor(status).withValues(alpha: 0.15);
+  }
+
+  IconData _eventStatusIcon(String status) {
+    switch (status) {
+      case 'UPCOMING': return Icons.schedule;
+      case 'ONGOING': return Icons.play_circle;
+      case 'TERMINATED': return Icons.check_circle_outline;
+      default: return Icons.event;
+    }
+  }
+
   void _showEventInfo(Evenement event) {
-    final sc = AppConstants.statutColors[event.statut] ?? AppTheme.textSecondary;
+    final sc = _eventStatusColor(_eventStatusLabel(event));
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Row(children: [
-          Icon(AppConstants.statutIcons[event.statut] ?? Icons.event, color: sc, size: 24),
+          Icon(_eventStatusIcon(_eventStatusLabel(event)), color: sc, size: 24),
           const SizedBox(width: 8),
           Expanded(child: Text(event.titre, style: const TextStyle(fontSize: 16))),
         ]),
@@ -93,9 +144,10 @@ class _EventPageState extends State<EventPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _infoRow('Statut', event.statut ?? '-', sc),
+            _infoRow('Statut', _eventStatusLabel(event), sc),
             _infoRow('Date', event.dateEvenement?.toIso8601String().split('T').first ?? '-'),
             _infoRow('Heure', event.heureEvenement ?? '-'),
+            _infoRow('Compte à rebours', _eventCountdown(event)),
             if (event.description != null) _infoRow('Description', event.description!),
             _infoRow('Catégorie', event.categorieNom ?? '-'),
             _infoRow('Lieu', event.lieuNom ?? '-'),
@@ -114,13 +166,8 @@ class _EventPageState extends State<EventPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text('$label :', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-          ),
-          Expanded(
-            child: Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: color)),
-          ),
+          SizedBox(width: 120, child: Text('$label :', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary))),
+          Expanded(child: Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: color))),
         ],
       ),
     );
@@ -182,7 +229,10 @@ class _EventPageState extends State<EventPage> {
                                 const Text('Aucun événement', style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
                                 const SizedBox(height: 16),
                                 ElevatedButton.icon(
-                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateEventPage())),
+                                  onPressed: () async {
+                                    await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateEventPage()));
+                                    _loadData(showLoader: false);
+                                  },
                                   icon: const Icon(Icons.add, size: 18),
                                   label: const Text('Créer un événement'),
                                 ),
@@ -194,48 +244,101 @@ class _EventPageState extends State<EventPage> {
                             itemCount: filtered.length,
                             itemBuilder: (ctx, i) {
                               final event = filtered[i];
-                              final sc = AppConstants.statutColors[event.statut] ?? AppTheme.textSecondary;
+                              final status = _eventStatusLabel(event);
+                              final sc = _eventStatusColor(status);
                               return Card(
                                 margin: const EdgeInsets.symmetric(vertical: 4),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: sc.withValues(alpha: 0.2),
-                                    child: Icon(AppConstants.statutIcons[event.statut] ?? Icons.event, color: sc, size: 20),
-                                  ),
-                                  title: Text(event.titre, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                                  subtitle: Text(
-                                    '${event.dateEvenement?.toIso8601String().split('T').first ?? ''} • ${event.statut}',
-                                    style: const TextStyle(fontSize: 11),
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: sc.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: sc.withValues(alpha: 0.4)),
+                                      Row(children: [
+                                        CircleAvatar(
+                                          backgroundColor: _eventBadgeBg(status),
+                                          child: Icon(_eventStatusIcon(status), color: sc, size: 20),
                                         ),
-                                        child: Text(event.statut ?? '', style: TextStyle(fontSize: 10, color: sc, fontWeight: FontWeight.w600)),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(event.titre, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                '${event.dateEvenement?.toIso8601String().split('T').first ?? ''}',
+                                                style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: _eventBadgeBg(status),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(color: sc.withValues(alpha: 0.4)),
+                                          ),
+                                          child: Text(status, style: TextStyle(fontSize: 9, color: sc, fontWeight: FontWeight.w700)),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        PopupMenuButton<String>(
+                                          onSelected: (v) async {
+                                            if (v == 'info') _showEventInfo(event);
+                                            if (v == 'edit') {
+                                              await Navigator.push(context, MaterialPageRoute(builder: (_) => CreateEventPage(event: event)));
+                                              _loadData(showLoader: false);
+                                            }
+                                            if (v == 'pricing') await _showPricingModal(event);
+                                            if (v == 'delete') _deleteEvent(event);
+                                          },
+                                          itemBuilder: (ctx) => [
+                                            const PopupMenuItem(value: 'info', child: ListTile(leading: Icon(Icons.info_outline, size: 18), title: Text('Info', style: TextStyle(fontSize: 13)))),
+                                            const PopupMenuItem(value: 'pricing', child: ListTile(leading: Icon(Icons.attach_money, size: 18), title: Text('Prix', style: TextStyle(fontSize: 13)))),
+                                            const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text('Modifier', style: TextStyle(fontSize: 13)))),
+                                            const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: AppTheme.errorColor), title: Text('Supprimer', style: TextStyle(fontSize: 13, color: AppTheme.errorColor)))),
+                                          ],
+                                        ),
+                                      ]),
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4, left: 48),
+                                        child: Text(_eventCountdown(event), style: TextStyle(fontSize: 11, color: sc, fontStyle: FontStyle.italic)),
                                       ),
-                                      PopupMenuButton<String>(
-                                        onSelected: (v) async {
-                                          if (v == 'info') _showEventInfo(event);
-                                          if (v == 'edit') {
-                                            await Navigator.push(context, MaterialPageRoute(builder: (_) => CreateEventPage(event: event)));
-                                            _loadData(showLoader: false);
-                                          }
-                                          if (v == 'pricing') await _showPricingModal(event);
-                                          if (v == 'delete') _deleteEvent(event);
-                                        },
-                                        itemBuilder: (ctx) => [
-                                          const PopupMenuItem(value: 'info', child: ListTile(leading: Icon(Icons.info_outline, size: 18), title: Text('Info', style: TextStyle(fontSize: 13)))),
-                                          const PopupMenuItem(value: 'pricing', child: ListTile(leading: Icon(Icons.attach_money, size: 18), title: Text('Prix', style: TextStyle(fontSize: 13)))),
-                                          const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text('Modifier', style: TextStyle(fontSize: 13)))),
-                                          const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: AppTheme.errorColor), title: Text('Supprimer', style: TextStyle(fontSize: 13, color: AppTheme.errorColor)))),
-                                        ],
-                                      ),
+                                      const Divider(height: 16),
+                                      Row(children: [
+                                        if (widget.onViewTickets != null && event.idEvenement != null)
+                                          Expanded(
+                                            child: SizedBox(
+                                              height: 32,
+                                              child: OutlinedButton.icon(
+                                                onPressed: () => widget.onViewTickets!(event.idEvenement!),
+                                                icon: const Icon(Icons.confirmation_number, size: 14),
+                                                label: const Text('Tickets', style: TextStyle(fontSize: 11)),
+                                                style: OutlinedButton.styleFrom(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                  side: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.4)),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        if (widget.onViewTickets != null && widget.onViewReservations != null && event.idEvenement != null)
+                                          const SizedBox(width: 8),
+                                        if (widget.onViewReservations != null && event.idEvenement != null)
+                                          Expanded(
+                                            child: SizedBox(
+                                              height: 32,
+                                              child: OutlinedButton.icon(
+                                                onPressed: () => widget.onViewReservations!(event.idEvenement!),
+                                                icon: const Icon(Icons.receipt_long, size: 14),
+                                                label: const Text('Réservations', style: TextStyle(fontSize: 11)),
+                                                style: OutlinedButton.styleFrom(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                  side: BorderSide(color: AppTheme.secondaryColor.withValues(alpha: 0.4)),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ]),
                                     ],
                                   ),
                                 ),

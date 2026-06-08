@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/services/user_service.dart';
+import '../../core/routes/auth_routes.dart';
 import '../../core/utils/error_helper.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -78,10 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _logout() {
     clearSession();
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const _LoginRedirect()),
-      (route) => false,
-    );
+    Navigator.of(context).pushNamedAndRemoveUntil(AuthRoutes.login, (route) => false);
   }
 
   @override
@@ -152,17 +150,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ],
             ),
-    );
-  }
-}
-
-class _LoginRedirect extends StatelessWidget {
-  const _LoginRedirect();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Redirection vers la connexion...')),
     );
   }
 }

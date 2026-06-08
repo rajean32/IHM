@@ -235,6 +235,69 @@ public class TicketService {
         return response;
     }
 
+    @Transactional
+    public TicketDTO.GateScanResponse scanAtGate(String qrToken) {
+        log.debug("Gate scan for token: {}", qrToken);
+
+        Ticket ticket = ticketRepository.findByCodeTicket(qrToken).orElse(null);
+        if (ticket == null) {
+            TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
+            r.setStatut("INVALID");
+            r.setMessage("Ticket not found");
+            return r;
+        }
+
+        List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(qrToken);
+        if (concerners.isEmpty()) {
+            TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
+            r.setStatut("INVALID");
+            r.setMessage("Ticket not linked to any event");
+            return r;
+        }
+
+        List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(qrToken);
+        if (correspondances.isEmpty()) {
+            TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
+            r.setStatut("INVALID");
+            r.setMessage("Ticket not linked to any reservation");
+            return r;
+        }
+
+        Concerner concerner = concerners.get(0);
+        EvenementPlaceConfiguration config = configRepository
+                .findByEvenement_IdEvenementAndPlace_NumeroPlace(
+                        concerner.getEvenement().getIdEvenement(), concerner.getPlace().getNumeroPlace())
+                .orElse(null);
+
+        if (config != null && "UTILISE".equals(config.getStatut())) {
+            TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
+            r.setStatut("ALREADY_USED");
+            r.setMessage("Ticket has already been used");
+            r.setCodeTicket(qrToken);
+            r.setEvenementTitre(concerner.getEvenement().getTitre());
+            r.setPlaceNumero(concerner.getPlace().getNumeroPlace());
+            return r;
+        }
+
+        if (config != null) {
+            config.setStatut("UTILISE");
+            configRepository.save(config);
+            log.info("Ticket {} marked as UTILISE at gate", qrToken);
+        }
+
+        String clientNom = correspondances.get(0).getReservation().getClient().getNom() + " "
+                + correspondances.get(0).getReservation().getClient().getPrenoms();
+
+        TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
+        r.setStatut("VALID");
+        r.setMessage("Ticket validated successfully");
+        r.setCodeTicket(qrToken);
+        r.setEvenementTitre(concerner.getEvenement().getTitre());
+        r.setPlaceNumero(concerner.getPlace().getNumeroPlace());
+        r.setClientNom(clientNom);
+        return r;
+    }
+
     private TicketDTO toDTO(Ticket ticket) {
         TicketDTO dto = new TicketDTO();
         dto.setCodeTicket(ticket.getCodeTicket());

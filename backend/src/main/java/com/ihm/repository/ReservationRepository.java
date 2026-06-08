@@ -26,4 +26,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
 
     @Query("SELECT COUNT(r) FROM Reservation r WHERE r.idReservation NOT IN (SELECT p.reservation.idReservation FROM Paiement p)")
     long countWithoutPayment();
+
+    @Query("SELECT DISTINCT r FROM Reservation r JOIN r.correspondances ca JOIN ca.ticket t JOIN t.concerners c WHERE c.evenement.idEvenement = :eventId ORDER BY r.dateReservation DESC")
+    List<Reservation> findByEvenementId(@Param("eventId") Integer eventId);
+
+    @Query("SELECT r FROM Reservation r JOIN FETCH r.correspondances ca JOIN FETCH ca.ticket t WHERE r.idReservation = :id")
+    Optional<Reservation> findByIdWithCorrespondances(@Param("id") Integer id);
 }

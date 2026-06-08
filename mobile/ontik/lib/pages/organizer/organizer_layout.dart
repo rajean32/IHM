@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'event_page.dart';
 import 'profile_page.dart';
+import 'tickets_page.dart';
+import 'reservations_page.dart';
 
 class OrganizerLayout extends StatefulWidget {
   const OrganizerLayout({super.key});
@@ -13,11 +15,13 @@ class OrganizerLayout extends StatefulWidget {
 class _OrganizerLayoutState extends State<OrganizerLayout> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    DashboardPage(),
-    EventPage(),
-    ProfilePage(),
-  ];
+  void _navigateToTicket(int eventId) {
+    setState(() => _currentIndex = 2);
+  }
+
+  void _navigateToReservation(int eventId) {
+    setState(() => _currentIndex = 3);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +35,16 @@ class _OrganizerLayoutState extends State<OrganizerLayout> {
       ),
       body: IndexedStack(
         index: _currentIndex,
-        children: _pages,
+        children: [
+          const DashboardPage(),
+          EventPage(
+            onViewTickets: _navigateToTicket,
+            onViewReservations: _navigateToReservation,
+          ),
+          const TicketsPage(),
+          const ReservationsPage(),
+          const ProfilePage(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -39,6 +52,8 @@ class _OrganizerLayoutState extends State<OrganizerLayout> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           NavigationDestination(icon: Icon(Icons.event), label: '\u00C9v\u00E9nements'),
+          NavigationDestination(icon: Icon(Icons.confirmation_number), label: 'Tickets'),
+          NavigationDestination(icon: Icon(Icons.receipt_long), label: 'R\u00E9servations'),
           NavigationDestination(icon: Icon(Icons.person), label: 'Compte'),
         ],
       ),

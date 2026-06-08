@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../pages/auth/login_page.dart';
+import '../../pages/splash_page.dart';
 import '../assets/app_colors.dart';
 import '../../pages/auth/register_page.dart';
 import '../../pages/auth/forgot_password_page.dart';
@@ -13,15 +14,26 @@ import '../../pages/organizer/organizer_layout.dart';
 import '../../pages/organizer/create_event_page.dart';
 import '../../pages/organizer/pricing_page.dart';
 import '../../pages/organizer/scan_page.dart';
+import '../../pages/organizer/tickets_page.dart';
+import '../../pages/organizer/reservations_page.dart';
+import '../../pages/organizer/reservation_detail_page.dart';
 import '../../pages/admin/admin_layout.dart';
 import 'auth_routes.dart';
 import 'client_routes.dart';
 import 'organizer_routes.dart';
 import 'admin_routes.dart';
+import '../api/dio_config.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    if (_isProtectedRoute(settings.name)) {
+      if (!isLoggedInSync) {
+        return MaterialPageRoute(builder: (_) => const SplashPage());
+      }
+    }
     switch (settings.name) {
+      case AuthRoutes.splash:
+        return MaterialPageRoute(builder: (_) => const SplashPage());
       case AuthRoutes.login:
         return MaterialPageRoute(builder: (_) => const LoginPage());
       case AuthRoutes.register:
@@ -59,11 +71,39 @@ class AppRouter {
         final a = settings.arguments as Map<String, dynamic>?;
         if (a == null) return _notFound();
         return MaterialPageRoute(builder: (_) => PricingPage(eventId: a['eventId'] as int));
+      case OrganizerRoutes.tickets:
+        return MaterialPageRoute(builder: (_) => const TicketsPage());
+      case OrganizerRoutes.reservations:
+        return MaterialPageRoute(builder: (_) => const ReservationsPage());
+      case OrganizerRoutes.reservationDetail:
+        final a = settings.arguments as Map<String, dynamic>?;
+        if (a == null) return _notFound();
+        return MaterialPageRoute(builder: (_) => ReservationDetailPage(id: a['id'] as int));
       case AdminRoutes.layout:
         return MaterialPageRoute(builder: (_) => const AdminLayout());
       default:
         return _notFound();
     }
+  }
+
+  static bool _isProtectedRoute(String? name) {
+    const protected = [
+      ClientRoutes.home,
+      ClientRoutes.homeDetail,
+      ClientRoutes.reservation,
+      ClientRoutes.payment,
+      ClientRoutes.ticket,
+      ClientRoutes.profile,
+      OrganizerRoutes.layout,
+      OrganizerRoutes.createEvent,
+      OrganizerRoutes.scan,
+      OrganizerRoutes.pricing,
+      OrganizerRoutes.tickets,
+      OrganizerRoutes.reservations,
+      OrganizerRoutes.reservationDetail,
+      AdminRoutes.layout,
+    ];
+    return protected.contains(name);
   }
 
   static Route<dynamic> _notFound() {
@@ -79,7 +119,7 @@ class AppRouter {
               const Text('Page introuvable', style: TextStyle(fontSize: 18, color: AppColors.textSecondary)),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false),
+                onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(AuthRoutes.splash, (route) => false),
                 icon: const Icon(Icons.home),
                 label: const Text('Accueil'),
               ),

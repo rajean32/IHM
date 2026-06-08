@@ -7,18 +7,26 @@ import com.ihm.schema.EvenementDTO;
 import com.ihm.schema.OrganisateurDTO;
 import com.ihm.schema.PlaceDTO;
 import com.ihm.repository.AdministrateurRepository;
+import com.ihm.repository.ConcernerRepository;
+import com.ihm.repository.CorrespondARepository;
 import com.ihm.repository.EvenementPlaceConfigurationRepository;
 import com.ihm.repository.EvenementRepository;
 import com.ihm.repository.OrganisateurRepository;
 import com.ihm.repository.PlaceRepository;
+import com.ihm.repository.ReservationRepository;
 import com.ihm.repository.SalleRepository;
+import com.ihm.repository.TicketRepository;
 import com.ihm.repository.UtilisateurRepository;
 import com.ihm.model.Administrateur;
+import com.ihm.model.Concerner;
+import com.ihm.model.CorrespondA;
 import com.ihm.model.Evenement;
 import com.ihm.model.EvenementPlaceConfiguration;
 import com.ihm.model.Organisateur;
 import com.ihm.model.Place;
+import com.ihm.model.Reservation;
 import com.ihm.model.Salle;
+import com.ihm.model.Ticket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,6 +52,10 @@ public class OrganisateurService {
     private final EvenementRepository evenementRepository;
     private final SalleRepository salleRepository;
     private final EvenementPlaceConfigurationRepository configRepository;
+    private final TicketRepository ticketRepository;
+    private final ReservationRepository reservationRepository;
+    private final CorrespondARepository correspondARepository;
+    private final ConcernerRepository concernerRepository;
 
     public OrganisateurService(OrganisateurRepository organisateurRepository,
                                 UtilisateurRepository utilisateurRepository,
@@ -52,7 +64,11 @@ public class OrganisateurService {
                                 PlaceRepository placeRepository,
                                 EvenementRepository evenementRepository,
                                 SalleRepository salleRepository,
-                                EvenementPlaceConfigurationRepository configRepository) {
+                                EvenementPlaceConfigurationRepository configRepository,
+                                TicketRepository ticketRepository,
+                                ReservationRepository reservationRepository,
+                                CorrespondARepository correspondARepository,
+                                ConcernerRepository concernerRepository) {
         this.organisateurRepository = organisateurRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.administrateurRepository = administrateurRepository;
@@ -61,6 +77,10 @@ public class OrganisateurService {
         this.evenementRepository = evenementRepository;
         this.salleRepository = salleRepository;
         this.configRepository = configRepository;
+        this.ticketRepository = ticketRepository;
+        this.reservationRepository = reservationRepository;
+        this.correspondARepository = correspondARepository;
+        this.concernerRepository = concernerRepository;
     }
 
     // ========== Organisateur CRUD ==========
@@ -309,6 +329,122 @@ public class OrganisateurService {
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
+    }
+
+    // ========== Ticket & Reservation queries ==========
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getTicketsForEvent(Integer eventId) {
+        evenementRepository.findByIdEvenement(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", eventId));
+
+        List<Ticket> tickets = ticketRepository.findByConcerners_Evenement_IdEvenement(eventId);
+        return tickets.stream().map(t -> {
+            Map<String, Object> m = new java.util.HashMap<>();
+            m.put("codeTicket", t.getCodeTicket());
+            m.put("prix", t.getPrix());
+            List<Concerner> cs = concernerRepository.findByTicket_CodeTicket(t.getCodeTicket());
+            if (!cs.isEmpty()) {
+                Concerner c = cs.get(0);
+                m.put("numeroPlace", c.getPlace().getNumeroPlace());
+                m.put("rang", c.getPlace().getRangePlace());
+                EvenementPlaceConfiguration cfg = configRepository
+                        .findByEvenement_IdEvenementAndPlace_NumeroPlace(eventId, c.getPlace().getNumeroPlace())
+                        .orElse(null);
+                m.put("typePlace", cfg != null ? cfg.getTypePlace() : null);
+            }
+            List<CorrespondA> corrs = correspondARepository.findByTicket_CodeTicket(t.getCodeTicket());
+            if (!corrs.isEmpty()) {
+                m.put("idReservation", corrs.get(0).getReservation().getIdReservation());
+                m.put("clientNom", corrs.get(0).getReservation().getClient().getNom() + " "
+                        + corrs.get(0).getReservation().getClient().getPrenoms());
+                m.put("statut", corrs.get(0).getReservation().getPaiement() != null ? "PAYE" : "EN_ATTENTE");
+            } else {
+                m.put("statut", "DISPONIBLE");
+            }
+            return m;
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getReservationsForEvent(Integer eventId) {
+        evenementRepository.findByIdEvenement(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", eventId));
+
+        List<Reservation> reservations = reservationRepository.findByEvenementId(eventId);
+        return reservations.stream().map(r -> {
+            Map<String, Object> m = new java.util.HashMap<>();
+            m.put("idReservation", r.getIdReservation());
+            m.put("dateReservation", r.getDateReservation().toString());
+            m.put("codeClient", r.getClient().getCodeUtilisateur());
+            m.put("clientNom", r.getClient().getNom() + " " + r.getClient().getPrenoms());
+            m.put("clientTel", r.getClient().getTel());
+            m.put("clientEmail", r.getClient().getEmail());
+            m.put("paiement", r.getPaiement() != null ? Map.of(
+                    "montant", r.getPaiement().getMontant(),
+                    "modePaiement", r.getPaiement().getModePaiement(),
+                    "datePaiement", r.getPaiement().getDatePaiement().toString()
+            ) : null);
+            List<Map<String, Object>> tickets = r.getCorrespondances().stream().map(ca -> {
+                Map<String, Object> t = new java.util.HashMap<>();
+                t.put("codeTicket", ca.getTicket().getCodeTicket());
+                t.put("prix", ca.getTicket().getPrix());
+                List<Concerner> cs = concernerRepository.findByTicket_CodeTicket(ca.getTicket().getCodeTicket());
+                if (!cs.isEmpty()) {
+                    Concerner c = cs.get(0);
+                    t.put("numeroPlace", c.getPlace().getNumeroPlace());
+                    t.put("rang", c.getPlace().getRangePlace());
+                    EvenementPlaceConfiguration cfg = configRepository
+                            .findByEvenement_IdEvenementAndPlace_NumeroPlace(eventId, c.getPlace().getNumeroPlace())
+                            .orElse(null);
+                    t.put("typePlace", cfg != null ? cfg.getTypePlace() : null);
+                }
+                return t;
+            }).collect(Collectors.toList());
+            m.put("tickets", tickets);
+            m.put("nombreTickets", tickets.size());
+            return m;
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getReservationDetail(Integer reservationId) {
+        Reservation r = reservationRepository.findByIdWithCorrespondances(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation", "idReservation", reservationId));
+
+        Map<String, Object> m = new java.util.HashMap<>();
+        m.put("idReservation", r.getIdReservation());
+        m.put("dateReservation", r.getDateReservation().toString());
+        m.put("codeClient", r.getClient().getCodeUtilisateur());
+        m.put("clientNom", r.getClient().getNom() + " " + r.getClient().getPrenoms());
+        m.put("clientTel", r.getClient().getTel());
+        m.put("clientEmail", r.getClient().getEmail());
+        m.put("paiement", r.getPaiement() != null ? Map.of(
+                "montant", r.getPaiement().getMontant(),
+                "modePaiement", r.getPaiement().getModePaiement(),
+                "datePaiement", r.getPaiement().getDatePaiement().toString()
+        ) : null);
+        List<Map<String, Object>> tickets = r.getCorrespondances().stream().map(ca -> {
+            Map<String, Object> t = new java.util.HashMap<>();
+            t.put("codeTicket", ca.getTicket().getCodeTicket());
+            t.put("prix", ca.getTicket().getPrix());
+            List<Concerner> cs = concernerRepository.findByTicket_CodeTicket(ca.getTicket().getCodeTicket());
+            if (!cs.isEmpty()) {
+                Concerner c = cs.get(0);
+                t.put("numeroPlace", c.getPlace().getNumeroPlace());
+                t.put("rang", c.getPlace().getRangePlace());
+                EvenementPlaceConfiguration cfg = configRepository
+                        .findByEvenement_IdEvenementAndPlace_NumeroPlace(c.getEvenement().getIdEvenement(), c.getPlace().getNumeroPlace())
+                        .orElse(null);
+                t.put("typePlace", cfg != null ? cfg.getTypePlace() : null);
+                t.put("evenementTitre", c.getEvenement().getTitre());
+                t.put("evenementDate", c.getEvenement().getDateEvenement().toString());
+            }
+            return t;
+        }).collect(Collectors.toList());
+        m.put("tickets", tickets);
+        m.put("nombreTickets", tickets.size());
+        return m;
     }
 
     // ========== Basic place queries ==========

@@ -5,6 +5,7 @@ import com.ihm.schema.EvenementDTO;
 import com.ihm.schema.LieuDTO;
 import com.ihm.schema.OrganisateurDTO;
 import com.ihm.schema.PlaceDTO;
+import com.ihm.schema.ReservationDTO;
 import com.ihm.schema.SalleDTO;
 import com.ihm.model.Salle;
 import com.ihm.service.LieuService;
@@ -330,5 +331,34 @@ public class OrganisateurController {
         log.info("DELETE /api/organisateur/venues/places/{}", numero);
         placeService.delete(numero);
         return ResponseEntity.ok(ApiResponse.success(200, "Place deleted"));
+    }
+
+    // ========== Ticket & Reservation Management ==========
+
+    // tickets d'un événement
+    @GetMapping("/organisateur/evenements/{eventId}/tickets")
+    @PreAuthorize("hasRole('ORGANISATEUR')")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEventTickets(@PathVariable Integer eventId) {
+        log.info("GET /api/organisateur/evenements/{}/tickets", eventId);
+        List<Map<String, Object>> data = organisateurService.getTicketsForEvent(eventId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Tickets fetched successfully", data));
+    }
+
+    // réservations d'un événément
+    @GetMapping("/organisateur/evenements/{eventId}/reservations")
+    @PreAuthorize("hasRole('ORGANISATEUR')")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEventReservations(@PathVariable Integer eventId) {
+        log.info("GET /api/organisateur/evenements/{}/reservations", eventId);
+        List<Map<String, Object>> data = organisateurService.getReservationsForEvent(eventId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Reservations fetched successfully", data));
+    }
+
+    // détail d'une réservation
+    @GetMapping("/organisateur/reservations/{id}")
+    @PreAuthorize("hasRole('ORGANISATEUR')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getReservationDetail(@PathVariable Integer id) {
+        log.info("GET /api/organisateur/reservations/{}", id);
+        Map<String, Object> data = organisateurService.getReservationDetail(id);
+        return ResponseEntity.ok(ApiResponse.success(200, "Reservation detail fetched successfully", data));
     }
 }

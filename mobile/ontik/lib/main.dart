@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'core/routes/auth_routes.dart';
 import 'core/routes/app_router.dart';
 import 'core/assets/app_colors.dart';
 import 'core/api/dio_config.dart';
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Ontik',
       theme: AppTheme.light,
-      initialRoute: '/login',
+      initialRoute: AuthRoutes.splash,
       onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
