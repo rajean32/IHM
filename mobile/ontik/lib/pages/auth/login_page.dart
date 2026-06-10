@@ -66,7 +66,10 @@ class _LoginPageState extends State<LoginPage>
       );
       if (!mounted) return;
       final role = data['role'] as String?;
-      final firstLogin = data['firstLogin'] == true;
+      bool firstLogin = data['firstLogin'] == true;
+      if (role != 'ADMINISTRATEUR') {
+        firstLogin = false;
+      }
       if (firstLogin) {
         Navigator.pushReplacementNamed(context, AuthRoutes.forgotPassword);
       } else if (role == 'ADMINISTRATEUR') {

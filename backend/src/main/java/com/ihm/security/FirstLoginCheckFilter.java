@@ -55,14 +55,18 @@ public class FirstLoginCheckFilter extends OncePerRequestFilter {
 
             Utilisateur user = utilisateurRepository.findByCodeUtilisateur(codeUtilisateur).orElse(null);
             if (user != null && user.isPremiereConnexion()) {
-                log.warn("Blocked request from user {} with premiereConnexion=true: {} {}",
-                    codeUtilisateur, request.getMethod(), path);
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.setContentType("application/json");
-                response.getWriter().write(
-                    "{\"status\":403,\"message\":\"First login setup required. Please update your email and password before accessing other features.\"}"
-                );
-                return;
+                boolean isAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> "ROLE_ADMINISTRATEUR".equals(a.getAuthority()));
+                if (isAdmin) {
+                    log.warn("Blocked request from admin {} with premiereConnexion=true: {} {}",
+                        codeUtilisateur, request.getMethod(), path);
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.getWriter().write(
+                        "{\"status\":403,\"message\":\"First login setup required. Please update your email and password before accessing other features.\"}"
+                    );
+                    return;
+                }
             }
         }
 
