@@ -107,6 +107,21 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
             const SizedBox(height: 8),
             Text(event.description!),
           ],
+          if (event.caracteristiqueValeurs != null && event.caracteristiqueValeurs!.isNotEmpty) ...[
+            const Text('Caractéristiques', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ...event.caracteristiqueValeurs!.map((c) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Text('${c.nomCaracteristique ?? "Caractéristique"} : ',
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
+                  Expanded(child: Text(c.valeur)),
+                ],
+              ),
+            )),
+            const SizedBox(height: 16),
+          ],
           const SizedBox(height: 16),
           if (_availableSeats.isNotEmpty) ...[
             Text('Places disponibles : ${_availableSeats.where((s) => s.disponible).length}/${_availableSeats.length}',

@@ -107,11 +107,6 @@ class _PlacesPageState extends State<PlacesPage> {
 
   int _placeCount(String salleNum) => _places.where((p) => p.numeroSalle == salleNum).length;
 
-  Future<void> _addSalle(Map<String, dynamic> data) async {
-    await dio.post(Endpoints.salles, data: data);
-    _loadData();
-  }
-
   Future<bool> _deleteSalle(String id) async {
     try {
       await dio.delete('${Endpoints.salles}/$id');

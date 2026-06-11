@@ -55,6 +55,15 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
+    public List<TicketDTO> getByClient(String clientCode) {
+        log.debug("Fetching tickets for client: {}", clientCode);
+        return ticketRepository.findByCorrespondances_Reservation_Client_CodeUtilisateur(clientCode)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public TicketDTO getById(String code) {
         log.debug("Fetching ticket by code: {}", code);
         Ticket ticket = ticketRepository.findByCodeTicket(code)
@@ -298,7 +307,7 @@ public class TicketService {
         return r;
     }
 
-    private TicketDTO toDTO(Ticket ticket) {
+    public TicketDTO toDTO(Ticket ticket) {
         TicketDTO dto = new TicketDTO();
         dto.setCodeTicket(ticket.getCodeTicket());
         dto.setPrix(ticket.getPrix());
@@ -308,6 +317,27 @@ public class TicketService {
             Concerner c = concerners.get(0);
             dto.setIdEvenement(c.getEvenement().getIdEvenement());
             dto.setNumeroPlace(c.getPlace().getNumeroPlace());
+            dto.setEvenementTitre(c.getEvenement().getTitre());
+            if (c.getEvenement().getDateEvenement() != null)
+                dto.setDateEvenement(c.getEvenement().getDateEvenement().toString());
+            if (c.getEvenement().getHeureEvenement() != null)
+                dto.setHeureEvenement(c.getEvenement().getHeureEvenement().toString());
+            if (c.getPlace().getSalle() != null) {
+                dto.setSalleNom(c.getPlace().getSalle().getNomSalle());
+                if (c.getPlace().getSalle().getLieu() != null) {
+                    dto.setLieuNom(c.getPlace().getSalle().getLieu().getNomLieu());
+                }
+            }
+
+            EvenementPlaceConfiguration config = configRepository
+                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(
+                            c.getEvenement().getIdEvenement(), c.getPlace().getNumeroPlace())
+                    .orElse(null);
+            if (config != null) {
+                dto.setRang(config.getRange());
+                dto.setTypePlace(config.getTypePlace());
+                dto.setStatut(config.getStatut());
+            }
         }
 
         return dto;

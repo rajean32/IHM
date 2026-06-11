@@ -34,6 +34,7 @@ public class ReservationService {
     private final PlaceRepository placeRepository;
     private final EvenementRepository evenementRepository;
     private final EvenementPlaceConfigurationRepository configRepository;
+    private final TicketService ticketService;
 
     public ReservationService(ReservationRepository reservationRepository,
                               ClientRepository clientRepository,
@@ -43,7 +44,8 @@ public class ReservationService {
                               ConcernerRepository concernerRepository,
                               PlaceRepository placeRepository,
                               EvenementRepository evenementRepository,
-                              EvenementPlaceConfigurationRepository configRepository) {
+                              EvenementPlaceConfigurationRepository configRepository,
+                              TicketService ticketService) {
         this.reservationRepository = reservationRepository;
         this.clientRepository = clientRepository;
         this.ticketRepository = ticketRepository;
@@ -53,6 +55,7 @@ public class ReservationService {
         this.placeRepository = placeRepository;
         this.evenementRepository = evenementRepository;
         this.configRepository = configRepository;
+        this.ticketService = ticketService;
     }
 
     @Transactional(readOnly = true)
@@ -308,6 +311,9 @@ public class ReservationService {
         dto.setCodeClient(reservation.getClient().getCodeUtilisateur());
         dto.setCodeTickets(reservation.getCorrespondances().stream()
                 .map(c -> c.getTicket().getCodeTicket())
+                .collect(Collectors.toList()));
+        dto.setTickets(reservation.getCorrespondances().stream()
+                .map(c -> ticketService.toDTO(c.getTicket()))
                 .collect(Collectors.toList()));
         return dto;
     }

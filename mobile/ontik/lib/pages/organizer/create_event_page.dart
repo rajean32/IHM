@@ -6,10 +6,12 @@ import '../../core/services/evenement_service.dart';
 import '../../core/services/lieu_service.dart';
 import '../../core/services/place_service.dart';
 import '../../core/services/categorie_service.dart';
+import '../../core/services/caracteristique_service.dart';
 import '../../models/event_place_config_model.dart';
 import '../../models/evenement_model.dart';
 import '../../models/lieu_model.dart';
 import '../../models/categorie_model.dart';
+import '../../models/caracteristique_model.dart';
 import '../../core/assets/app_colors.dart';
 import '../../widgets/event_image_widget.dart';
 import 'pricing_page.dart';
@@ -29,10 +31,13 @@ class _CreateEventPageState extends State<CreateEventPage> {
   final _formKey = GlobalKey<FormState>();
   final _titreCtrl = TextEditingController();
   final _descriptionCtrl = TextEditingController();
+  final _prixCtrl = TextEditingController();
+  final _capaciteCtrl = TextEditingController();
   final _imagePicker = ImagePicker();
   String? _selectedImagePath;
   bool get _hasNewImage => _selectedImagePath != null;
   DateTime? _selectedDate;
+  DateTime? _selectedDateFin;
   String? _selectedTime;
   String? _selectedCategorie;
   String? _selectedLieu;
@@ -56,6 +61,13 @@ class _CreateEventPageState extends State<CreateEventPage> {
   final Map<String, String> _pendingPlaceAssignments = {};
   bool _gridExpanded = false;
 
+  // characteristics
+  List<Caracteristique> _caracteristiques = [];
+  Map<int, TextEditingController> _caracControllers = {};
+  Map<int, String> _caracDropdownValues = {};
+  Map<int, bool> _caracBooleanValues = {};
+  bool _loadingCaracteristiques = false;
+
   bool _loading = false;
   bool _dataLoading = true;
 
@@ -63,6 +75,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   final _lieuService = LieuService();
   final _placeService = PlaceService();
   final _categorieService = CategorieService();
+  final _caracService = CaracteristiqueService();
 
   final _statuts = ['planifie', 'en_cours', 'termine'];
   String _selectedStatut = 'planifie';
@@ -79,9 +92,14 @@ class _CreateEventPageState extends State<CreateEventPage> {
   void dispose() {
     _titreCtrl.dispose();
     _descriptionCtrl.dispose();
+    _prixCtrl.dispose();
+    _capaciteCtrl.dispose();
     _newTypeNameCtrl.dispose();
     _newTypePriceCtrl.dispose();
     for (final ctrl in _typePrices.values) {
+      ctrl.dispose();
+    }
+    for (final ctrl in _caracControllers.values) {
       ctrl.dispose();
     }
     super.dispose();
@@ -106,16 +124,64 @@ class _CreateEventPageState extends State<CreateEventPage> {
     }
   }
 
-  Future<void> _loadSalles(String lieuCode) async {
+  Future<void> _loadCaracteristiques(String codeCategorie, {List<EvenementCaracteristiqueValeur>? existingValues}) async {
+    setState(() => _loadingCaracteristiques = true);
+    try {
+      final data = await _caracService.getByCategorie(codeCategorie);
+      if (!mounted) return;
+      final caracs = data.map((e) => Caracteristique.fromJson(e as Map<String, dynamic>)).toList();
+      final controllers = <int, TextEditingController>{};
+      final dropdownValues = <int, String>{};
+      final booleanValues = <int, bool>{};
+
+      final existingMap = <int, String>{};
+      if (existingValues != null) {
+        for (final v in existingValues) {
+          existingMap[v.idCaracteristique] = v.valeur;
+        }
+      }
+
+      for (final c in caracs) {
+        if (c.idCaracteristique != null) {
+          final existingVal = existingMap[c.idCaracteristique!];
+          controllers[c.idCaracteristique!] = TextEditingController(
+            text: (existingVal != null && c.typeDonnee != 'boolean' && c.typeDonnee != 'select') ? existingVal : '',
+          );
+          dropdownValues[c.idCaracteristique!] = (existingVal != null && c.typeDonnee == 'select') ? existingVal : '';
+          booleanValues[c.idCaracteristique!] = (existingVal != null && c.typeDonnee == 'boolean') ? (existingVal == 'true') : false;
+        }
+      }
+      setState(() {
+        _caracteristiques = caracs;
+        _caracControllers = controllers;
+        _caracDropdownValues = dropdownValues;
+        _caracBooleanValues = booleanValues;
+        _loadingCaracteristiques = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _caracteristiques = [];
+        _loadingCaracteristiques = false;
+      });
+    }
+  }
+
+  Future<void> _loadSalles(String lieuCode, {String? categorieCode}) async {
     setState(() {
       if (!_isEditing) _selectedSalle = null;
       _loadingSalles = true;
     });
     try {
-      final allSalles = await _lieuService.getSalles();
-      final filtered = allSalles.where((s) => (s as Map<String, dynamic>)['codeLieu'] == lieuCode).cast<Map<String, dynamic>>().toList();
+      final List<dynamic> filtered;
+      if (categorieCode != null) {
+        filtered = await _lieuService.getSallesCompatible(lieuCode, categorieCode);
+      } else {
+        final allSalles = await _lieuService.getSalles();
+        filtered = allSalles.where((s) => (s as Map<String, dynamic>)['codeLieu'] == lieuCode).cast<Map<String, dynamic>>().toList();
+      }
       if (!mounted) return;
-      setState(() { _salles = filtered; _loadingSalles = false; });
+      setState(() { _salles = filtered.cast<Map<String, dynamic>>(); _loadingSalles = false; });
     } catch (e) {
       if (!mounted) return;
       setState(() { _salles = []; _loadingSalles = false; });
@@ -155,29 +221,23 @@ class _CreateEventPageState extends State<CreateEventPage> {
   void _populateFromEvent(Evenement event) {
     _titreCtrl.text = event.titre;
     if (event.description != null) _descriptionCtrl.text = event.description!;
+    if (event.prix != null) _prixCtrl.text = event.prix.toString();
+    if (event.capacite != null) _capaciteCtrl.text = event.capacite.toString();
     _selectedDate = event.dateEvenement;
+    _selectedDateFin = event.dateFin;
     _selectedTime = event.heureEvenement;
     _selectedCategorie = event.codeCategorie;
     _selectedLieu = event.codeLieu;
     _selectedStatut = event.statut ?? 'planifie';
+    if (event.codeCategorie != null) {
+      _loadCaracteristiques(event.codeCategorie!, existingValues: event.caracteristiqueValeurs);
+    }
     if (event.codeLieu != null && _isEditing && event.idEvenement != null) {
-      _loadSalles(event.codeLieu!).then((_) async {
-        String? salle;
-        if (_salles.isNotEmpty) {
-          salle = _salles.first['numeroSalle'] as String?;
-          setState(() => _selectedSalle = salle);
+      _loadSalles(event.codeLieu!, categorieCode: event.codeCategorie).then((_) async {
+        if (event.numeroSalle != null) {
+          setState(() => _selectedSalle = event.numeroSalle);
           _loadPlaces();
         }
-        try {
-          final eventSalles = await _placeService.getOrganizerEventSalles(event.idEvenement!);
-          if (eventSalles.isNotEmpty && mounted) {
-            final exact = (eventSalles.first as Map<String, dynamic>)['numeroSalle'] as String?;
-            if (exact != null && exact != salle) {
-              setState(() => _selectedSalle = exact);
-              _loadPlaces();
-            }
-          }
-        } catch (_) {}
       });
     }
   }
@@ -569,6 +629,104 @@ class _CreateEventPageState extends State<CreateEventPage> {
     );
   }
 
+  Widget _buildCaracteristiquesSection() {
+    if (_caracteristiques.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(),
+        const Text('Caractéristiques', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primaryDark)),
+        const SizedBox(height: 12),
+        ..._caracteristiques.map((c) {
+          final id = c.idCaracteristique!;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildCharacteristicInput(c, id),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildCharacteristicInput(Caracteristique c, int id) {
+    final label = '${c.nom}${c.obligatoire ? ' *' : ''}';
+    switch (c.typeDonnee) {
+      case 'boolean':
+        return Card(
+          margin: EdgeInsets.zero,
+          child: SwitchListTile(
+            title: Text(label, style: const TextStyle(fontSize: 14)),
+            value: _caracBooleanValues[id] ?? false,
+            onChanged: (v) => setState(() => _caracBooleanValues[id] = v),
+          ),
+        );
+      case 'select':
+        final options = (c.options ?? '').split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+        return DropdownButtonFormField<String>(
+          value: _caracDropdownValues[id]?.isNotEmpty == true ? _caracDropdownValues[id] : null,
+          isExpanded: true,
+          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+          items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
+          onChanged: (v) => setState(() => _caracDropdownValues[id] = v ?? ''),
+        );
+      case 'number':
+        return TextFormField(
+          controller: _caracControllers[id]!,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+        );
+      case 'date':
+        return InkWell(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime.now().add(const Duration(days: 365)),
+            );
+            if (picked != null) {
+              _caracControllers[id]!.text = picked.toIso8601String().split('T').first;
+              setState(() {});
+            }
+          },
+          child: InputDecorator(
+            decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+            child: Text(_caracControllers[id]!.text.isEmpty ? 'Sélectionner une date' : _caracControllers[id]!.text),
+          ),
+        );
+      default:
+        return TextFormField(
+          controller: _caracControllers[id]!,
+          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+        );
+    }
+  }
+
+  List<Map<String, dynamic>> _buildCaracteristiqueValeurs() {
+    final values = <Map<String, dynamic>>[];
+    for (final c in _caracteristiques) {
+      if (c.idCaracteristique == null) continue;
+      String valeur;
+      switch (c.typeDonnee) {
+        case 'boolean':
+          valeur = _caracBooleanValues[c.idCaracteristique!]?.toString() ?? 'false';
+          break;
+        case 'select':
+          valeur = _caracDropdownValues[c.idCaracteristique!] ?? '';
+          break;
+        default:
+          valeur = _caracControllers[c.idCaracteristique!]?.text ?? '';
+      }
+      if (valeur.isNotEmpty) {
+        values.add({
+          'idCaracteristique': c.idCaracteristique,
+          'valeur': valeur,
+        });
+      }
+    }
+    return values;
+  }
+
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -577,6 +735,16 @@ class _CreateEventPageState extends State<CreateEventPage> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) setState(() => _selectedDate = picked);
+  }
+
+  Future<void> _selectDateFin() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDateFin ?? _selectedDate ?? DateTime.now().add(const Duration(days: 1)),
+      firstDate: _selectedDate ?? DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null) setState(() => _selectedDateFin = picked);
   }
 
   Future<void> _selectTime() async {
@@ -620,11 +788,21 @@ class _CreateEventPageState extends State<CreateEventPage> {
         titre: _titreCtrl.text,
         description: _descriptionCtrl.text.isEmpty ? null : _descriptionCtrl.text,
         dateEvenement: _selectedDate,
+        dateFin: _selectedDateFin,
         heureEvenement: _selectedTime,
+        prix: double.tryParse(_prixCtrl.text),
+        capacite: int.tryParse(_capaciteCtrl.text),
         statut: _selectedStatut,
         codeCategorie: _selectedCategorie,
         codeLieu: _selectedLieu,
+        numeroSalle: _selectedSalle,
         codeOrganisateur: orgCode,
+        caracteristiqueValeurs: _buildCaracteristiqueValeurs()
+            .map((e) => EvenementCaracteristiqueValeur(
+              idCaracteristique: e['idCaracteristique'] as int,
+              valeur: e['valeur'] as String,
+            ))
+            .toList(),
       );
 
       if (_isEditing) {
@@ -796,7 +974,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                     onTap: _selectDate,
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Date',
+                        labelText: 'Date de début',
                         border: OutlineInputBorder(),
                       ),
                       child: Text(
@@ -808,14 +986,47 @@ class _CreateEventPageState extends State<CreateEventPage> {
                   ),
                   const SizedBox(height: 16),
                   InkWell(
+                    onTap: _selectDateFin,
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Date de fin (optionnel)',
+                        border: OutlineInputBorder(),
+                      ),
+                      child: Text(
+                        _selectedDateFin != null
+                            ? '${_selectedDateFin!.day}/${_selectedDateFin!.month}/${_selectedDateFin!.year}'
+                            : 'Sélectionner une date de fin',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
                     onTap: _selectTime,
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Time',
+                        labelText: 'Heure',
                         border: OutlineInputBorder(),
                       ),
                       child: Text(_selectedTime ?? 'Sélectionner l\'heure'),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _prixCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Prix (optionnel)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _capaciteCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Capacité (optionnel)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
@@ -833,8 +1044,34 @@ class _CreateEventPageState extends State<CreateEventPage> {
                               child: Text(c.nomCategorie, style: const TextStyle(fontSize: 13)),
                             ))
                         .toList(),
-                    onChanged: (v) => setState(() => _selectedCategorie = v),
+                    onChanged: (v) {
+                      setState(() {
+                        _selectedCategorie = v;
+                        _selectedSalle = null;
+                        _salles = [];
+                      });
+                      if (v != null) {
+                        _loadCaracteristiques(v);
+                        if (_selectedLieu != null) {
+                          _loadSalles(_selectedLieu!, categorieCode: v);
+                        }
+                      } else {
+                        setState(() {
+                          _caracteristiques = [];
+                          _caracControllers.clear();
+                          _caracDropdownValues.clear();
+                          _caracBooleanValues.clear();
+                        });
+                      }
+                    },
                   ),
+                  if (_loadingCaracteristiques)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: LinearProgressIndicator(),
+                    )
+                  else
+                    _buildCaracteristiquesSection(),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: _selectedLieu,
@@ -853,7 +1090,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
                         .toList(),
                     onChanged: (v) {
                       setState(() => _selectedLieu = v);
-                      if (v != null) _loadSalles(v);
+                      if (v != null) {
+                        _loadSalles(v, categorieCode: _selectedCategorie);
+                      }
                     },
                   ),
                   const SizedBox(height: 16),

@@ -153,6 +153,12 @@ class _EventPageState extends State<EventPage> {
             _infoRow('Lieu', event.lieuNom ?? '-'),
             _infoRow('Organisateur', event.organisateurNom ?? '-'),
             if (event.idEvenement != null) _infoRow('ID', event.idEvenement.toString()),
+            if (event.caracteristiqueValeurs != null && event.caracteristiqueValeurs!.isNotEmpty) ...[
+              const Divider(height: 16),
+              const Text('Caractéristiques', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              ...event.caracteristiqueValeurs!.map((c) =>
+                _infoRow(c.nomCaracteristique ?? 'Caractéristique', c.valeur)),
+            ],
           ],
         ),
         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fermer'))],

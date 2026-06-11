@@ -3,12 +3,28 @@ class Ticket {
   final double? prix;
   final String? numeroPlace;
   final int? idEvenement;
+  final String? evenementTitre;
+  final String? dateEvenement;
+  final String? heureEvenement;
+  final String? lieuNom;
+  final String? salleNom;
+  final String? rang;
+  final String? typePlace;
+  final String? statut;
 
   Ticket({
     required this.codeTicket,
     this.prix,
     this.numeroPlace,
     this.idEvenement,
+    this.evenementTitre,
+    this.dateEvenement,
+    this.heureEvenement,
+    this.lieuNom,
+    this.salleNom,
+    this.rang,
+    this.typePlace,
+    this.statut,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
@@ -17,6 +33,14 @@ class Ticket {
       prix: json['prix'] != null ? double.tryParse(json['prix'].toString()) : null,
       numeroPlace: json['numeroPlace'],
       idEvenement: json['idEvenement'],
+      evenementTitre: json['evenementTitre'],
+      dateEvenement: json['dateEvenement'],
+      heureEvenement: json['heureEvenement'],
+      lieuNom: json['lieuNom'],
+      salleNom: json['salleNom'],
+      rang: json['rang'],
+      typePlace: json['typePlace'],
+      statut: json['statut'],
     );
   }
 

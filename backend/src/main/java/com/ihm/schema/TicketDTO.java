@@ -15,6 +15,14 @@ public class TicketDTO {
     private BigDecimal prix;
     private String numeroPlace;
     private Integer idEvenement;
+    private String evenementTitre;
+    private String dateEvenement;
+    private String heureEvenement;
+    private String lieuNom;
+    private String salleNom;
+    private String rang;
+    private String typePlace;
+    private String statut;
 
     public TicketDTO() {}
 
@@ -26,6 +34,22 @@ public class TicketDTO {
     public void setNumeroPlace(String numeroPlace) { this.numeroPlace = numeroPlace; }
     public Integer getIdEvenement() { return idEvenement; }
     public void setIdEvenement(Integer idEvenement) { this.idEvenement = idEvenement; }
+    public String getEvenementTitre() { return evenementTitre; }
+    public void setEvenementTitre(String evenementTitre) { this.evenementTitre = evenementTitre; }
+    public String getDateEvenement() { return dateEvenement; }
+    public void setDateEvenement(String dateEvenement) { this.dateEvenement = dateEvenement; }
+    public String getHeureEvenement() { return heureEvenement; }
+    public void setHeureEvenement(String heureEvenement) { this.heureEvenement = heureEvenement; }
+    public String getLieuNom() { return lieuNom; }
+    public void setLieuNom(String lieuNom) { this.lieuNom = lieuNom; }
+    public String getSalleNom() { return salleNom; }
+    public void setSalleNom(String salleNom) { this.salleNom = salleNom; }
+    public String getRang() { return rang; }
+    public void setRang(String rang) { this.rang = rang; }
+    public String getTypePlace() { return typePlace; }
+    public void setTypePlace(String typePlace) { this.typePlace = typePlace; }
+    public String getStatut() { return statut; }
+    public void setStatut(String statut) { this.statut = statut; }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class QRResponse {

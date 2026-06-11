@@ -19,11 +19,16 @@ public class EvenementDTO {
     @NotNull(message = "Event date is required")
     @Future(message = "Event date must be in the future")
     private LocalDate dateEvenement;
+    private LocalDate dateFin;
     private LocalTime heureEvenement;
+    private BigDecimal prix;
+    private Integer capacite;
     private String image;
     private String statut;
     private String codeCategorie;
     private String codeLieu;
+    private String numeroSalle;
+    private String nomSalle;
     @NotBlank(message = "Organizer code is required")
     private String codeOrganisateur;
     private String motifAnnulation;
@@ -32,6 +37,7 @@ public class EvenementDTO {
     private String categorieNom;
     private Long placesTotal;
     private Long placesDisponibles;
+    private List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs;
 
     public EvenementDTO() {}
 
@@ -43,8 +49,14 @@ public class EvenementDTO {
     public void setDescription(String description) { this.description = description; }
     public LocalDate getDateEvenement() { return dateEvenement; }
     public void setDateEvenement(LocalDate dateEvenement) { this.dateEvenement = dateEvenement; }
+    public LocalDate getDateFin() { return dateFin; }
+    public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
     public LocalTime getHeureEvenement() { return heureEvenement; }
     public void setHeureEvenement(LocalTime heureEvenement) { this.heureEvenement = heureEvenement; }
+    public BigDecimal getPrix() { return prix; }
+    public void setPrix(BigDecimal prix) { this.prix = prix; }
+    public Integer getCapacite() { return capacite; }
+    public void setCapacite(Integer capacite) { this.capacite = capacite; }
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
     public String getStatut() { return statut; }
@@ -53,6 +65,10 @@ public class EvenementDTO {
     public void setCodeCategorie(String codeCategorie) { this.codeCategorie = codeCategorie; }
     public String getCodeLieu() { return codeLieu; }
     public void setCodeLieu(String codeLieu) { this.codeLieu = codeLieu; }
+    public String getNumeroSalle() { return numeroSalle; }
+    public void setNumeroSalle(String numeroSalle) { this.numeroSalle = numeroSalle; }
+    public String getNomSalle() { return nomSalle; }
+    public void setNomSalle(String nomSalle) { this.nomSalle = nomSalle; }
     public String getCodeOrganisateur() { return codeOrganisateur; }
     public void setCodeOrganisateur(String codeOrganisateur) { this.codeOrganisateur = codeOrganisateur; }
     public String getMotifAnnulation() { return motifAnnulation; }
@@ -67,6 +83,8 @@ public class EvenementDTO {
     public void setPlacesTotal(Long placesTotal) { this.placesTotal = placesTotal; }
     public Long getPlacesDisponibles() { return placesDisponibles; }
     public void setPlacesDisponibles(Long placesDisponibles) { this.placesDisponibles = placesDisponibles; }
+    public List<EvenementCaracteristiqueValeurDTO> getCaracteristiqueValeurs() { return caracteristiqueValeurs; }
+    public void setCaracteristiqueValeurs(List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs) { this.caracteristiqueValeurs = caracteristiqueValeurs; }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class EventDetail {
@@ -74,7 +92,10 @@ public class EvenementDTO {
         private String titre;
         private String description;
         private LocalDate dateEvenement;
+        private LocalDate dateFin;
         private LocalTime heureEvenement;
+        private BigDecimal prix;
+        private Integer capacite;
         private String image;
         private String statut;
         private String codeCategorie;
@@ -83,12 +104,15 @@ public class EvenementDTO {
         private String lieuNom;
         private String lieuAdresse;
         private String lieuVille;
+        private String numeroSalle;
+        private String nomSalle;
         private String codeOrganisateur;
         private String organisateurNom;
         private long placesDisponibles;
         private long placesTotal;
         private BigDecimal prixMin;
         private BigDecimal prixMax;
+        private List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs;
         private List<com.ihm.schema.SalleDTO.SeatingDTO> places;
 
         public EventDetail() {}
@@ -101,8 +125,14 @@ public class EvenementDTO {
         public void setDescription(String description) { this.description = description; }
         public LocalDate getDateEvenement() { return dateEvenement; }
         public void setDateEvenement(LocalDate dateEvenement) { this.dateEvenement = dateEvenement; }
+        public LocalDate getDateFin() { return dateFin; }
+        public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
         public LocalTime getHeureEvenement() { return heureEvenement; }
         public void setHeureEvenement(LocalTime heureEvenement) { this.heureEvenement = heureEvenement; }
+        public BigDecimal getPrix() { return prix; }
+        public void setPrix(BigDecimal prix) { this.prix = prix; }
+        public Integer getCapacite() { return capacite; }
+        public void setCapacite(Integer capacite) { this.capacite = capacite; }
         public String getImage() { return image; }
         public void setImage(String image) { this.image = image; }
         public String getStatut() { return statut; }
@@ -119,6 +149,10 @@ public class EvenementDTO {
         public void setLieuAdresse(String lieuAdresse) { this.lieuAdresse = lieuAdresse; }
         public String getLieuVille() { return lieuVille; }
         public void setLieuVille(String lieuVille) { this.lieuVille = lieuVille; }
+        public String getNumeroSalle() { return numeroSalle; }
+        public void setNumeroSalle(String numeroSalle) { this.numeroSalle = numeroSalle; }
+        public String getNomSalle() { return nomSalle; }
+        public void setNomSalle(String nomSalle) { this.nomSalle = nomSalle; }
         public String getCodeOrganisateur() { return codeOrganisateur; }
         public void setCodeOrganisateur(String codeOrganisateur) { this.codeOrganisateur = codeOrganisateur; }
         public String getOrganisateurNom() { return organisateurNom; }
@@ -131,6 +165,8 @@ public class EvenementDTO {
         public void setPrixMin(BigDecimal prixMin) { this.prixMin = prixMin; }
         public BigDecimal getPrixMax() { return prixMax; }
         public void setPrixMax(BigDecimal prixMax) { this.prixMax = prixMax; }
+        public List<EvenementCaracteristiqueValeurDTO> getCaracteristiqueValeurs() { return caracteristiqueValeurs; }
+        public void setCaracteristiqueValeurs(List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs) { this.caracteristiqueValeurs = caracteristiqueValeurs; }
         public List<com.ihm.schema.SalleDTO.SeatingDTO> getPlaces() { return places; }
         public void setPlaces(List<com.ihm.schema.SalleDTO.SeatingDTO> places) { this.places = places; }
     }

@@ -30,6 +30,7 @@ class Endpoints {
   static const categories = '$base/categories';
   static const lieux = '$base/lieux';
   static const salles = '$base/salles';
+  static const caracteristiques = '$base/caracteristiques';
 
   static const dashboard = '$base/admin/dashboard';
   static String organizerDashboard(String code) => '$base/organisateurs/$code/dashboard';

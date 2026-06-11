@@ -14,6 +14,7 @@ public class ReservationDTO {
     @NotNull(message = "Client code is required")
     private String codeClient;
     private List<String> codeTickets;
+    private List<TicketDTO> tickets;
     public ReservationDTO() {}
     public Integer getIdReservation() { return idReservation; }
     public void setIdReservation(Integer idReservation) { this.idReservation = idReservation; }
@@ -23,6 +24,8 @@ public class ReservationDTO {
     public void setCodeClient(String codeClient) { this.codeClient = codeClient; }
     public List<String> getCodeTickets() { return codeTickets; }
     public void setCodeTickets(List<String> codeTickets) { this.codeTickets = codeTickets; }
+    public List<TicketDTO> getTickets() { return tickets; }
+    public void setTickets(List<TicketDTO> tickets) { this.tickets = tickets; }
     public static class PurchaseRequest {
         private String codeClient;
         private List<PurchaseTicketItem> tickets;

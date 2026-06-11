@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/assets/app_colors.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/user_service.dart';
 import '../../core/routes/auth_routes.dart';
 import '../../core/utils/error_helper.dart';
@@ -14,12 +15,16 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool _loading = true;
-  Map<String, dynamic>? _profile;
+
   final _nomCtrl = TextEditingController();
   final _prenomsCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _telCtrl = TextEditingController();
+  final _currentPasswordCtrl = TextEditingController();
+  final _newPasswordCtrl = TextEditingController();
+  final _confirmPasswordCtrl = TextEditingController();
   bool _saving = false;
+  bool _savingPassword = false;
   final _userService = UserService();
 
   @override
@@ -31,6 +36,9 @@ class _ProfilePageState extends State<ProfilePage> {
     _prenomsCtrl.dispose();
     _emailCtrl.dispose();
     _telCtrl.dispose();
+    _currentPasswordCtrl.dispose();
+    _newPasswordCtrl.dispose();
+    _confirmPasswordCtrl.dispose();
     super.dispose();
   }
 
@@ -43,7 +51,6 @@ class _ProfilePageState extends State<ProfilePage> {
       final data = await _userService.getOrganizerProfile(code);
       if (!mounted) return;
       setState(() {
-        _profile = data;
         _nomCtrl.text = data['nom'] ?? '';
         _prenomsCtrl.text = data['prenoms'] ?? '';
         _emailCtrl.text = data['email'] ?? '';
@@ -74,6 +81,42 @@ class _ProfilePageState extends State<ProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor));
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _changePassword() async {
+    if (_currentPasswordCtrl.text.isEmpty) return;
+    if (_newPasswordCtrl.text.length < 6) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Le mot de passe doit contenir au moins 6 caractères'), backgroundColor: AppTheme.errorColor),
+      );
+      return;
+    }
+    if (_newPasswordCtrl.text != _confirmPasswordCtrl.text) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Les mots de passe ne correspondent pas'), backgroundColor: AppTheme.errorColor),
+      );
+      return;
+    }
+    setState(() => _savingPassword = true);
+    try {
+      await AuthService().changePassword(_currentPasswordCtrl.text, _newPasswordCtrl.text);
+      if (!mounted) return;
+      _currentPasswordCtrl.clear();
+      _newPasswordCtrl.clear();
+      _confirmPasswordCtrl.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mot de passe modifié'), backgroundColor: AppTheme.secondaryColor),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
+      );
+    } finally {
+      if (mounted) setState(() => _savingPassword = false);
     }
   }
 
@@ -140,6 +183,45 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: _saving
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Text('Enregistrer'),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Changer le mot de passe', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _currentPasswordCtrl,
+                          obscureText: true,
+                          decoration: const InputDecoration(labelText: 'Mot de passe actuel', border: OutlineInputBorder()),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _newPasswordCtrl,
+                          obscureText: true,
+                          decoration: const InputDecoration(labelText: 'Nouveau mot de passe', border: OutlineInputBorder()),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _confirmPasswordCtrl,
+                          obscureText: true,
+                          decoration: const InputDecoration(labelText: 'Confirmer', border: OutlineInputBorder()),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _savingPassword ? null : _changePassword,
+                            icon: const Icon(Icons.lock_outline, size: 18),
+                            label: Text(_savingPassword ? 'Modification...' : 'Changer le mot de passe'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const Divider(height: 32),

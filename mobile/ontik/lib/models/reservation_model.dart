@@ -1,14 +1,18 @@
+import 'ticket_model.dart';
+
 class Reservation {
   final int? idReservation;
   final DateTime? dateReservation;
   final String codeClient;
   final List<String>? codeTickets;
+  final List<Ticket>? tickets;
 
   Reservation({
     this.idReservation,
     this.dateReservation,
     required this.codeClient,
     this.codeTickets,
+    this.tickets,
   });
 
   factory Reservation.fromJson(Map<String, dynamic> json) {
@@ -21,6 +25,9 @@ class Reservation {
       codeTickets: json['codeTickets'] != null
           ? List<String>.from(json['codeTickets'])
           : null,
+      tickets: json['tickets'] != null
+          ? (json['tickets'] as List).map((e) => Ticket.fromJson(e as Map<String, dynamic>)).toList()
+          : null,
     );
   }
 
@@ -30,6 +37,7 @@ class Reservation {
       'dateReservation': dateReservation?.toIso8601String(),
       'codeClient': codeClient,
       if (codeTickets != null) 'codeTickets': codeTickets,
+      if (tickets != null) 'tickets': tickets!.map((t) => t.toJson()).toList(),
     };
   }
 }

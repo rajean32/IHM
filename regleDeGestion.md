@@ -170,3 +170,16 @@ Avant toute livraison ou arrêt de tâche, l'agent IA doit obligatoirement écri
 1. **Test de non-régression d'API (Dashboard) :** Validation que l'endpoint du Dashboard renvoie un statut `HTTP 200 OK` avec un payload JSON valide (fin de l'erreur 500).
 2. **Test de Concurrence de Génération :** Validation de l'intégrité de la contrainte d'identifiant combiné unique ; vérification qu'une double tentative d'insertion de places identiques rejette proprement le doublon sans corrompre la table.
 3. **Test IHM (Flutter UI) :** Validation structurelle que le composant `TabBar` s'exécute au sein d'un arbre de widgets pourvu d'un `TabController` adéquat (fin du crash de rendu).
+
+
+
+
+
+Cinéma	Film (titre, réalisateur, durée, genre, langue), horaires des séances, salles et nombre de places
+Concert	Artiste / groupe, style de musique, arrangement des places (assis/debout), restrictions d’âge éventuelles
+Théâtre	Pièce, metteur en scène, distribution, arrangement des sièges
+Sport	Type de sport, équipes, score (optionnel), tribunes, catégories de billets
+Festival	Programmation par jour, différents lieux, pass multi-événements, badges
+Conférence	Sujet, intervenants, horaires détaillés, nombre de sessions
+Exposition / Musée	Type de billet (adulte/enfant), créneau horaire, durée estimée
+Atelier / Cours	Niveau (débutant/avancé), matériel requis, durée, animateur

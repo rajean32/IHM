@@ -32,15 +32,36 @@ class Lieu {
 class Salle {
   final String numeroSalle;
   final String nomSalle;
+  final String? type;
+  final int? capacite;
+  final String? range;
   final String? codeLieu;
+  final String? nomLieu;
+  final List<String>? typesEvenement;
 
-  Salle({required this.numeroSalle, required this.nomSalle, this.codeLieu});
+  Salle({
+    required this.numeroSalle,
+    required this.nomSalle,
+    this.type,
+    this.capacite,
+    this.range,
+    this.codeLieu,
+    this.nomLieu,
+    this.typesEvenement,
+  });
 
   factory Salle.fromJson(Map<String, dynamic> json) {
     return Salle(
       numeroSalle: json['numeroSalle'] ?? '',
       nomSalle: json['nomSalle'] ?? '',
+      type: json['type'],
+      capacite: json['capacite'],
+      range: json['range'],
       codeLieu: json['codeLieu'],
+      nomLieu: json['nomLieu'],
+      typesEvenement: json['typesEvenement'] != null
+          ? (json['typesEvenement'] as List).cast<String>()
+          : null,
     );
   }
 
@@ -48,7 +69,11 @@ class Salle {
     return {
       'numeroSalle': numeroSalle,
       'nomSalle': nomSalle,
+      'type': type,
+      'capacite': capacite,
+      'range': range,
       'codeLieu': codeLieu,
+      'typesEvenement': typesEvenement,
     };
   }
 }

@@ -1,4 +1,5 @@
 import 'lieu_model.dart';
+import 'caracteristique_model.dart';
 import 'package:intl/intl.dart';
 
 class Evenement {
@@ -6,11 +7,16 @@ class Evenement {
   final String titre;
   final String? description;
   final DateTime? dateEvenement;
+  final DateTime? dateFin;
   final String? heureEvenement;
+  final double? prix;
+  final int? capacite;
   final String? image;
   final String? statut;
   final String? codeCategorie;
   final String? codeLieu;
+  final String? numeroSalle;
+  final String? nomSalle;
   final String codeOrganisateur;
   final String? motifAnnulation;
   final String? organisateurNom;
@@ -18,17 +24,23 @@ class Evenement {
   final String? categorieNom;
   final int? placesTotal;
   final int? placesDisponibles;
+  final List<EvenementCaracteristiqueValeur>? caracteristiqueValeurs;
 
   Evenement({
     this.idEvenement,
     required this.titre,
     this.description,
     this.dateEvenement,
+    this.dateFin,
     this.heureEvenement,
+    this.prix,
+    this.capacite,
     this.image,
     this.statut,
     this.codeCategorie,
     this.codeLieu,
+    this.numeroSalle,
+    this.nomSalle,
     required this.codeOrganisateur,
     this.motifAnnulation,
     this.organisateurNom,
@@ -36,6 +48,7 @@ class Evenement {
     this.categorieNom,
     this.placesTotal,
     this.placesDisponibles,
+    this.caracteristiqueValeurs,
   });
 
   factory Evenement.fromJson(Map<String, dynamic> json) {
@@ -46,11 +59,22 @@ class Evenement {
       dateEvenement: json['dateEvenement'] != null
           ? DateTime.tryParse(json['dateEvenement'])
           : null,
+      dateFin: json['dateFin'] != null
+          ? DateTime.tryParse(json['dateFin'])
+          : null,
       heureEvenement: json['heureEvenement'],
+      prix: json['prix'] != null
+          ? double.tryParse(json['prix'].toString())
+          : null,
+      capacite: json['capacite'] != null
+          ? int.tryParse(json['capacite'].toString())
+          : null,
       image: json['image'],
       statut: json['statut'],
       codeCategorie: json['codeCategorie'],
       codeLieu: json['codeLieu'],
+      numeroSalle: json['numeroSalle'],
+      nomSalle: json['nomSalle'],
       codeOrganisateur: json['codeOrganisateur'] ?? '',
       motifAnnulation: json['motifAnnulation'],
       organisateurNom: json['organisateurNom'],
@@ -58,6 +82,11 @@ class Evenement {
       categorieNom: json['categorieNom'],
       placesTotal: json['placesTotal'],
       placesDisponibles: json['placesDisponibles'],
+      caracteristiqueValeurs: json['caracteristiqueValeurs'] != null
+          ? (json['caracteristiqueValeurs'] as List)
+              .map((e) => EvenementCaracteristiqueValeur.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : null,
     );
   }
 
@@ -67,13 +96,19 @@ class Evenement {
       'titre': titre,
       'description': description,
       'dateEvenement': dateEvenement != null ? DateFormat('yyyy-MM-dd').format(dateEvenement!) : null,
+      'dateFin': dateFin != null ? DateFormat('yyyy-MM-dd').format(dateFin!) : null,
       'heureEvenement': heureEvenement,
+      'prix': prix,
+      'capacite': capacite,
       'image': image,
       'statut': statut,
       'codeCategorie': codeCategorie,
       'codeLieu': codeLieu,
+      'numeroSalle': numeroSalle,
       'codeOrganisateur': codeOrganisateur,
       'motifAnnulation': motifAnnulation,
+      if (caracteristiqueValeurs != null)
+        'caracteristiqueValeurs': caracteristiqueValeurs!.map((v) => v.toJson()).toList(),
     };
   }
 }
@@ -90,11 +125,16 @@ class EventDetail extends Evenement {
     required String titre,
     String? description,
     DateTime? dateEvenement,
+    DateTime? dateFin,
     String? heureEvenement,
+    double? prix,
+    int? capacite,
     String? image,
     String? statut,
     String? codeCategorie,
     String? codeLieu,
+    String? numeroSalle,
+    String? nomSalle,
     required String codeOrganisateur,
     String? categorieNom,
     String? lieuNom,
@@ -106,22 +146,29 @@ class EventDetail extends Evenement {
     this.prixMin,
     this.prixMax,
     this.places,
+    List<EvenementCaracteristiqueValeur>? caracteristiqueValeurs,
   }) : super(
           idEvenement: idEvenement,
           titre: titre,
           description: description,
           dateEvenement: dateEvenement,
+          dateFin: dateFin,
           heureEvenement: heureEvenement,
+          prix: prix,
+          capacite: capacite,
           image: image,
           statut: statut,
           codeCategorie: codeCategorie,
           codeLieu: codeLieu,
+          numeroSalle: numeroSalle,
+          nomSalle: nomSalle,
           codeOrganisateur: codeOrganisateur,
           categorieNom: categorieNom,
           lieuNom: lieuNom,
           organisateurNom: organisateurNom,
           placesDisponibles: placesDisponibles,
           placesTotal: placesTotal,
+          caracteristiqueValeurs: caracteristiqueValeurs,
         );
 
   factory EventDetail.fromJson(Map<String, dynamic> json) {
@@ -132,11 +179,22 @@ class EventDetail extends Evenement {
       dateEvenement: json['dateEvenement'] != null
           ? DateTime.tryParse(json['dateEvenement'])
           : null,
+      dateFin: json['dateFin'] != null
+          ? DateTime.tryParse(json['dateFin'])
+          : null,
       heureEvenement: json['heureEvenement'],
+      prix: json['prix'] != null
+          ? double.tryParse(json['prix'].toString())
+          : null,
+      capacite: json['capacite'] != null
+          ? int.tryParse(json['capacite'].toString())
+          : null,
       image: json['image'],
       statut: json['statut'],
       codeCategorie: json['codeCategorie'],
       codeLieu: json['codeLieu'],
+      numeroSalle: json['numeroSalle'],
+      nomSalle: json['nomSalle'],
       codeOrganisateur: json['codeOrganisateur'] ?? '',
       categorieNom: json['categorieNom'],
       lieuNom: json['lieuNom'],
@@ -154,6 +212,11 @@ class EventDetail extends Evenement {
       places: json['places'] != null
           ? (json['places'] as List)
               .map((e) => SeatingPlace.fromJson(e))
+              .toList()
+          : null,
+      caracteristiqueValeurs: json['caracteristiqueValeurs'] != null
+          ? (json['caracteristiqueValeurs'] as List)
+              .map((e) => EvenementCaracteristiqueValeur.fromJson(e as Map<String, dynamic>))
               .toList()
           : null,
     );
