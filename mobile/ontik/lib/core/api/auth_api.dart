@@ -17,11 +17,12 @@ class AuthApi {
     await dio.post(Endpoints.register, data: userData);
   }
 
-  Future<Map<String, dynamic>> firstLogin(String code, String email, String password) async {
+  Future<Map<String, dynamic>> firstLogin(String code, String email, String password, {String? ville}) async {
     final resp = await dio.post(Endpoints.firstLogin, data: {
       'codeUtilisateur': code,
       'newEmail': email,
       'newPassword': password,
+      if (ville != null) 'ville': ville,
     });
     return resp.data['data'] as Map<String, dynamic>;
   }
@@ -30,6 +31,13 @@ class AuthApi {
     await dio.put(Endpoints.changePassword, data: {
       'currentPassword': currentPassword,
       'newPassword': newPassword,
+    });
+  }
+
+  Future<void> updateVille(String codeUtilisateur, String ville) async {
+    await dio.put(Endpoints.updateVille, data: {
+      'codeUtilisateur': codeUtilisateur,
+      'ville': ville,
     });
   }
 

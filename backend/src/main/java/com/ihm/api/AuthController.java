@@ -68,6 +68,14 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(200, "Password reset successful", data));
     }
 
+    @PutMapping("/ville")
+    public ResponseEntity<ApiResponse<Map<String, String>>> updateVille(@Valid @RequestBody AuthDTO.UpdateVilleRequest request) {
+        log.info("PUT /api/auth/ville - user: {}, ville: {}", request.getCodeUtilisateur(), request.getVille());
+        authService.updateVille(request.getCodeUtilisateur(), request.getVille());
+        Map<String, String> data = Map.of("message", "Ville updated successfully", "ville", request.getVille());
+        return ResponseEntity.ok(ApiResponse.success(200, "Ville updated successfully", data));
+    }
+
     @PutMapping("/change-password")
     public ResponseEntity<ApiResponse<Map<String, String>>> changePassword(@Valid @RequestBody PasswordDTO.ChangeRequest request) {
         String codeUtilisateur = SecurityContextHolder.getContext().getAuthentication() != null

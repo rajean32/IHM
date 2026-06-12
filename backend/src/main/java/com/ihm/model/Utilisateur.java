@@ -36,6 +36,8 @@ public class Utilisateur {
     @Column(name = "Tel", length = 20, nullable = false)
     @NotBlank(message = "Phone number is required")
     private String tel;
+    @Column(name = "Ville", length = 100)
+    private String ville;
     @Column(name = "MotDePasse", length = 255, nullable = false)
     @NotBlank(message = "Password is required")
     private String motDePasse;
@@ -66,4 +68,6 @@ public class Utilisateur {
     public void setPremiereConnexion(boolean premiereConnexion) { this.premiereConnexion = premiereConnexion; }
     public Administrateur getAdministrateur() { return administrateur; }
     public void setAdministrateur(Administrateur administrateur) { this.administrateur = administrateur; }
+    public String getVille() { return ville; }
+    public void setVille(String ville) { this.ville = ville; }
 }

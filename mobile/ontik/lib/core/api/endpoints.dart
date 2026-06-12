@@ -5,6 +5,7 @@ class Endpoints {
   static const register = '$base/auth/register';
   static const firstLogin = '$base/auth/first-login-update';
   static const changePassword = '$base/auth/change-password';
+  static const updateVille = '$base/auth/ville';
 
   static const events = '$base/evenements';
   static String eventById(int id) => '$base/evenements/$id';

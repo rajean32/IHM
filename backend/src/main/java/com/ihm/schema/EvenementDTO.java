@@ -35,6 +35,7 @@ public class EvenementDTO {
     private String organisateurNom;
     private String lieuNom;
     private String categorieNom;
+    private String lieuVille;
     private Long placesTotal;
     private Long placesDisponibles;
     private List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs;
@@ -54,6 +55,8 @@ public class EvenementDTO {
     public LocalTime getHeureEvenement() { return heureEvenement; }
     public void setHeureEvenement(LocalTime heureEvenement) { this.heureEvenement = heureEvenement; }
     public BigDecimal getPrix() { return prix; }
+    public String getLieuVille() { return lieuVille; }
+    public void setLieuVille(String lieuVille) { this.lieuVille = lieuVille; }
     public void setPrix(BigDecimal prix) { this.prix = prix; }
     public Integer getCapacite() { return capacite; }
     public void setCapacite(Integer capacite) { this.capacite = capacite; }

@@ -93,6 +93,22 @@ public class EvenementService {
     }
 
     @Transactional(readOnly = true)
+    public List<EvenementDTO> getAllWithVillePriority(String ville) {
+        log.debug("Fetching all events prioritized by ville: {}", ville);
+        return evenementRepository.findAll().stream()
+                .sorted((a, b) -> {
+                    String va = a.getLieu() != null ? a.getLieu().getVille() : "";
+                    String vb = b.getLieu() != null ? b.getLieu().getVille() : "";
+                    boolean matchA = ville.equalsIgnoreCase(va);
+                    boolean matchB = ville.equalsIgnoreCase(vb);
+                    if (matchA && !matchB) return -1;
+                    if (!matchA && matchB) return 1;
+                    return 0;
+                })
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     public EvenementDTO getById(Integer id) {
         log.debug("Fetching event by id: {}", id);
         Evenement event = evenementRepository.findByIdEvenement(id)
@@ -633,6 +649,7 @@ public class EvenementService {
         dto.setCategorieNom(event.getCategorie() != null ? event.getCategorie().getNomCategorie() : null);
         dto.setCodeLieu(event.getLieu() != null ? event.getLieu().getCode() : null);
         dto.setLieuNom(event.getLieu() != null ? event.getLieu().getNomLieu() : null);
+        dto.setLieuVille(event.getLieu() != null ? event.getLieu().getVille() : null);
         dto.setNumeroSalle(event.getSalle() != null ? event.getSalle().getNumeroSalle() : null);
         dto.setNomSalle(event.getSalle() != null ? event.getSalle().getNomSalle() : null);
         dto.setCodeOrganisateur(event.getOrganisateur().getCodeUtilisateur());

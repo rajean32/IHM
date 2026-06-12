@@ -34,8 +34,9 @@ public class EvenementController {
     public ResponseEntity<ApiResponse<List<EvenementDTO>>> getAll(
             @RequestParam(required = false) String organisateur,
             @RequestParam(required = false) String categorie,
-            @RequestParam(required = false) String statut) {
-        log.info("GET /api/evenements");
+            @RequestParam(required = false) String statut,
+            @RequestParam(required = false) String ville) {
+        log.info("GET /api/evenements - ville: {}", ville);
         List<EvenementDTO> data;
         if (organisateur != null) {
             data = evenementService.getByOrganisateur(organisateur);
@@ -43,6 +44,8 @@ public class EvenementController {
             data = evenementService.getByCategorie(categorie);
         } else if (statut != null) {
             data = evenementService.getByStatut(statut);
+        } else if (ville != null) {
+            data = evenementService.getAllWithVillePriority(ville);
         } else {
             data = evenementService.getAll();
         }

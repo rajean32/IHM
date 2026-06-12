@@ -28,6 +28,7 @@ public class AuthDTO {
         private String prenoms;
         private String role;
         private boolean isFirstLogin;
+        private String ville;
         public LoginResponse() {}
         public LoginResponse(String token, String codeUtilisateur, String email, String nom, String prenoms, String role) {
             this.token = token; this.codeUtilisateur = codeUtilisateur; this.email = email;
@@ -35,6 +36,9 @@ public class AuthDTO {
         }
         public LoginResponse(String token, String codeUtilisateur, String email, String nom, String prenoms, String role, boolean isFirstLogin) {
             this(token, codeUtilisateur, email, nom, prenoms, role); this.isFirstLogin = isFirstLogin;
+        }
+        public LoginResponse(String token, String codeUtilisateur, String email, String nom, String prenoms, String role, boolean isFirstLogin, String ville) {
+            this(token, codeUtilisateur, email, nom, prenoms, role, isFirstLogin); this.ville = ville;
         }
         public String getToken() { return token; }
         public void setToken(String token) { this.token = token; }
@@ -50,6 +54,8 @@ public class AuthDTO {
         public void setRole(String role) { this.role = role; }
         public boolean isFirstLogin() { return isFirstLogin; }
         public void setFirstLogin(boolean isFirstLogin) { this.isFirstLogin = isFirstLogin; }
+        public String getVille() { return ville; }
+        public void setVille(String ville) { this.ville = ville; }
     }
 
     public static class RegisterRequest {
@@ -87,6 +93,7 @@ public class AuthDTO {
         @NotBlank private String codeUtilisateur;
         private String newPassword;
         private String newEmail;
+        private String ville;
         public FirstLoginUpdateRequest() {}
         public String getCodeUtilisateur() { return codeUtilisateur; }
         public void setCodeUtilisateur(String codeUtilisateur) { this.codeUtilisateur = codeUtilisateur; }
@@ -94,5 +101,17 @@ public class AuthDTO {
         public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
         public String getNewEmail() { return newEmail; }
         public void setNewEmail(String newEmail) { this.newEmail = newEmail; }
+        public String getVille() { return ville; }
+        public void setVille(String ville) { this.ville = ville; }
+    }
+
+    public static class UpdateVilleRequest {
+        @NotBlank private String codeUtilisateur;
+        @NotBlank private String ville;
+        public UpdateVilleRequest() {}
+        public String getCodeUtilisateur() { return codeUtilisateur; }
+        public void setCodeUtilisateur(String codeUtilisateur) { this.codeUtilisateur = codeUtilisateur; }
+        public String getVille() { return ville; }
+        public void setVille(String ville) { this.ville = ville; }
     }
 }
