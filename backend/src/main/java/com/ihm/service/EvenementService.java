@@ -29,7 +29,7 @@ public class EvenementService {
 
     private static final List<String> VALID_STATUSES = List.of("planifie", "en_cours", "termine", "annule", "suspendu", "valide");
 
-    private static final java.util.Map<String, List<String>> ALLOWED_TRANSITIONS = java.util.Map.of(
+    private static final Map<String, List<String>> ALLOWED_TRANSITIONS = Map.of(
         "planifie", List.of("en_cours", "termine", "annule", "suspendu", "valide"),
         "en_cours", List.of("termine", "annule", "suspendu"),
         "termine",   List.of(),
@@ -50,6 +50,8 @@ public class EvenementService {
     private final CorrespondARepository correspondARepository;
     private final SalleRepository salleRepository;
     private final EvenementPlaceConfigurationRepository configRepository;
+    private final ReservationRepository reservationRepository;
+    private final PaiementService paiementService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -63,7 +65,9 @@ public class EvenementService {
                             TicketRepository ticketRepository,
                             CorrespondARepository correspondARepository,
                             SalleRepository salleRepository,
-                            EvenementPlaceConfigurationRepository configRepository) {
+                            EvenementPlaceConfigurationRepository configRepository,
+                            ReservationRepository reservationRepository,
+                            PaiementService paiementService) {
         this.evenementRepository = evenementRepository;
         this.categorieRepository = categorieRepository;
         this.lieuRepository = lieuRepository;
@@ -74,6 +78,8 @@ public class EvenementService {
         this.correspondARepository = correspondARepository;
         this.salleRepository = salleRepository;
         this.configRepository = configRepository;
+        this.reservationRepository = reservationRepository;
+        this.paiementService = paiementService;
     }
 
     @Transactional(readOnly = true)
@@ -152,7 +158,6 @@ public class EvenementService {
 
         Evenement saved = evenementRepository.save(event);
 
-        // auto-generate EvenementPlaceConfiguration for all places in the venue
         List<Salle> salles = salleRepository.findByLieu_Code(lieu.getCode());
         for (Salle salle : salles) {
             List<Place> places = placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle());
@@ -273,10 +278,27 @@ public class EvenementService {
         if ("annule".equals(event.getStatut()) || "termine".equals(event.getStatut())) {
             throw new BadRequestException("Event cannot be cancelled. Current status: " + event.getStatut());
         }
+        
+        // Get all reservations for this event
+        List<Reservation> reservations = reservationRepository.findByEvenementId(id);
+        
+        // Process automatic refunds
+        for (Reservation reservation : reservations) {
+            try {
+                paiementService.rembourserReservation(reservation.getIdReservation(), 
+                        reservation.getClient().getCodeUtilisateur(), true);
+                log.info("Auto-refund processed for reservation {} after event cancellation", 
+                        reservation.getIdReservation());
+            } catch (Exception e) {
+                log.error("Error processing refund for reservation {}: {}", 
+                        reservation.getIdReservation(), e.getMessage());
+            }
+        }
+        
         event.setStatut("annule");
         event.setMotifAnnulation(motif);
         Evenement saved = evenementRepository.save(event);
-        log.info("Event cancelled: id={}", id);
+        log.info("Event cancelled: id={}, {} reservation(s) refunded", id, reservations.size());
         return toDTO(saved);
     }
 
@@ -418,7 +440,6 @@ public class EvenementService {
         dto.setPlacesTotal(totalPlaces);
         dto.setPlacesDisponibles(totalPlaces - reservedPlaces.size());
 
-        // read min/max prices from EPC only
         List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(idEvent);
         BigDecimal minPrice = null;
         BigDecimal maxPrice = null;
@@ -451,7 +472,6 @@ public class EvenementService {
             reservedPlaces.add(c.getPlace().getNumeroPlace());
         }
 
-        // get all EPC configs for this event
         List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(idEvent);
         Map<String, EvenementPlaceConfiguration> configMap = new HashMap<>();
         for (EvenementPlaceConfiguration cfg : configs) {

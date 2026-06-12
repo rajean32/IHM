@@ -8,6 +8,7 @@ import '../../core/routes/client_routes.dart';
 import '../../widgets/seat_picker.dart';
 import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
+import '../../models/paiement_request_model.dart';
 
 class ReservationPage extends StatefulWidget {
   final int eventId;

@@ -19,7 +19,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private static final String DEFAULT_ADMIN_CODE = "ADMIN_DEFAULT";
     private static final String DEFAULT_ADMIN_EMAIL = "admin@admin.mg";
-    private static final String DEFAULT_ADMIN_PASSWORD = "admin";
+    private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
 
     private final AdministrateurRepository administrateurRepository;
     private final UtilisateurRepository utilisateurRepository;

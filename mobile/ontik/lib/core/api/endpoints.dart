@@ -48,4 +48,32 @@ class Endpoints {
   static String organizerEventTypePricing(int eventId) => '$base/organisateur/evenements/$eventId/places/type/pricing';
   static String organizerEventAssignType(int eventId) => '$base/organisateur/evenements/$eventId/places/assign-type';
   static String organizerEventPlaceConfig(int eventId, String numeroPlace) => '$base/organisateur/evenements/$eventId/places/config/$numeroPlace';
+
+  // À AJOUTER dans le fichier endpoints.dart existant
+
+// NOUVEAUX ENDPOINTS pour les réductions
+  static const reductions = '$base/reductions';
+  static String reductionById(int id) => '$base/reductions/$id';
+  static String verifierCodePromo(String code, int idEvenement) => '$base/reductions/verifier?code=$code&idEvenement=$idEvenement';
+
+// NOUVEAUX ENDPOINTS pour les films
+  static const films = '$base/films';
+  static const filmsAVenir = '$base/films/a-venir';
+  static String filmById(int id) => '$base/films/$id';
+  static String filmByEvenement(int idEvenement) => '$base/films/evenement/$idEvenement';
+  static String seancesByFilm(int idFilm) => '$base/films/$idFilm/seances';
+
+// NOUVEAU endpoint pour paiement avec réduction
+  static const paymentProcessWithReduction = '$base/paiements/process-with-reduction';
+
+// NOUVEAU endpoint pour remboursement
+  static String rembourserReservation(int idReservation, String codeClient, bool isAnnulationEvenement) =>
+      '$base/paiements/rembourser/$idReservation?codeClient=$codeClient&isAnnulationEvenement=$isAnnulationEvenement';
+
+// NOUVEAU endpoint pour vérifier transaction mobile
+  static String verifierTransaction(String reference, String typePaiement) =>
+      '$base/paiements/transaction/verifier?reference=$reference&typePaiement=$typePaiement';
+
+// NOUVEAU endpoint pour événements cinéma
+  static const cinemaEvents = '$base/evenements/cinema';
 }

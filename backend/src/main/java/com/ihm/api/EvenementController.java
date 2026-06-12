@@ -29,7 +29,6 @@ public class EvenementController {
         this.evenementService = evenementService;
     }
 
-    // liste des événements
     @GetMapping
     public ResponseEntity<ApiResponse<List<EvenementDTO>>> getAll(
             @RequestParam(required = false) String organisateur,
@@ -49,7 +48,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Events fetched successfully", data));
     }
 
-    // recherche d'événements
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<EvenementDTO>>> searchEvents(
             @RequestParam(required = false) String q,
@@ -77,7 +75,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Search completed, found " + results.size() + " events", results));
     }
 
-    // événements à venir
     @GetMapping("/upcoming")
     public ResponseEntity<ApiResponse<List<EvenementDTO>>> getUpcomingEvents() {
         log.info("GET /api/evenements/upcoming");
@@ -85,7 +82,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Upcoming events fetched successfully", events));
     }
 
-    // événements populaires
     @GetMapping("/popular")
     public ResponseEntity<ApiResponse<List<EvenementDTO>>> getPopularEvents() {
         log.info("GET /api/evenements/popular");
@@ -93,7 +89,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Popular events fetched successfully", events));
     }
 
-    // détail d'un événement
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<EvenementDTO>> getById(@PathVariable Integer id) {
         log.info("GET /api/evenements/{}", id);
@@ -101,7 +96,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Event fetched successfully", data));
     }
 
-    // détail complet d'un événement
     @GetMapping("/{id}/detail")
     public ResponseEntity<ApiResponse<EvenementDTO.EventDetail>> getEventDetail(@PathVariable Integer id) {
         log.info("GET /api/evenements/{}/detail", id);
@@ -109,7 +103,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Event detail fetched successfully", detail));
     }
 
-    // places disponibles
     @GetMapping("/{id}/places/available")
     public ResponseEntity<ApiResponse<List<SalleDTO.SeatingDTO>>> getAvailableSeats(@PathVariable Integer id) {
         log.info("GET /api/evenements/{}/places/available", id);
@@ -117,7 +110,13 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Available seats fetched successfully", seats));
     }
 
-    // création d'un événement
+    @GetMapping("/cinema")
+    public ResponseEntity<ApiResponse<List<EvenementDTO>>> getCinemaEvents() {
+        log.info("GET /api/evenements/cinema");
+        List<EvenementDTO> events = evenementService.getByCategorie("CINEMA");
+        return ResponseEntity.ok(ApiResponse.success(200, "Cinema events fetched successfully", events));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<EvenementDTO>> create(@Valid @RequestBody EvenementDTO dto) {
         log.info("POST /api/evenements - title: {}", dto.getTitre());
@@ -134,7 +133,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Event updated successfully", data));
     }
 
-    // suppression d'un événement
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Integer id) {
         log.info("DELETE /api/evenements/{}", id);
@@ -142,7 +140,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Event deleted successfully"));
     }
 
-    // validation d'un événement
     @PutMapping("/{id}/validate")
     @PreAuthorize("hasRole('ADMINISTRATEUR')")
     public ResponseEntity<ApiResponse<EvenementDTO>> validate(@PathVariable Integer id) {
@@ -151,7 +148,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Event validated successfully", data));
     }
 
-    // suspension d'un événement
     @PutMapping("/{id}/suspend")
     @PreAuthorize("hasRole('ADMINISTRATEUR')")
     public ResponseEntity<ApiResponse<EvenementDTO>> suspend(@PathVariable Integer id) {
@@ -160,7 +156,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Event suspended successfully", data));
     }
 
-    // reprise d'un événement
     @PutMapping("/{id}/resume")
     @PreAuthorize("hasRole('ADMINISTRATEUR')")
     public ResponseEntity<ApiResponse<EvenementDTO>> resume(@PathVariable Integer id) {
@@ -169,7 +164,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Event resumed successfully", data));
     }
 
-    // upload d'image
     @PostMapping("/{id}/image")
     public ResponseEntity<ApiResponse<Void>> uploadImage(@PathVariable Integer id,
                                                           @RequestParam("file") MultipartFile file) {
@@ -178,7 +172,6 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Image uploaded successfully"));
     }
 
-    // annulation d'un événement
     @PutMapping("/{id}/cancel")
     @PreAuthorize("hasRole('ADMINISTRATEUR')")
     public ResponseEntity<ApiResponse<EvenementDTO>> cancel(@PathVariable Integer id,
