@@ -41,7 +41,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedHeureDebut;
-  TimeOfDay? _selectedHeureFin;
+  int _nombreJours = 1;
+  int _dureeHeures = 2;
+  int _dureeMinutes = 0;
 
   String? _selectedCategorie;
   String? _selectedLieu;
@@ -52,6 +54,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
   bool _loadingSalles = false;
 
   String _typePlacement = 'LIBRE';
+  bool _salleOptionnelle = true;
+  final _capaciteLibreCtrl = TextEditingController();
+  bool _capaciteIllimitee = true;
+
   final List<String> _placeTypes = ['Standard', 'VIP'];
   final _newPlaceTypeCtrl = TextEditingController();
 
@@ -64,6 +70,12 @@ class _CreateEventPageState extends State<CreateEventPage> {
   bool _gridExpanded = false;
   List<EventPlaceConfig> _places = [];
   bool _loadingPlaces = false;
+
+  final List<Map<String, dynamic>> _standingZones = [];
+  final _zoneNomCtrl = TextEditingController();
+  final _zoneCapaciteCtrl = TextEditingController();
+  final _zonePrixCtrl = TextEditingController();
+  bool _zoneCapaciteIllimitee = true;
 
   List<Caracteristique> _caracteristiques = [];
   Map<int, TextEditingController> _caracControllers = {};
@@ -93,6 +105,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
     _titreCtrl.dispose();
     _descriptionCtrl.dispose();
     _newPlaceTypeCtrl.dispose();
+    _capaciteLibreCtrl.dispose();
+    _zoneNomCtrl.dispose();
+    _zoneCapaciteCtrl.dispose();
+    _zonePrixCtrl.dispose();
     for (final ctrl in _typePriceCtrls.values) ctrl.dispose();
     for (final ctrl in _caracControllers.values) ctrl.dispose();
     super.dispose();
@@ -168,38 +184,26 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   String get _typeAgencementFromPlacement {
     switch (_typePlacement) {
-      case 'LIBRE': return 'DEBOUT_SANS_LIMITE';
-      case 'MIXTE': return 'ASSIS_DEBOUT';
-      default: return 'UNIQUEMENT_ASSIS';
+      case 'LIBRE':
+        return _capaciteIllimitee ? 'DEBOUT_SANS_LIMITE' : 'DEBOUT_AVEC_LIMITE';
+      case 'MIXTE':
+        return 'ASSIS_DEBOUT';
+      default:
+        return 'UNIQUEMENT_ASSIS';
     }
   }
 
-  Duration? get _dureeCalculee {
-    if (_selectedHeureDebut != null && _selectedHeureFin != null) {
-      final debut = _selectedHeureDebut!;
-      final fin = _selectedHeureFin!;
-      final d = DateTime(2000, 1, 1, fin.hour, fin.minute).difference(DateTime(2000, 1, 1, debut.hour, debut.minute));
-      if (d.isNegative) return d + const Duration(hours: 24);
-      return d;
-    }
-    return null;
-  }
+  Duration get _dureeCalculee => Duration(hours: _dureeHeures, minutes: _dureeMinutes);
 
   bool get _step1Valid => _titreCtrl.text.trim().isNotEmpty && _selectedCategorie != null;
   bool get _step2Valid => _selectedDate != null && _selectedHeureDebut != null;
 
-  Future<void> _loadSalles(String lieuCode, {String? categorieCode}) async {
+  Future<void> _loadSalles(String lieuCode) async {
     setState(() { if (!_isEditing) _selectedSalle = null; _loadingSalles = true; });
     try {
-      final List<dynamic> filtered;
-      if (categorieCode != null) {
-        filtered = await _lieuService.getSallesCompatible(lieuCode, categorieCode);
-      } else {
-        final allSalles = await _lieuService.getSalles();
-        filtered = allSalles.where((s) => (s as Map<String, dynamic>)['codeLieu'] == lieuCode).cast<Map<String, dynamic>>().toList();
-      }
+      final allSalles = await _lieuService.getSallesByLieu(lieuCode);
       if (!mounted) return;
-      setState(() { _salles = filtered.cast<Map<String, dynamic>>(); _loadingSalles = false; });
+      setState(() { _salles = allSalles.cast<Map<String, dynamic>>(); _loadingSalles = false; });
     } catch (_) {
       if (mounted) setState(() { _salles = []; _loadingSalles = false; });
     }
@@ -250,11 +254,33 @@ class _CreateEventPageState extends State<CreateEventPage> {
     });
   }
 
+  void _addStandingZone() {
+    final nom = _zoneNomCtrl.text.trim();
+    if (nom.isEmpty) return;
+    setState(() {
+      _standingZones.add({
+        'nom': nom,
+        'capacite': _zoneCapaciteIllimitee ? null : (int.tryParse(_zoneCapaciteCtrl.text) ?? 0),
+        'prix': double.tryParse(_zonePrixCtrl.text) ?? 0.0,
+      });
+      _zoneNomCtrl.clear();
+      _zoneCapaciteCtrl.clear();
+      _zonePrixCtrl.clear();
+      _zoneCapaciteIllimitee = true;
+    });
+  }
+
+  void _removeStandingZone(int index) {
+    setState(() => _standingZones.removeAt(index));
+  }
+
   Widget _buildCaracteristiquesInputs() {
     if (_caracteristiques.isEmpty) return const SizedBox.shrink();
+    final cat = _categories.where((c) => c.codeCategorie == _selectedCategorie).firstOrNull;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Divider(),
-      const Text('Caractéristiques', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+      Text('Caractéristiques ${cat != null ? '- ${cat.nomCategorie}' : ''}',
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
       ..._caracteristiques.map((c) {
         final id = c.idCaracteristique!;
@@ -325,20 +351,23 @@ class _CreateEventPageState extends State<CreateEventPage> {
     setState(() => _loading = true);
     try {
       final orgCode = userCode ?? '';
+      final dateFin = _selectedDate!.add(Duration(days: _nombreJours - 1));
       final event = Evenement(
         idEvenement: _isEditing ? widget.event!.idEvenement : null,
         titre: _titreCtrl.text,
         description: _descriptionCtrl.text.isEmpty ? null : _descriptionCtrl.text,
         dateEvenement: _selectedDate,
         heureEvenement: '${_selectedHeureDebut!.hour.toString().padLeft(2, '0')}:${_selectedHeureDebut!.minute.toString().padLeft(2, '0')}:00',
-        dateFin: _selectedDate,
+        dateFin: dateFin,
         prix: null,
-        capacite: null,
+        capacite: (_typePlacement == 'LIBRE' && !_capaciteIllimitee)
+            ? int.tryParse(_capaciteLibreCtrl.text)
+            : null,
         statut: 'planifie',
         codeCategorie: _selectedCategorie,
         codeLieu: _selectedLieu,
         typeAgencement: _typeAgencementFromPlacement,
-        numeroSalle: _selectedSalle,
+        numeroSalle: _typePlacement == 'LIBRE' ? (_salleOptionnelle ? null : _selectedSalle) : _selectedSalle,
         codeOrganisateur: orgCode,
         caracteristiqueValeurs: _buildCaracteristiqueValeurs()
             .map((e) => EvenementCaracteristiqueValeur(idCaracteristique: e['idCaracteristique'] as int, valeur: e['valeur'] as String))
@@ -374,6 +403,17 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 });
               }
             } catch (_) {}
+          }
+          if (_typePlacement == 'MIXTE') {
+            for (final zone in _standingZones) {
+              try {
+                await _eventService.createStandingZone(created.idEvenement!, {
+                  'nom': zone['nom'],
+                  'capacite': zone['capacite'],
+                  'prix': zone['prix'],
+                });
+              } catch (_) {}
+            }
           }
           if (_hasNewImage) {
             try { await _eventService.uploadImage(created.idEvenement!, File(_selectedImagePath!)); } catch (_) {}
@@ -525,15 +565,11 @@ class _CreateEventPageState extends State<CreateEventPage> {
         decoration: const InputDecoration(labelText: 'Genre *', border: OutlineInputBorder()),
         items: _categories.map((c) => DropdownMenuItem(value: c.codeCategorie, child: Text(c.nomCategorie))).toList(),
         onChanged: (v) {
-          setState(() { _selectedCategorie = v; });
+          setState(() { _selectedCategorie = v; _caracteristiques = []; });
           if (v != null) _loadCaracteristiques(v);
         },
         validator: (v) => v == null ? 'Requis' : null,
       ),
-      if (_loadingCaracteristiques)
-        const LinearProgressIndicator()
-      else
-        _buildCaracteristiquesInputs(),
       const SizedBox(height: 12),
       const Text('Type de placement', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
@@ -544,6 +580,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
         const SizedBox(width: 8),
         _buildPlacementChip('MIXTE', 'Placement\nMixte', Icons.swap_horiz),
       ]),
+      if (_loadingCaracteristiques)
+        const Padding(padding: EdgeInsets.only(top: 12), child: LinearProgressIndicator())
+      else
+        _buildCaracteristiquesInputs(),
     ]);
   }
 
@@ -576,6 +616,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   Widget _buildStep2() {
     final duree = _dureeCalculee;
+    final dateFin = _selectedDate != null ? _selectedDate!.add(Duration(days: _nombreJours - 1)) : null;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Text('Date & Heure', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       const SizedBox(height: 16),
@@ -596,6 +637,19 @@ class _CreateEventPageState extends State<CreateEventPage> {
         ),
       ),
       const SizedBox(height: 12),
+      TextFormField(
+        initialValue: _nombreJours.toString(),
+        decoration: const InputDecoration(labelText: 'Nombre de jours *', border: OutlineInputBorder(),
+            helperText: '1 = un seul jour'),
+        keyboardType: TextInputType.number,
+        onChanged: (v) => setState(() => _nombreJours = int.tryParse(v) ?? 1),
+        validator: (v) {
+          final n = int.tryParse(v ?? '');
+          if (n == null || n < 1) return 'Minimum 1 jour';
+          return null;
+        },
+      ),
+      const SizedBox(height: 12),
       InkWell(
         onTap: () async {
           final picked = await showTimePicker(context: context, initialTime: _selectedHeureDebut ?? TimeOfDay.now());
@@ -609,33 +663,52 @@ class _CreateEventPageState extends State<CreateEventPage> {
         ),
       ),
       const SizedBox(height: 12),
-      InkWell(
-        onTap: () async {
-          final picked = await showTimePicker(context: context, initialTime: _selectedHeureFin ?? TimeOfDay.now());
-          if (picked != null) setState(() => _selectedHeureFin = picked);
-        },
-        child: InputDecorator(
-          decoration: const InputDecoration(labelText: 'Heure fin', border: OutlineInputBorder()),
-          child: Text(_selectedHeureFin != null
-              ? '${_selectedHeureFin!.hour.toString().padLeft(2, '0')}:${_selectedHeureFin!.minute.toString().padLeft(2, '0')}'
-              : 'Sélectionner l\'heure'),
+      Row(children: [
+        Expanded(
+          child: TextFormField(
+            initialValue: _dureeHeures.toString(),
+            decoration: const InputDecoration(labelText: 'Durée (heures)', border: OutlineInputBorder(), isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
+            keyboardType: TextInputType.number,
+            onChanged: (v) => setState(() => _dureeHeures = int.tryParse(v) ?? 0),
+          ),
         ),
-      ),
-      if (duree != null) ...[
-        const SizedBox(height: 8),
-        Card(
-          color: AppTheme.primaryColor.withValues(alpha: 0.08),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(children: [
+        const SizedBox(width: 8),
+        Expanded(
+          child: TextFormField(
+            initialValue: _dureeMinutes.toString(),
+            decoration: const InputDecoration(labelText: 'Durée (minutes)', border: OutlineInputBorder(), isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
+            keyboardType: TextInputType.number,
+            onChanged: (v) => setState(() => _dureeMinutes = int.tryParse(v) ?? 0),
+          ),
+        ),
+      ]),
+      const SizedBox(height: 8),
+      Card(
+        color: AppTheme.primaryColor.withValues(alpha: 0.08),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
               const Icon(Icons.timer, size: 20, color: AppTheme.primaryColor),
               const SizedBox(width: 8),
               Text('Durée : ${duree.inHours}h ${duree.inMinutes.remainder(60)}min',
                   style: const TextStyle(fontWeight: FontWeight.w600)),
             ]),
-          ),
+            if (dateFin != null) ...[
+              const SizedBox(height: 4),
+              Row(children: [
+                const Icon(Icons.date_range, size: 20, color: AppTheme.primaryColor),
+                const SizedBox(width: 8),
+                Text('Du ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year} '
+                    'au ${dateFin.day}/${dateFin.month}/${dateFin.year} ($_nombreJours jour${_nombreJours > 1 ? 's' : ''})',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              ]),
+            ],
+          ]),
         ),
-      ],
+      ),
     ]);
   }
 
@@ -651,47 +724,225 @@ class _CreateEventPageState extends State<CreateEventPage> {
         items: lieuxFiltres.map((l) => DropdownMenuItem(value: l.code, child: Text(l.nomLieu))).toList(),
         onChanged: (v) {
           setState(() { _selectedLieu = v; _selectedSalle = null; _salles = []; });
-          if (v != null) _loadSalles(v, categorieCode: _selectedCategorie);
+          if (v != null) _loadSalles(v);
         },
       ),
       const SizedBox(height: 12),
-      if (_selectedLieu != null)
-        _loadingSalles
-            ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
-            : _salles.isEmpty
-                ? Text('Aucune salle disponible', style: TextStyle(color: AppTheme.textSecondary))
-                : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('Salle', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 6),
-                    ..._salles.map((s) {
-                      final id = s['numeroSalle'] as String? ?? '';
-                      final nom = s['nomSalle'] as String? ?? id;
-                      final capacite = s['capacite'];
-                      final selected = _selectedSalle == id;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() { _selectedSalle = id; });
-                          _loadPlaces();
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 6),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: selected ? AppTheme.primaryColor.withValues(alpha: 0.08) : AppTheme.surfaceColor,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: selected ? AppTheme.primaryColor : AppTheme.dividerColor),
-                          ),
-                          child: Row(children: [
-                            Icon(Icons.meeting_room, size: 20, color: selected ? AppTheme.primaryColor : AppTheme.textSecondary),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(nom, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
-                            if (capacite != null) Text('$capacite pl.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                          ]),
-                        ),
-                      );
-                    }),
-                  ]),
-      const SizedBox(height: 20),
+      if (_typePlacement == 'LIBRE') _buildLibreSection(),
+      if (_typePlacement == 'NUMEROTE') _buildNumeroteSection(),
+      if (_typePlacement == 'MIXTE') _buildMixteSection(),
+    ]);
+  }
+
+  Widget _buildLibreSection() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      SwitchListTile(
+        title: const Text('Sans salle spécifique', style: TextStyle(fontSize: 14)),
+        value: _salleOptionnelle,
+        onChanged: (v) => setState(() { _salleOptionnelle = v; _selectedSalle = null; _salles = []; }),
+        contentPadding: EdgeInsets.zero,
+      ),
+      if (!_salleOptionnelle && _selectedLieu != null) ...[
+        if (_loadingSalles)
+          const Center(child: CircularProgressIndicator(strokeWidth: 2))
+        else if (_salles.isEmpty)
+          Text('Aucune salle disponible', style: TextStyle(color: AppTheme.textSecondary))
+        else ...[
+          const Text('Salle', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          ..._salles.map(_buildSalleTile),
+        ],
+      ],
+      const SizedBox(height: 16),
+      const Text('Capacité', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      SwitchListTile(
+        title: const Text('Sans limite de personnes', style: TextStyle(fontSize: 14)),
+        value: _capaciteIllimitee,
+        onChanged: (v) => setState(() => _capaciteIllimitee = v),
+        contentPadding: EdgeInsets.zero,
+      ),
+      if (!_capaciteIllimitee)
+        TextFormField(
+          controller: _capaciteLibreCtrl,
+          decoration: const InputDecoration(labelText: 'Nombre max de personnes', border: OutlineInputBorder(),
+              helperText: 'Laissez vide pour illimité'),
+          keyboardType: TextInputType.number,
+        ),
+      const SizedBox(height: 8),
+      if (_typePlacement == 'LIBRE') ...[
+        const Divider(),
+        const Text('Types de places tarifs', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        ..._placeTypes.map((type) {
+          _typePriceCtrls.putIfAbsent(type, () => TextEditingController());
+          return Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(children: [
+                Expanded(child: Text(type, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
+                SizedBox(
+                  width: 100,
+                  child: TextField(
+                    controller: _typePriceCtrls[type]!,
+                    decoration: const InputDecoration(hintText: 'Prix', border: OutlineInputBorder(), isDense: true,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8), prefixText: 'Ar '),
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ]),
+            ),
+          );
+        }),
+      ],
+      _buildPlaceTypeManager(),
+    ]);
+  }
+
+  Widget _buildNumeroteSection() {
+    if (_selectedLieu == null) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (_loadingSalles)
+        const Center(child: CircularProgressIndicator(strokeWidth: 2))
+      else if (_salles.isEmpty)
+        Text('Aucune salle disponible', style: TextStyle(color: AppTheme.textSecondary))
+      else ...[
+        const Text('Salle *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        ..._salles.map(_buildSalleTile),
+      ],
+      _buildPlaceTypeManager(),
+    ]);
+  }
+
+  Widget _buildMixteSection() {
+    if (_selectedLieu == null) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (_loadingSalles)
+        const Center(child: CircularProgressIndicator(strokeWidth: 2))
+      else if (_salles.isEmpty)
+        Text('Aucune salle disponible', style: TextStyle(color: AppTheme.textSecondary))
+      else ...[
+        const Text('Salle *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        ..._salles.map(_buildSalleTile),
+      ],
+      _buildPlaceTypeManager(),
+      const SizedBox(height: 16),
+      const Divider(),
+      const Text('Zones debout', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      ..._standingZones.asMap().entries.map((entry) {
+        final i = entry.key;
+        final z = entry.value;
+        return Card(
+          margin: const EdgeInsets.only(bottom: 6),
+          child: ListTile(
+            dense: true,
+            title: Text(z['nom'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text(
+              '${z['capacite'] != null ? '${z['capacite']} pers. max' : 'Sans limite'}'
+              ' — Ar ${(z['prix'] as num).toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 12),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+              onPressed: () => _removeStandingZone(i),
+            ),
+          ),
+        );
+      }),
+      _buildAddZoneForm(),
+    ]);
+  }
+
+  Widget _buildAddZoneForm() {
+    return Card(
+      margin: const EdgeInsets.only(top: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Ajouter une zone debout', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _zoneNomCtrl,
+            decoration: const InputDecoration(labelText: 'Nom de la zone', border: OutlineInputBorder(), isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10), hintText: 'Fosse, Balcon...'),
+            style: const TextStyle(fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(
+              child: TextField(
+                controller: _zoneCapaciteCtrl,
+                decoration: const InputDecoration(labelText: 'Capacité max', border: OutlineInputBorder(), isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+                keyboardType: TextInputType.number,
+                enabled: !_zoneCapaciteIllimitee,
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: () => setState(() => _zoneCapaciteIllimitee = !_zoneCapaciteIllimitee),
+              child: Text(_zoneCapaciteIllimitee ? 'Illimité' : 'Limitée', style: const TextStyle(fontSize: 12)),
+            ),
+          ]),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _zonePrixCtrl,
+            decoration: const InputDecoration(labelText: 'Prix unitaire (Ar)', border: OutlineInputBorder(), isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
+            keyboardType: TextInputType.number,
+            style: const TextStyle(fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: _zoneNomCtrl.text.trim().isEmpty ? null : _addStandingZone,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Ajouter la zone', style: TextStyle(fontSize: 12)),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildSalleTile(Map<String, dynamic> s) {
+    final id = s['numeroSalle'] as String? ?? '';
+    final nom = s['nomSalle'] as String? ?? id;
+    final capacite = s['capacite'];
+    final selected = _selectedSalle == id;
+    return GestureDetector(
+      onTap: () {
+        setState(() { _selectedSalle = id; });
+        _loadPlaces();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.primaryColor.withValues(alpha: 0.08) : AppTheme.surfaceColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: selected ? AppTheme.primaryColor : AppTheme.dividerColor),
+        ),
+        child: Row(children: [
+          Icon(Icons.meeting_room, size: 20, color: selected ? AppTheme.primaryColor : AppTheme.textSecondary),
+          const SizedBox(width: 10),
+          Expanded(child: Text(nom, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
+          if (capacite != null) Text('$capacite pl.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildPlaceTypeManager() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const SizedBox(height: 16),
       const Text('Types de places', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
       const SizedBox(height: 4),
       Text('Créez les catégories de places (Standard, VIP, Fosse, Balcon...)',
@@ -732,6 +983,23 @@ class _CreateEventPageState extends State<CreateEventPage> {
       Text('Définissez le prix pour chaque type de place.',
           style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
       const SizedBox(height: 16),
+      if (_typePlacement == 'LIBRE') ...[
+        ..._placeTypes.map(_buildPriceCard),
+        if (_standingZones.isNotEmpty) ...[
+          const Divider(),
+          const Text('Zones debout', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          ..._standingZones.map((z) => Card(
+            margin: const EdgeInsets.only(bottom: 6),
+            child: ListTile(
+              dense: true,
+              title: Text(z['nom'] as String),
+              trailing: Text('Ar ${(z['prix'] as num).toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          )),
+        ],
+      ],
       if (_typePlacement == 'NUMEROTE' || _typePlacement == 'MIXTE') ...[
         if (_selectedSalle == null)
           Padding(
@@ -740,37 +1008,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 style: TextStyle(color: AppTheme.textSecondary)),
           )
         else ...[
-          ..._placeTypes.map((type) {
-            _typePriceCtrls.putIfAbsent(type, () => TextEditingController());
-            final count = _places.where((p) => (p.typePlace ?? 'Standard') == type).length;
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(children: [
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(type, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      Text('$count place(s)', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                    ]),
-                  ),
-                  SizedBox(
-                    width: 100,
-                    child: TextField(
-                      controller: _typePriceCtrls[type]!,
-                      decoration: const InputDecoration(
-                        hintText: 'Prix', border: OutlineInputBorder(), isDense: true,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                        prefixText: 'Ar ',
-                      ),
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                ]),
-              ),
-            );
-          }),
+          ..._placeTypes.map(_buildPriceCard),
           const SizedBox(height: 8),
           if (_places.isNotEmpty) ...[
             const Text('Configurer le plan de salle', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -831,15 +1069,73 @@ class _CreateEventPageState extends State<CreateEventPage> {
           ],
         ],
       ],
-      if (_typePlacement == 'LIBRE' || _typePlacement == 'MIXTE') ...[
+      if (_typePlacement == 'MIXTE') ...[
         const Divider(),
-        const Text('Places libres / debout', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        const Text('Zones debout', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Text('Pour les zones debout ou libres, la tarification sera gérée après la création.',
-            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+        ..._standingZones.asMap().entries.map((entry) {
+          final i = entry.key;
+          final z = entry.value;
+          return Card(
+            margin: const EdgeInsets.only(bottom: 6),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(z['nom'] as String, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text(z['capacite'] != null ? '${z['capacite']} pers. max' : 'Sans limite',
+                        style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                  ]),
+                ),
+                Text('Ar ${(z['prix'] as num).toStringAsFixed(2)}',
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                  onPressed: () => _removeStandingZone(i),
+                ),
+              ]),
+            ),
+          );
+        }),
       ],
     ]);
   }
+
+  Widget _buildPriceCard(String type) {
+    _typePriceCtrls.putIfAbsent(type, () => TextEditingController());
+    final count = _places.where((p) => (p.typePlace ?? 'Standard') == type).length;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(type, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              if (_typePlacement != 'LIBRE')
+                Text('$count place(s)', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+            ]),
+          ),
+          SizedBox(
+            width: 100,
+            child: TextField(
+              controller: _typePriceCtrls[type]!,
+              decoration: const InputDecoration(
+                hintText: 'Prix', border: OutlineInputBorder(), isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                prefixText: 'Ar ',
+              ),
+              keyboardType: TextInputType.number,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
   Widget _buildRowSelector() {
     final rangs = _places.map((p) => p.range).whereType<String>().toSet().toList()..sort();
     if (rangs.isEmpty) return const Text('Aucune rangée', style: TextStyle(color: AppTheme.textSecondary));
@@ -889,6 +1185,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
     final cat = _categories.where((c) => c.codeCategorie == _selectedCategorie).firstOrNull;
     final salle = _salles.where((s) => (s['numeroSalle'] as String?) == _selectedSalle).firstOrNull;
     final lieu = _lieux.where((l) => l.code == _selectedLieu).firstOrNull;
+    final dateFin = _selectedDate?.add(Duration(days: _nombreJours - 1));
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Text('Récapitulatif', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       const SizedBox(height: 16),
@@ -909,21 +1206,32 @@ class _CreateEventPageState extends State<CreateEventPage> {
             ],
             const Divider(),
             _recapRow(Icons.calendar_today, _selectedDate != null
-                ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}' : '—'),
+                ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                : '—'),
+            if (dateFin != null && _nombreJours > 1)
+              _recapRow(Icons.date_range, 'Jusqu\'au ${dateFin.day}/${dateFin.month}/${dateFin.year} ($_nombreJours jours)'),
             if (_selectedHeureDebut != null)
               _recapRow(Icons.access_time,
                   '${_selectedHeureDebut!.hour.toString().padLeft(2, '0')}:${_selectedHeureDebut!.minute.toString().padLeft(2, '0')}'
-                  '${_selectedHeureFin != null ? ' → ${_selectedHeureFin!.hour.toString().padLeft(2, '0')}:${_selectedHeureFin!.minute.toString().padLeft(2, '0')}' : ''}'
-                  '${duree != null ? ' (${duree.inHours}h${duree.inMinutes.remainder(60)}min)' : ''}'),
+                  ' — ${duree.inHours}h${duree.inMinutes.remainder(60)}min'),
             if (lieu != null) _recapRow(Icons.location_on, lieu.nomLieu),
-            if (salle != null) _recapRow(Icons.meeting_room, salle['nomSalle'] as String? ?? ''),
+            if (salle != null || (_typePlacement == 'LIBRE' && !_salleOptionnelle && _selectedSalle != null))
+              _recapRow(Icons.meeting_room, salle?['nomSalle'] as String? ?? _selectedSalle ?? ''),
+            if (_typePlacement == 'LIBRE' && !_capaciteIllimitee && _capaciteLibreCtrl.text.isNotEmpty)
+              _recapRow(Icons.people, 'Capacité : ${_capaciteLibreCtrl.text} personnes'),
             const Divider(),
             _recapRow(Icons.people, _typePlacement == 'LIBRE' ? 'Placement libre' : (_typePlacement == 'MIXTE' ? 'Mixte' : 'Numéroté')),
             _recapRow(Icons.category, _placeTypes.join(', ')),
+            if (_typePlacement == 'MIXTE' && _standingZones.isNotEmpty)
+              _recapRow(Icons.accessibility_new, '${_standingZones.length} zone(s) debout'),
             if (_typePriceCtrls.entries.any((e) => e.value.text.isNotEmpty)) ...[
               const Divider(),
               ..._typePriceCtrls.entries.where((e) => e.value.text.isNotEmpty).map((e) =>
                 _recapRow(Icons.monetization_on, '${e.key} : Ar ${double.tryParse(e.value.text)?.toStringAsFixed(2) ?? e.value.text}')),
+            ],
+            if (_standingZones.isNotEmpty) ...[
+              ..._standingZones.map((z) =>
+                _recapRow(Icons.accessibility_new, '${z['nom']} : Ar ${(z['prix'] as num).toStringAsFixed(2)}')),
             ],
             if (_caracteristiques.isNotEmpty && _buildCaracteristiqueValeurs().isNotEmpty) ...[
               const Divider(),
@@ -989,7 +1297,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
     switch (_currentStep) {
       case 0: return _step1Valid;
       case 1: return _step2Valid;
-      case 2: return _selectedLieu != null;
+      case 2:
+        if (_typePlacement == 'LIBRE') return _selectedLieu != null;
+        return _selectedLieu != null && _selectedSalle != null;
       case 3: return true;
       default: return true;
     }

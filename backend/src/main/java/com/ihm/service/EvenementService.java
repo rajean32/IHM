@@ -52,6 +52,12 @@ public class EvenementService {
     private final CorrespondARepository correspondARepository;
     private final SalleRepository salleRepository;
     private final EvenementPlaceConfigurationRepository configRepository;
+    private final CaracteristiqueRepository caracteristiqueRepository;
+    private final EvenementCaracteristiqueValeurRepository valeurRepository;
+    private final ZoneStandingRepository zoneStandingRepository;
+    private final ReservationRepository reservationRepository;
+    private final StandingZoneService standingZoneService;
+    private final PaiementService paiementService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -65,7 +71,13 @@ public class EvenementService {
                             TicketRepository ticketRepository,
                             CorrespondARepository correspondARepository,
                             SalleRepository salleRepository,
-                            EvenementPlaceConfigurationRepository configRepository) {
+                            EvenementPlaceConfigurationRepository configRepository,
+                            CaracteristiqueRepository caracteristiqueRepository,
+                            EvenementCaracteristiqueValeurRepository valeurRepository,
+                            ZoneStandingRepository zoneStandingRepository,
+                            ReservationRepository reservationRepository,
+                            StandingZoneService standingZoneService,
+                            PaiementService paiementService) {
         this.evenementRepository = evenementRepository;
         this.categorieRepository = categorieRepository;
         this.lieuRepository = lieuRepository;
@@ -76,6 +88,12 @@ public class EvenementService {
         this.correspondARepository = correspondARepository;
         this.salleRepository = salleRepository;
         this.configRepository = configRepository;
+        this.caracteristiqueRepository = caracteristiqueRepository;
+        this.valeurRepository = valeurRepository;
+        this.zoneStandingRepository = zoneStandingRepository;
+        this.reservationRepository = reservationRepository;
+        this.standingZoneService = standingZoneService;
+        this.paiementService = paiementService;
     }
 
     @Transactional(readOnly = true)

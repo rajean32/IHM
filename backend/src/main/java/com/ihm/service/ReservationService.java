@@ -36,6 +36,9 @@ public class ReservationService {
     private final EvenementRepository evenementRepository;
     private final EvenementPlaceConfigurationRepository configRepository;
     private final PaiementTransactionRepository paiementTransactionRepository;
+    private final StandingZoneService standingZoneService;
+    private final ZoneStandingRepository zoneStandingRepository;
+    private final TicketService ticketService;
 
     public ReservationService(ReservationRepository reservationRepository,
                               ClientRepository clientRepository,
@@ -46,7 +49,10 @@ public class ReservationService {
                               PlaceRepository placeRepository,
                               EvenementRepository evenementRepository,
                               EvenementPlaceConfigurationRepository configRepository,
-                              PaiementTransactionRepository paiementTransactionRepository) {
+                              PaiementTransactionRepository paiementTransactionRepository,
+                              StandingZoneService standingZoneService,
+                              ZoneStandingRepository zoneStandingRepository,
+                              TicketService ticketService) {
         this.reservationRepository = reservationRepository;
         this.clientRepository = clientRepository;
         this.ticketRepository = ticketRepository;
@@ -57,6 +63,9 @@ public class ReservationService {
         this.evenementRepository = evenementRepository;
         this.configRepository = configRepository;
         this.paiementTransactionRepository = paiementTransactionRepository;
+        this.standingZoneService = standingZoneService;
+        this.zoneStandingRepository = zoneStandingRepository;
+        this.ticketService = ticketService;
     }
 
     @Transactional(readOnly = true)
