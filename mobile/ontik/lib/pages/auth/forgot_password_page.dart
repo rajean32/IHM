@@ -21,6 +21,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
   final _newEmailCtrl = TextEditingController();
   final _newPasswordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
+  final _villeCtrl = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   bool _loading = false;
@@ -61,6 +62,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
     _newEmailCtrl.dispose();
     _newPasswordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
+    _villeCtrl.dispose();
     _animController.dispose();
     super.dispose();
   }
@@ -70,7 +72,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
     FocusScope.of(context).unfocus();
     setState(() { _loading = true; _error = null; });
     try {
-      await AuthService().firstLogin(_codeCtrl.text.trim(), _newEmailCtrl.text.trim(), _newPasswordCtrl.text);
+      final ville = _villeCtrl.text.trim();
+      await AuthService().firstLogin(_codeCtrl.text.trim(), _newEmailCtrl.text.trim(), _newPasswordCtrl.text, ville: ville.isNotEmpty ? ville : null);
       if (!mounted) return;
       final role = userRole;
       if (role == 'ADMINISTRATEUR') {
@@ -232,6 +235,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
                 hint: 'Your code',
                 icon: Icons.badge_outlined,
                 readOnly: true,
+                validator: null,
+              ),
+              const SizedBox(height: 16),
+
+              // Ville
+              _buildTextField(
+                controller: _villeCtrl,
+                label: 'Your City',
+                hint: 'Antananarivo, Toamasina...',
+                icon: Icons.location_city_outlined,
                 validator: null,
               ),
               const SizedBox(height: 16),

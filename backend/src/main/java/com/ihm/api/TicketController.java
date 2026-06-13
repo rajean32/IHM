@@ -29,11 +29,17 @@ public class TicketController {
         this.pdfTicketService = pdfTicketService;
     }
 
-    // tous les tickets
+    // tous les tickets (optionnellement filtrés par client)
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TicketDTO>>> getAll() {
-        log.info("GET /api/tickets");
-        List<TicketDTO> data = ticketService.getAll();
+    public ResponseEntity<ApiResponse<List<TicketDTO>>> getAll(
+            @RequestParam(required = false) String client) {
+        log.info("GET /api/tickets?client={}", client);
+        List<TicketDTO> data;
+        if (client != null) {
+            data = ticketService.getByClient(client);
+        } else {
+            data = ticketService.getAll();
+        }
         return ResponseEntity.ok(ApiResponse.success(200, "Tickets fetched successfully", data));
     }
 

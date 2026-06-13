@@ -60,7 +60,7 @@ class PlaceControllerTest {
         dto.setNumeroPlace("A1");
         dto.setNumeroSalle("S001");
 
-        String expectedNumeroPlace = lieu.getCode() + "-S001-?-A1";
+        String expectedNumeroPlace = lieu.getCode() + "-S001-A-1";
 
         mockMvc.perform(post("/api/places")
                         .contentType(MediaType.APPLICATION_JSON)

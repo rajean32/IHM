@@ -1,6 +1,7 @@
 package com.ihm.api;
 
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,8 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ihm.schema.ApiResponse;
 import com.ihm.schema.CategorieDTO;
 import com.ihm.service.CategorieService;
-import com.ihm.repository.CategorieRepository;
-import com.ihm.model.Categorie;
 
 import jakarta.validation.Valid;
 
@@ -30,11 +29,9 @@ public class CategorieController {
     private static final Logger log = LoggerFactory.getLogger(CategorieController.class);
 
     private final CategorieService categorieService;
-    private final CategorieRepository categorieRepository;
 
-    public CategorieController(CategorieService categorieService, CategorieRepository categorieRepository) {
+    public CategorieController(CategorieService categorieService) {
         this.categorieService = categorieService;
-        this.categorieRepository = categorieRepository;
     }
 
     @GetMapping
@@ -72,16 +69,5 @@ public class CategorieController {
         log.info("DELETE /api/categories/{}", code);
         categorieService.delete(code);
         return ResponseEntity.ok(ApiResponse.success(200, "Category deleted successfully"));
-    }
-
-    @PostMapping("/cinema/init")
-    public ResponseEntity<ApiResponse<Void>> initCinemaCategorie() {
-        log.info("POST /api/categories/cinema/init");
-        if (!categorieRepository.existsByCodeCategorie("CINEMA")) {
-            Categorie cinema = new Categorie("CINEMA", "Cinéma");
-            categorieRepository.save(cinema);
-            log.info("Catégorie Cinéma créée");
-        }
-        return ResponseEntity.ok(ApiResponse.success(200, "Catégorie Cinéma initialisée"));
     }
 }

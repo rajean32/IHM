@@ -14,6 +14,7 @@ public class ReservationDTO {
     @NotNull(message = "Client code is required")
     private String codeClient;
     private List<String> codeTickets;
+    private List<TicketDTO> tickets;
     public ReservationDTO() {}
     public Integer getIdReservation() { return idReservation; }
     public void setIdReservation(Integer idReservation) { this.idReservation = idReservation; }
@@ -23,6 +24,8 @@ public class ReservationDTO {
     public void setCodeClient(String codeClient) { this.codeClient = codeClient; }
     public List<String> getCodeTickets() { return codeTickets; }
     public void setCodeTickets(List<String> codeTickets) { this.codeTickets = codeTickets; }
+    public List<TicketDTO> getTickets() { return tickets; }
+    public void setTickets(List<TicketDTO> tickets) { this.tickets = tickets; }
     public static class PurchaseRequest {
         private String codeClient;
         private List<PurchaseTicketItem> tickets;
@@ -43,6 +46,7 @@ public class ReservationDTO {
             private Integer idEvenement;
             private BigDecimal prix;
             private String idPlaceCombine;
+            private Integer idZone;
             public PurchaseTicketItem() {}
             public String getCodeTicket() { return codeTicket; }
             public void setCodeTicket(String codeTicket) { this.codeTicket = codeTicket; }
@@ -54,6 +58,8 @@ public class ReservationDTO {
             public void setPrix(BigDecimal prix) { this.prix = prix; }
             public String getIdPlaceCombine() { return idPlaceCombine; }
             public void setIdPlaceCombine(String idPlaceCombine) { this.idPlaceCombine = idPlaceCombine; }
+            public Integer getIdZone() { return idZone; }
+            public void setIdZone(Integer idZone) { this.idZone = idZone; }
         }
     }
     @JsonInclude(JsonInclude.Include.NON_NULL)

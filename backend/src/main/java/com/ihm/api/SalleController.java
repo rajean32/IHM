@@ -72,4 +72,22 @@ public class SalleController {
         int deleted = salleService.deleteBatch(numeros);
         return ResponseEntity.ok(ApiResponse.success(200, deleted + " rooms deleted successfully", deleted));
     }
+
+    // salles par lieu
+    @GetMapping("/by-lieu/{codeLieu}")
+    public ResponseEntity<ApiResponse<List<SalleDTO>>> getByLieu(@PathVariable String codeLieu) {
+        log.info("GET /api/salles/by-lieu/{}", codeLieu);
+        List<SalleDTO> data = salleService.getByLieu(codeLieu);
+        return ResponseEntity.ok(ApiResponse.success(200, "Rooms fetched successfully", data));
+    }
+
+    // salles compatibles avec un type d'evenement
+    @GetMapping("/compatible")
+    public ResponseEntity<ApiResponse<List<SalleDTO>>> getCompatible(
+            @RequestParam String codeLieu,
+            @RequestParam String codeCategorie) {
+        log.info("GET /api/salles/compatible?codeLieu={}&codeCategorie={}", codeLieu, codeCategorie);
+        List<SalleDTO> data = salleService.getCompatibleSalles(codeLieu, codeCategorie);
+        return ResponseEntity.ok(ApiResponse.success(200, "Compatible rooms fetched successfully", data));
+    }
 }

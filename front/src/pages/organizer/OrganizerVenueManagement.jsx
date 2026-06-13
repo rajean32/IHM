@@ -83,12 +83,20 @@ function LieuxTab() {
   )
 }
 
+const TYPE_AGENCEMENT_OPTIONS = [
+  { value: 'UNIQUEMENT_ASSIS', label: 'Uniquement assis' },
+  { value: 'TABLE_ASSIS', label: 'Tables + chaises' },
+  { value: 'ASSIS_DEBOUT', label: 'Assis/Debout mixte' },
+  { value: 'DEBOUT_AVEC_LIMITE', label: 'Debout avec jauge' },
+  { value: 'DEBOUT_SANS_LIMITE', label: 'Debout sans limite' },
+]
+
 function SallesTab() {
   const [salles, setSalles] = useState([])
   const [lieux, setLieux] = useState([])
   const [modal, setModal] = useState(false)
   const [edit, setEdit] = useState(null)
-  const [form, setForm] = useState({ nom: '', capacite: '', idLieu: '' })
+  const [form, setForm] = useState({ nom: '', capacite: '', idLieu: '', typeAgencement: 'UNIQUEMENT_ASSIS' })
 
   function load() {
     getAll('/api/organisateur/venues/salles').then(setSalles).catch(() => {})
@@ -96,18 +104,24 @@ function SallesTab() {
   }
   useEffect(() => { load() }, [])
 
-  function openCreate() { setEdit(null); setForm({ nom: '', capacite: '', idLieu: '' }); setModal(true) }
-  function openEdit(s) { setEdit(s); setForm({ nom: s.nom || '', capacite: s.capacite || '', idLieu: s.idLieu || '' }); setModal(true) }
+  function openCreate() { setEdit(null); setForm({ nom: '', capacite: '', idLieu: '', typeAgencement: 'UNIQUEMENT_ASSIS' }); setModal(true) }
+  function openEdit(s) { setEdit(s); setForm({ nom: s.nom || '', capacite: s.capacite || '', idLieu: s.idLieu || '', typeAgencement: s.typeAgencement || 'UNIQUEMENT_ASSIS' }); setModal(true) }
 
   function onChange(e) { setForm({ ...form, [e.target.name]: e.target.value }) }
 
   async function handleSave(e) {
     e.preventDefault()
     try {
+      const payload = {
+        nomSalle: form.nom,
+        capacite: Number(form.capacite) || 0,
+        idLieu: form.idLieu,
+        typeAgencement: form.typeAgencement,
+      }
       if (edit) {
-        await update('/api/organisateur/venues/salles', edit.idSalle || edit.id, form)
+        await update('/api/organisateur/venues/salles', edit.idSalle || edit.id || edit.numeroSalle, payload)
       } else {
-        await create('/api/organisateur/venues/salles', form)
+        await create('/api/organisateur/venues/salles', payload)
       }
       setModal(false)
       load()
@@ -117,7 +131,7 @@ function SallesTab() {
   async function handleDelete(s) {
     if (!window.confirm('Supprimer cette salle ?')) return
     try {
-      await remove('/api/organisateur/venues/salles', s.idSalle || s.id)
+      await remove('/api/organisateur/venues/salles', s.idSalle || s.id || s.numeroSalle)
       load()
     } catch (err) { alert(err.message) }
   }
@@ -126,13 +140,14 @@ function SallesTab() {
     <div className="tab-content">
       <button onClick={openCreate}>Ajouter une Salle</button>
       <table>
-        <thead><tr><th>Nom</th><th>Capacité</th><th>Lieu</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Nom</th><th>Capacité</th><th>Lieu</th><th>Type</th><th>Actions</th></tr></thead>
         <tbody>
           {salles.map(s => (
-            <tr key={s.idSalle || s.id}>
-              <td>{s.nom}</td>
+            <tr key={s.idSalle || s.id || s.numeroSalle}>
+              <td>{s.nom || s.nomSalle}</td>
               <td>{s.capacite}</td>
               <td>{s.lieuNom || s.idLieu}</td>
+              <td><span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '8px', background: '#e8edf5', color: '#0f3460' }}>{TYPE_AGENCEMENT_OPTIONS.find(o => o.value === s.typeAgencement)?.label || s.typeAgencement || '—'}</span></td>
               <td>
                 <button onClick={() => openEdit(s)}>Modifier</button>
                 <button onClick={() => handleDelete(s)}>Supprimer</button>
@@ -145,6 +160,13 @@ function SallesTab() {
         <form onSubmit={handleSave}>
           <label>Nom <input name="nom" value={form.nom} onChange={onChange} required /></label>
           <label>Capacité <input name="capacite" type="number" value={form.capacite} onChange={onChange} /></label>
+          <label>Type d'agencement
+            <select name="typeAgencement" value={form.typeAgencement} onChange={onChange}>
+              {TYPE_AGENCEMENT_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </label>
           <label>Lieu
             <select name="idLieu" value={form.idLieu} onChange={onChange} required>
               <option value="">Sélectionner...</option>

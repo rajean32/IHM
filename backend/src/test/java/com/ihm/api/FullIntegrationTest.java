@@ -61,6 +61,8 @@ class FullIntegrationTest {
     private PaiementRepository paiementRepository;
     @Autowired
     private EvenementPlaceConfigurationRepository configRepository;
+    @Autowired
+    private ZoneStandingRepository zoneStandingRepository;
 
     private String adminCode;
     private String organisateurCode;
@@ -80,6 +82,7 @@ class FullIntegrationTest {
         reservationRepository.deleteAll();
         ticketRepository.deleteAll();
         configRepository.deleteAll();
+        zoneStandingRepository.deleteAll();
         evenementRepository.deleteAll();
         placeRepository.deleteAll();
         salleRepository.deleteAll();
@@ -135,11 +138,13 @@ class FullIntegrationTest {
         salle.setNumeroSalle("SAL_INT");
         salle.setNomSalle("Test Room");
         salle.setLieu(lieu);
+        salle.setTypeAgencement(TypeAgencement.UNIQUEMENT_ASSIS);
         salleRepository.save(salle);
         salleNumero = "SAL_INT";
 
         Place place = new Place();
         place.setNumeroPlace("PLA_INT");
+        place.setRangePlace("A");
         place.setSalle(salle);
         placeRepository.save(place);
         placeNumero = "PLA_INT";

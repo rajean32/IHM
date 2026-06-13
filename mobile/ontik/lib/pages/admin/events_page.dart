@@ -148,6 +148,24 @@ class _EventsPageState extends State<EventsPage> {
                 const Text('Aucune place configurée', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               const SizedBox(height: 20),
 
+              if (detail.caracteristiqueValeurs != null && detail.caracteristiqueValeurs!.isNotEmpty) ...[
+                _sectionTitle('Caractéristiques'),
+                const SizedBox(height: 4),
+                ...detail.caracteristiqueValeurs!.map((c) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 120,
+                        child: Text('${c.nomCaracteristique ?? ""} :', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      ),
+                      Expanded(child: Text(c.valeur, style: const TextStyle(fontSize: 13))),
+                    ],
+                  ),
+                )),
+                const SizedBox(height: 12),
+              ],
+
               _sectionTitle('Actions'),
               const SizedBox(height: 8),
               _adminActionButton(

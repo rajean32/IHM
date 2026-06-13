@@ -6,6 +6,7 @@ import com.ihm.schema.ReservationDTO;
 import com.ihm.schema.ReservationDTO.PurchaseRequest.PurchaseTicketItem;
 import com.ihm.repository.*;
 import com.ihm.model.*;
+import com.ihm.model.ZoneStanding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -193,7 +194,11 @@ public class ReservationService {
 
         List<CorrespondA> correspondances = correspondARepository.findByReservation_IdReservation(id);
         for (CorrespondA ca : correspondances) {
-            List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(ca.getTicket().getCodeTicket());
+            Ticket t = ca.getTicket();
+            if (t.getZoneStanding() != null) {
+                standingZoneService.decrementReservation(t.getZoneStanding().getIdZone());
+            }
+            List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(t.getCodeTicket());
             for (Concerner c : concerners) {
                 EvenementPlaceConfiguration config = configRepository
                         .findByEvenement_IdEvenementAndPlace_NumeroPlace(
@@ -267,6 +272,14 @@ public class ReservationService {
             Ticket ticket = new Ticket();
             ticket.setCodeTicket(item.getCodeTicket());
             ticket.setPrix(item.getPrix() != null ? item.getPrix() : BigDecimal.ZERO);
+
+            if (item.getIdZone() != null) {
+                ZoneStanding zone = zoneStandingRepository.findById(item.getIdZone())
+                        .orElseThrow(() -> new ResourceNotFoundException("ZoneStanding", "idZone", item.getIdZone()));
+                standingZoneService.incrementReservation(item.getIdZone());
+                ticket.setZoneStanding(zone);
+            }
+
             Ticket saved = ticketRepository.save(ticket);
             tickets.add(saved);
 
@@ -336,6 +349,9 @@ public class ReservationService {
         dto.setCodeClient(reservation.getClient().getCodeUtilisateur());
         dto.setCodeTickets(reservation.getCorrespondances().stream()
                 .map(c -> c.getTicket().getCodeTicket())
+                .collect(Collectors.toList()));
+        dto.setTickets(reservation.getCorrespondances().stream()
+                .map(c -> ticketService.toDTO(c.getTicket()))
                 .collect(Collectors.toList()));
         return dto;
     }

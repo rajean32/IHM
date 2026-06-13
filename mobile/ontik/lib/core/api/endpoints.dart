@@ -5,11 +5,13 @@ class Endpoints {
   static const register = '$base/auth/register';
   static const firstLogin = '$base/auth/first-login-update';
   static const changePassword = '$base/auth/change-password';
+  static const updateVille = '$base/auth/ville';
 
   static const events = '$base/evenements';
   static String eventById(int id) => '$base/evenements/$id';
   static String eventValidate(int id) => '$base/evenements/$id/validate';
   static String eventAvailablePlaces(int id) => '$base/evenements/$id/places/available';
+  static String eventStandingZones(int id) => '$base/evenements/$id/zones';
   static String eventImage(int id) => '$base/evenements/$id/image';
 
   static const places = '$base/places';
@@ -30,6 +32,7 @@ class Endpoints {
   static const categories = '$base/categories';
   static const lieux = '$base/lieux';
   static const salles = '$base/salles';
+  static const caracteristiques = '$base/caracteristiques';
 
   static const dashboard = '$base/admin/dashboard';
   static String organizerDashboard(String code) => '$base/organisateurs/$code/dashboard';

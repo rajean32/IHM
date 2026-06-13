@@ -49,6 +49,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,
                     "/api/evenements/**",
                     "/api/categories/**",
+                    "/api/caracteristiques/**",
+                    "/api/salles/**",
+                    "/api/places/**",
                     "/api/lieux/**",
                     "/api/tickets/*/qrcode"
                 ).permitAll()
@@ -65,6 +68,7 @@ public class SecurityConfig {
                 ).authenticated()
                 .requestMatchers(HttpMethod.POST,
                     "/api/organisateur/**",
+                    "/api/caracteristiques/**",
                     "/api/places/**",
                     "/api/places/batch",
                     "/api/salles/**",
@@ -72,12 +76,14 @@ public class SecurityConfig {
                 ).authenticated()
                 .requestMatchers(HttpMethod.PUT,
                     "/api/organisateur/**",
+                    "/api/caracteristiques/**",
                     "/api/places/**",
                     "/api/salles/**",
                     "/api/lieux/**"
                 ).authenticated()
                 .requestMatchers(HttpMethod.DELETE,
                     "/api/organisateur/**",
+                    "/api/caracteristiques/**",
                     "/api/places/**",
                     "/api/salles/**",
                     "/api/lieux/**"

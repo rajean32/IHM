@@ -43,6 +43,7 @@ class _TicketPageState extends State<TicketPage> {
           'placeNumero': qrResponse['placeNumero'],
           'rang': qrResponse['rang'],
           'typePlace': qrResponse['typePlace'],
+          'zoneNom': qrResponse['zoneNom'],
           'prix': qrResponse['prix'],
           'qrCodeBase64': qrResponse['qrCodeBase64'],
           'valid': validation['valid'],
@@ -136,6 +137,8 @@ class _TicketPageState extends State<TicketPage> {
                   _infoRow('Rangée', _qrData!['rang']),
                 if (_qrData!['typePlace'] != null)
                   _infoRow('Type', _qrData!['typePlace']),
+                if (_qrData!['zoneNom'] != null)
+                  _infoRow('Zone', _qrData!['zoneNom']),
                 if (_qrData!['prix'] != null)
                   _infoRow('Prix', 'Ar ${_qrData!['prix']}'),
                 if (_qrData!['clientNom'] != null)

@@ -28,6 +28,8 @@ public class TicketService {
     private final CorrespondARepository correspondARepository;
     private final QRCodeService qrCodeService;
     private final EvenementPlaceConfigurationRepository configRepository;
+    private final StandingZoneService standingZoneService;
+    private final ZoneStandingRepository zoneStandingRepository;
 
     public TicketService(TicketRepository ticketRepository,
                          ConcernerRepository concernerRepository,
@@ -35,7 +37,9 @@ public class TicketService {
                          PlaceRepository placeRepository,
                          CorrespondARepository correspondARepository,
                          QRCodeService qrCodeService,
-                         EvenementPlaceConfigurationRepository configRepository) {
+                         EvenementPlaceConfigurationRepository configRepository,
+                         StandingZoneService standingZoneService,
+                         ZoneStandingRepository zoneStandingRepository) {
         this.ticketRepository = ticketRepository;
         this.concernerRepository = concernerRepository;
         this.evenementRepository = evenementRepository;
@@ -43,6 +47,8 @@ public class TicketService {
         this.correspondARepository = correspondARepository;
         this.qrCodeService = qrCodeService;
         this.configRepository = configRepository;
+        this.standingZoneService = standingZoneService;
+        this.zoneStandingRepository = zoneStandingRepository;
     }
 
     @Transactional(readOnly = true)
@@ -55,11 +61,58 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
+    public List<TicketDTO> getByClient(String clientCode) {
+        log.debug("Fetching tickets for client: {}", clientCode);
+        return ticketRepository.findByCorrespondances_Reservation_Client_CodeUtilisateur(clientCode)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public TicketDTO getById(String code) {
         log.debug("Fetching ticket by code: {}", code);
         Ticket ticket = ticketRepository.findByCodeTicket(code)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", "codeTicket", code));
         return toDTO(ticket);
+    }
+
+    @Transactional(readOnly = true)
+    public TicketDTO.ValidationResponse validateTicket(String codeTicket) {
+        log.debug("Validating ticket: {}", codeTicket);
+        Ticket ticket = ticketRepository.findByCodeTicket(codeTicket)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", "codeTicket", codeTicket));
+
+        List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(codeTicket);
+
+        if (correspondances.isEmpty()) {
+            TicketDTO.ValidationResponse response = new TicketDTO.ValidationResponse();
+            response.setValid(false);
+            response.setCodeTicket(codeTicket);
+            response.setMessage("Ticket not used in any reservation");
+            return response;
+        }
+
+        TicketDTO.ValidationResponse response = new TicketDTO.ValidationResponse();
+        response.setValid(true);
+        response.setCodeTicket(codeTicket);
+        response.setClientNom(correspondances.get(0).getReservation().getClient().getNom() + " " +
+                correspondances.get(0).getReservation().getClient().getPrenoms());
+        response.setMessage("Ticket is valid");
+
+        if (ticket.getZoneStanding() != null) {
+            response.setEvenementTitre(ticket.getZoneStanding().getEvenement().getTitre());
+            response.setPlaceNumero(ticket.getZoneStanding().getNom());
+        } else {
+            List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(codeTicket);
+            if (!concerners.isEmpty()) {
+                Concerner concerner = concerners.get(0);
+                response.setEvenementTitre(concerner.getEvenement().getTitre());
+                response.setPlaceNumero(concerner.getPlace().getNumeroPlace());
+            }
+        }
+
+        return response;
     }
 
     @Transactional
@@ -83,6 +136,14 @@ public class TicketService {
         Ticket ticket = new Ticket();
         ticket.setCodeTicket(dto.getCodeTicket());
         ticket.setPrix(dto.getPrix());
+
+        if (dto.getIdZone() != null) {
+            ZoneStanding zone = zoneStandingRepository.findById(dto.getIdZone())
+                    .orElseThrow(() -> new ResourceNotFoundException("ZoneStanding", "idZone", dto.getIdZone()));
+            standingZoneService.incrementReservation(dto.getIdZone());
+            ticket.setZoneStanding(zone);
+        }
+
         Ticket saved = ticketRepository.save(ticket);
 
         if (dto.getIdEvenement() != null && dto.getNumeroPlace() != null) {
@@ -160,11 +221,14 @@ public class TicketService {
 
         List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(codeTicket);
         String evenementTitre = "";
-        String placeNumero = "";
+        String placeNumero = ticket.getZoneStanding() != null ? ticket.getZoneStanding().getNom() : "";
         String rang = "";
-        String typePlace = "";
+        String typePlace = ticket.getZoneStanding() != null ? "DEBOUT" : "";
 
-        if (!concerners.isEmpty()) {
+        if (ticket.getZoneStanding() != null) {
+            evenementTitre = ticket.getZoneStanding().getEvenement().getTitre();
+            placeNumero = ticket.getZoneStanding().getNom();
+        } else if (!concerners.isEmpty()) {
             Concerner concerner = concerners.get(0);
             evenementTitre = concerner.getEvenement().getTitre();
             placeNumero = concerner.getPlace().getNumeroPlace();
@@ -195,46 +259,6 @@ public class TicketService {
         return response;
     }
 
-    @Transactional(readOnly = true)
-    public TicketDTO.ValidationResponse validateTicket(String codeTicket) {
-        log.debug("Validating ticket: {}", codeTicket);
-        Ticket ticket = ticketRepository.findByCodeTicket(codeTicket)
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket", "codeTicket", codeTicket));
-
-        List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(codeTicket);
-        if (concerners.isEmpty()) {
-            TicketDTO.ValidationResponse response = new TicketDTO.ValidationResponse();
-            response.setValid(false);
-            response.setCodeTicket(codeTicket);
-            response.setMessage("Ticket not linked to any event");
-            return response;
-        }
-
-        Concerner concerner = concerners.get(0);
-        List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(codeTicket);
-
-        if (correspondances.isEmpty()) {
-            TicketDTO.ValidationResponse response = new TicketDTO.ValidationResponse();
-            response.setValid(false);
-            response.setCodeTicket(codeTicket);
-            response.setMessage("Ticket not used in any reservation");
-            return response;
-        }
-
-        String clientNom = correspondances.get(0).getReservation().getClient().getNom() + " " +
-                correspondances.get(0).getReservation().getClient().getPrenoms();
-
-        TicketDTO.ValidationResponse response = new TicketDTO.ValidationResponse();
-        response.setValid(true);
-        response.setCodeTicket(codeTicket);
-        response.setEvenementTitre(concerner.getEvenement().getTitre());
-        response.setPlaceNumero(concerner.getPlace().getNumeroPlace());
-        response.setClientNom(clientNom);
-        response.setMessage("Ticket is valid");
-
-        return response;
-    }
-
     @Transactional
     public TicketDTO.GateScanResponse scanAtGate(String qrToken) {
         log.debug("Gate scan for token: {}", qrToken);
@@ -248,14 +272,29 @@ public class TicketService {
         }
 
         List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(qrToken);
-        if (concerners.isEmpty()) {
+        List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(qrToken);
+
+        if (ticket.getZoneStanding() == null && concerners.isEmpty()) {
             TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
             r.setStatut("INVALID");
             r.setMessage("Ticket not linked to any event");
             return r;
         }
 
-        List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(qrToken);
+        if (ticket.getZoneStanding() != null) {
+            String clientNom2 = correspondances.isEmpty() ? "" :
+                    correspondances.get(0).getReservation().getClient().getNom() + " "
+                    + correspondances.get(0).getReservation().getClient().getPrenoms();
+            TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
+            r.setStatut("VALID");
+            r.setMessage("Ticket validated successfully (standing)");
+            r.setCodeTicket(qrToken);
+            r.setEvenementTitre(ticket.getZoneStanding().getEvenement().getTitre());
+            r.setPlaceNumero(ticket.getZoneStanding().getNom());
+            r.setClientNom(clientNom2);
+            return r;
+        }
+
         if (correspondances.isEmpty()) {
             TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
             r.setStatut("INVALID");
@@ -298,16 +337,49 @@ public class TicketService {
         return r;
     }
 
-    private TicketDTO toDTO(Ticket ticket) {
+    public TicketDTO toDTO(Ticket ticket) {
         TicketDTO dto = new TicketDTO();
         dto.setCodeTicket(ticket.getCodeTicket());
         dto.setPrix(ticket.getPrix());
+
+        if (ticket.getZoneStanding() != null) {
+            dto.setZoneNom(ticket.getZoneStanding().getNom());
+            dto.setIdEvenement(ticket.getZoneStanding().getEvenement().getIdEvenement());
+            dto.setEvenementTitre(ticket.getZoneStanding().getEvenement().getTitre());
+            if (ticket.getZoneStanding().getEvenement().getDateEvenement() != null)
+                dto.setDateEvenement(ticket.getZoneStanding().getEvenement().getDateEvenement().toString());
+            if (ticket.getZoneStanding().getEvenement().getHeureEvenement() != null)
+                dto.setHeureEvenement(ticket.getZoneStanding().getEvenement().getHeureEvenement().toString());
+            dto.setStatut("VALID");
+            return dto;
+        }
 
         List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(ticket.getCodeTicket());
         if (!concerners.isEmpty()) {
             Concerner c = concerners.get(0);
             dto.setIdEvenement(c.getEvenement().getIdEvenement());
             dto.setNumeroPlace(c.getPlace().getNumeroPlace());
+            dto.setEvenementTitre(c.getEvenement().getTitre());
+            if (c.getEvenement().getDateEvenement() != null)
+                dto.setDateEvenement(c.getEvenement().getDateEvenement().toString());
+            if (c.getEvenement().getHeureEvenement() != null)
+                dto.setHeureEvenement(c.getEvenement().getHeureEvenement().toString());
+            if (c.getPlace().getSalle() != null) {
+                dto.setSalleNom(c.getPlace().getSalle().getNomSalle());
+                if (c.getPlace().getSalle().getLieu() != null) {
+                    dto.setLieuNom(c.getPlace().getSalle().getLieu().getNomLieu());
+                }
+            }
+
+            EvenementPlaceConfiguration config = configRepository
+                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(
+                            c.getEvenement().getIdEvenement(), c.getPlace().getNumeroPlace())
+                    .orElse(null);
+            if (config != null) {
+                dto.setRang(config.getRange());
+                dto.setTypePlace(config.getTypePlace());
+                dto.setStatut(config.getStatut());
+            }
         }
 
         return dto;

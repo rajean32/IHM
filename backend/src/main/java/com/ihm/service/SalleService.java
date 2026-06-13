@@ -10,6 +10,8 @@ import com.ihm.repository.SalleRepository;
 import com.ihm.model.Lieu;
 import com.ihm.model.Place;
 import com.ihm.model.Salle;
+import com.ihm.model.SalleTypeEvenement;
+import com.ihm.model.TypeAgencement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,7 @@ public class SalleService {
         this.configRepository = configRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<SalleDTO> getAll() {
         log.debug("Fetching all rooms");
         return salleRepository.findAll()
@@ -47,11 +50,24 @@ public class SalleService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public SalleDTO getById(String numero) {
         log.debug("Fetching room by numero: {}", numero);
         Salle salle = salleRepository.findByNumeroSalle(numero)
                 .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", numero));
         return toDTO(salle);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SalleDTO> getByLieu(String codeLieu) {
+        return salleRepository.findByLieu_Code(codeLieu)
+                .stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SalleDTO> getCompatibleSalles(String codeLieu, String codeCategorie) {
+        return salleRepository.findCompatibleSalles(codeLieu, codeCategorie)
+                .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Transactional
@@ -71,7 +87,10 @@ public class SalleService {
         Salle salle = new Salle();
         salle.setNumeroSalle(numeroSalle);
         salle.setNomSalle(dto.getNomSalle());
+        salle.setType(dto.getType());
+        salle.setCapacite(dto.getCapacite());
         salle.setRange(dto.getRange());
+        salle.setTypeAgencement(dto.getTypeAgencement() != null ? dto.getTypeAgencement() : TypeAgencement.UNIQUEMENT_ASSIS);
         salle.setLieu(lieu);
         Salle saved = salleRepository.save(salle);
         log.info("Salle créée avec succès: numeroSalle={}, nom={}, lieu={}, range={}",
@@ -92,6 +111,10 @@ public class SalleService {
         Salle salle = salleRepository.findByNumeroSalle(numero)
                 .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", numero));
         if (dto.getNomSalle() != null) salle.setNomSalle(dto.getNomSalle());
+        if (dto.getType() != null) salle.setType(dto.getType());
+        if (dto.getCapacite() != null) salle.setCapacite(dto.getCapacite());
+        if (dto.getRange() != null)         salle.setRange(dto.getRange());
+        if (dto.getTypeAgencement() != null) salle.setTypeAgencement(dto.getTypeAgencement());
         if (dto.getCodeLieu() != null) {
             Lieu lieu = lieuRepository.findById(dto.getCodeLieu())
                     .orElseThrow(() -> new ResourceNotFoundException("Lieu", "codeLieu", dto.getCodeLieu()));
@@ -145,10 +168,19 @@ public class SalleService {
         SalleDTO dto = new SalleDTO();
         dto.setNumeroSalle(salle.getNumeroSalle());
         dto.setNomSalle(salle.getNomSalle());
+        dto.setType(salle.getType());
+        dto.setCapacite(salle.getCapacite());
         dto.setRange(salle.getRange());
+        dto.setTypeAgencement(salle.getTypeAgencement());
         if (salle.getLieu() != null) {
             dto.setCodeLieu(salle.getLieu().getCode());
             dto.setIdLieu(salle.getLieu().getCode());
+            dto.setNomLieu(salle.getLieu().getNomLieu());
+        }
+        if (salle.getTypesEvenement() != null && !salle.getTypesEvenement().isEmpty()) {
+            dto.setTypesEvenement(salle.getTypesEvenement().stream()
+                    .map(st -> st.getCategorie().getCodeCategorie())
+                    .collect(Collectors.toList()));
         }
         return dto;
     }

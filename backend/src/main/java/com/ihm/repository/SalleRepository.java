@@ -18,6 +18,10 @@ public interface SalleRepository extends JpaRepository<Salle, String> {
 
     boolean existsByNumeroSalle(String numeroSalle);
 
+    @Query("SELECT s FROM Salle s WHERE s.lieu.code = :codeLieu AND s.numeroSalle IN " +
+           "(SELECT st.id.numeroSalle FROM SalleTypeEvenement st WHERE st.id.codeCategorie = :codeCategorie)")
+    List<Salle> findCompatibleSalles(@Param("codeLieu") String codeLieu, @Param("codeCategorie") String codeCategorie);
+
     @Query("SELECT COUNT(s) FROM Salle s WHERE s.lieu IN (SELECT e.lieu FROM Evenement e WHERE e.idEvenement = :idEvent)")
     long countSallesForEvent(@Param("idEvent") Integer idEvent);
 }

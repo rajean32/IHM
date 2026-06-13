@@ -12,4 +12,7 @@ class EvenementService {
   Future<void> deleteEvent(int id) => _api.deleteEvent(id);
   Future<Map<String, dynamic>> validateEvent(int id) => _api.validateEvent(id);
   Future<void> uploadImage(int eventId, File file) => _api.uploadImage(eventId, file);
+  Future<List<dynamic>> getStandingZones(int eventId) => _api.getStandingZones(eventId);
+  Future<Map<String, dynamic>> createStandingZone(int eventId, Map<String, dynamic> data) => _api.createStandingZone(eventId, data);
+  Future<void> deleteStandingZone(int eventId, int zoneId) => _api.deleteStandingZone(eventId, zoneId);
 }

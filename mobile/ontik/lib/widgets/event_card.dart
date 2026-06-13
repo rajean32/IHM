@@ -88,6 +88,16 @@ class EventCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
                 ),
               ],
+              if (event.caracteristiqueValeurs != null && event.caracteristiqueValeurs!.length <= 3)
+                ...event.caracteristiqueValeurs!.map((c) => Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    '${c.nomCaracteristique ?? ""} : ${c.valeur}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                  ),
+                )),
             ],
           ),
         ),

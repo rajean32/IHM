@@ -39,6 +39,20 @@ class EvenementApi {
     return resp.data['data'] as Map<String, dynamic>;
   }
 
+  Future<List<dynamic>> getStandingZones(int eventId) async {
+    final resp = await dio.get(Endpoints.eventStandingZones(eventId));
+    return (resp.data['data'] as List?) ?? [];
+  }
+
+  Future<Map<String, dynamic>> createStandingZone(int eventId, Map<String, dynamic> data) async {
+    final resp = await dio.post(Endpoints.eventStandingZones(eventId), data: data);
+    return resp.data['data'] as Map<String, dynamic>;
+  }
+
+  Future<void> deleteStandingZone(int eventId, int zoneId) async {
+    await dio.delete('${Endpoints.eventStandingZones(eventId)}/$zoneId');
+  }
+
   Future<void> uploadImage(int eventId, File file) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(file.path, filename: file.path.split('/').last),

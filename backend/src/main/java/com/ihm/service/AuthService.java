@@ -66,7 +66,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getCodeUtilisateur(), role);
 
         log.info("User logged in: {} (firstLogin: {})", user.getCodeUtilisateur(), user.isPremiereConnexion());
-        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, user.isPremiereConnexion());
+        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, user.isPremiereConnexion(), user.getVille());
     }
 
     // inscription utilisateur
@@ -107,7 +107,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getCodeUtilisateur(), role);
 
         log.info("User registered: {} as {}", user.getCodeUtilisateur(), role);
-        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, user.isPremiereConnexion());
+        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, user.isPremiereConnexion(), user.getVille());
     }
 
     // allocation
@@ -151,6 +151,10 @@ public class AuthService {
             user.setMotDePasse(passwordEncoder.encode(request.getNewPassword()));
         }
 
+        if (request.getVille() != null && !request.getVille().isBlank()) {
+            user.setVille(request.getVille());
+        }
+
         user.setPremiereConnexion(false);
         utilisateurRepository.save(user);
 
@@ -158,7 +162,16 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getCodeUtilisateur(), role);
 
         log.info("First login update completed for: {}", user.getCodeUtilisateur());
-        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, false);
+        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, false, user.getVille());
+    }
+
+    @Transactional
+    public void updateVille(String codeUtilisateur, String ville) {
+        Utilisateur user = utilisateurRepository.findByCodeUtilisateur(codeUtilisateur)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "code", codeUtilisateur));
+        user.setVille(ville);
+        utilisateurRepository.save(user);
+        log.info("Ville updated for user {}: {}", codeUtilisateur, ville);
     }
 
     // demande de reinitialisation mot de passe

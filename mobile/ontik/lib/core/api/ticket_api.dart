@@ -17,6 +17,11 @@ class TicketApi {
     return (resp.data['data'] as List?) ?? [];
   }
 
+  Future<List<dynamic>> getMyTickets(String clientCode) async {
+    final resp = await dio.get('${Endpoints.tickets}?client=$clientCode');
+    return (resp.data['data'] as List?) ?? [];
+  }
+
   Future<List<dynamic>> getEventTickets(int eventId) async {
     final resp = await dio.get(Endpoints.organizerEventTickets(eventId));
     return (resp.data['data'] as List?) ?? [];

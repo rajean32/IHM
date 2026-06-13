@@ -4,6 +4,16 @@ import { getAll, getById, create, update, getUserInfo } from '../../api/entityAp
 
 const STEPS = ['Informations', 'Média', 'Lieu & Salle', 'Tarification', 'Récapitulatif']
 
+const TYPE_AGENCEMENT_LABELS = {
+  UNIQUEMENT_ASSIS: 'Uniquement assis',
+  TABLE_ASSIS: 'Tables + chaises',
+  ASSIS_DEBOUT: 'Assis/Debout mixte',
+  DEBOUT_AVEC_LIMITE: 'Debout avec jauge',
+  DEBOUT_SANS_LIMITE: 'Debout sans limite',
+}
+
+const TYPE_AGENCEMENT_OPTIONS = Object.entries(TYPE_AGENCEMENT_LABELS).map(([k, v]) => ({ value: k, label: v }))
+
 export default function EventCreationWizard() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -28,9 +38,13 @@ export default function EventCreationWizard() {
     image: '',
     idLieu: '',
     numeroSalle: '',
+    typeAgencement: '',
   })
 
   const [placePricing, setPlacePricing] = useState({})
+  const [standingZones, setStandingZones] = useState([])
+  const [caracteristiques, setCaracteristiques] = useState([])
+  const [caracteristiqueValues, setCaracteristiqueValues] = useState({})
 
   useEffect(() => {
     Promise.all([
@@ -41,6 +55,16 @@ export default function EventCreationWizard() {
       setLieux(lieuxData?.data || lieuxData || [])
     })
   }, [])
+
+  useEffect(() => {
+    if (!form.codeCategorie) { setCaracteristiques([]); return }
+    getAll(`/api/caracteristiques/by-categorie/${form.codeCategorie}`)
+      .then(resp => {
+        const list = resp?.data || resp || []
+        setCaracteristiques(list)
+      })
+      .catch(() => setCaracteristiques([]))
+  }, [form.codeCategorie])
 
   useEffect(() => {
     if (!form.idLieu) { setSalles([]); return }
@@ -69,6 +93,14 @@ export default function EventCreationWizard() {
   }, [form.numeroSalle])
 
   useEffect(() => {
+    if (!form.numeroSalle) return
+    const salle = salles.find(s => (s.numeroSalle || s.id) === form.numeroSalle)
+    if (salle?.typeAgencement && !form.typeAgencement) {
+      setForm(prev => ({ ...prev, typeAgencement: salle.typeAgencement }))
+    }
+  }, [form.numeroSalle, salles, form.typeAgencement])
+
+  useEffect(() => {
     if (!isEdit) return
     getById('/api/evenements', id)
       .then(ev => {
@@ -83,6 +115,7 @@ export default function EventCreationWizard() {
           image: d.image || '',
           idLieu: d.idLieu || '',
           numeroSalle: '',
+          typeAgencement: d.typeAgencement || '',
         })
       })
       .catch(err => setError(err.message))
@@ -92,10 +125,93 @@ export default function EventCreationWizard() {
     return e => setForm({ ...form, [field]: e.target.value })
   }
 
+  function addStandingZone() {
+    setStandingZones([...standingZones, { nom: '', capacite: '', prix: '' }])
+  }
+
+  function updateStandingZone(index, field, value) {
+    const updated = [...standingZones]
+    updated[index] = { ...updated[index], [field]: value }
+    setStandingZones(updated)
+  }
+
+  function removeStandingZone(index) {
+    setStandingZones(standingZones.filter((_, i) => i !== index))
+  }
+
+  function setCaracValue(id, value) {
+    setCaracteristiqueValues(prev => ({ ...prev, [id]: value }))
+  }
+
+  function renderCaracteristiques() {
+    if (caracteristiques.length === 0) return null
+    return (
+      <div style={{ marginTop: '1rem' }}>
+        <h4>Caractéristiques</h4>
+        {caracteristiques.map(c => {
+          const id = c.idCaracteristique || c.id
+          const label = `${c.nom}${c.obligatoire ? ' *' : ''}`
+          const val = caracteristiqueValues[id] || ''
+          switch (c.typeDonnee) {
+            case 'boolean':
+              return (
+                <label key={id} style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
+                  <input type="checkbox" checked={val === 'true'} onChange={e => setCaracValue(id, e.target.checked ? 'true' : 'false')} />
+                  {label}
+                </label>
+              )
+            case 'select': {
+              const options = (c.options || '').split(',').map(s => s.trim()).filter(Boolean)
+              return (
+                <label key={id} style={{ display: 'block', margin: '8px 0' }}>
+                  {label}
+                  <select value={val} onChange={e => setCaracValue(id, e.target.value)} style={{ width: '100%', marginTop: '4px' }}>
+                    <option value="">Sélectionner...</option>
+                    {options.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </label>
+              )
+            }
+            case 'number':
+              return (
+                <label key={id} style={{ display: 'block', margin: '8px 0' }}>
+                  {label}
+                  <input type="number" value={val} onChange={e => setCaracValue(id, e.target.value)} style={{ width: '100%', marginTop: '4px' }} />
+                </label>
+              )
+            case 'date':
+              return (
+                <label key={id} style={{ display: 'block', margin: '8px 0' }}>
+                  {label}
+                  <input type="date" value={val} onChange={e => setCaracValue(id, e.target.value)} style={{ width: '100%', marginTop: '4px' }} />
+                </label>
+              )
+            default:
+              return (
+                <label key={id} style={{ display: 'block', margin: '8px 0' }}>
+                  {label}
+                  <input type="text" value={val} onChange={e => setCaracValue(id, e.target.value)} style={{ width: '100%', marginTop: '4px' }} />
+                </label>
+              )
+          }
+        })}
+      </div>
+    )
+  }
+
+  function canUseStandingZones() {
+    const t = form.typeAgencement
+    return t === 'ASSIS_DEBOUT' || t === 'DEBOUT_AVEC_LIMITE' || t === 'DEBOUT_SANS_LIMITE'
+  }
+
   async function handleSave() {
     setLoading(true)
     setError('')
     try {
+      const caracteristiqueValeurs = Object.entries(caracteristiqueValues)
+        .filter(([, v]) => v !== '' && v !== undefined)
+        .map(([k, v]) => ({ idCaracteristique: Number(k), valeur: String(v) }))
+
       const payload = {
         titre: form.titre,
         description: form.description || undefined,
@@ -106,13 +222,31 @@ export default function EventCreationWizard() {
         image: form.image || undefined,
         codeLieu: form.idLieu,
         codeOrganisateur: user?.codeUtilisateur,
+        typeAgencement: form.typeAgencement || undefined,
+        caracteristiqueValeurs: caracteristiqueValeurs.length > 0 ? caracteristiqueValeurs : undefined,
       }
+      if (form.numeroSalle) {
+        payload.numeroSalle = form.numeroSalle
+      }
+      let eventId
       if (isEdit) {
         await update('/api/evenements', id, payload)
+        eventId = id
       } else {
         const result = await create('/api/evenements', payload)
-        const eventId = result?.data?.idEvenement || result?.idEvenement
+        eventId = result?.data?.idEvenement || result?.idEvenement
       }
+
+      if (eventId && standingZones.length > 0) {
+        for (const zone of standingZones) {
+          await create(`/api/evenements/${eventId}/zones`, {
+            nom: zone.nom,
+            capacite: zone.capacite ? Number(zone.capacite) : null,
+            prix: Number(zone.prix),
+          })
+        }
+      }
+
       navigate('/organizer')
     } catch (err) {
       setError(err.message)
@@ -135,6 +269,8 @@ export default function EventCreationWizard() {
   }
 
   const placeTypes = [...new Set(selectedSallePlaces.map(p => p.typePlace || 'Standard'))]
+  const currentSalle = salles.find(s => (s.numeroSalle || s.id) === form.numeroSalle)
+  const isStandingOnly = form.typeAgencement === 'DEBOUT_AVEC_LIMITE' || form.typeAgencement === 'DEBOUT_SANS_LIMITE'
 
   function renderStep() {
     switch (step) {
@@ -163,6 +299,7 @@ export default function EventCreationWizard() {
                 <option value="annule">Annulé</option>
               </select>
             </label>
+            {renderCaracteristiques()}
           </div>
         )
       case 1:
@@ -200,15 +337,37 @@ export default function EventCreationWizard() {
                       }}>
                         <input type="radio" name="salle" value={s.numeroSalle || s.id}
                           checked={form.numeroSalle === (s.numeroSalle || s.id)}
-                          onChange={e => setForm({ ...form, numeroSalle: e.target.value })} />
+                          onChange={e => {
+                            setForm({ ...form, numeroSalle: e.target.value, typeAgencement: s.typeAgencement || '' })
+                          }} />
                         <div>
                           <strong>{s.nomSalle || s.nom}</strong>
                           <span style={{ marginLeft: '8px', color: '#666', fontSize: '0.85rem' }}>
-                            {s.capacite || s.places?.length || '?'} places
+                            {s.capacite || '?'} places
                           </span>
+                          {s.typeAgencement && (
+                            <span style={{ marginLeft: '8px', fontSize: '0.8rem', color: '#0f3460', background: '#e8edf5', padding: '1px 8px', borderRadius: '8px' }}>
+                              {TYPE_AGENCEMENT_LABELS[s.typeAgencement] || s.typeAgencement}
+                            </span>
+                          )}
                         </div>
                       </label>
                     ))}
+                  </div>
+                )}
+                {form.numeroSalle && (
+                  <div style={{ marginTop: '1rem', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 0 }}>
+                      <span style={{ fontWeight: 500 }}>Type d'agencement (surcharge):</span>
+                      <select value={form.typeAgencement} onChange={set('typeAgencement')} style={{ flex: 1 }}>
+                        {TYPE_AGENCEMENT_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '4px' }}>
+                      Par défaut : celui de la salle. Vous pouvez le surcharger pour cet événement.
+                    </p>
                   </div>
                 )}
               </>
@@ -218,55 +377,166 @@ export default function EventCreationWizard() {
       case 3:
         return (
           <div className="wizard-step">
-            <h4>Tarification par type de place</h4>
-            <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
-              Salle : {salles.find(s => (s.numeroSalle || s.id) === form.numeroSalle)?.nomSalle || form.numeroSalle}
-            </p>
-            {selectedSallePlaces.length === 0 ? (
-              <p>Aucune place trouvée dans cette salle.</p>
+            {isStandingOnly ? (
+              <>
+                <h4>Configuration des zones debout</h4>
+                <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  {form.typeAgencement === 'DEBOUT_AVEC_LIMITE'
+                    ? 'Cet événement est debout avec jauge. Définissez la capacité maximale.'
+                    : 'Cet événement est debout sans limite de places.'}
+                </p>
+                {standingZones.map((zone, i) => (
+                  <div key={i} style={{
+                    padding: '16px', border: '1px solid #e0e0e0', borderRadius: '8px',
+                    background: '#fafafa', marginBottom: '12px',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <strong>Zone {i + 1}</strong>
+                      <button className="btn-danger" style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+                        onClick={() => removeStandingZone(i)}>Supprimer</button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      <label style={{ flex: 1, minWidth: '120px' }}>
+                        Nom
+                        <input value={zone.nom} onChange={e => updateStandingZone(i, 'nom', e.target.value)}
+                          placeholder="Ex: Fosse, Pelouse..." />
+                      </label>
+                      {form.typeAgencement === 'DEBOUT_AVEC_LIMITE' && (
+                        <label style={{ flex: 1, minWidth: '100px' }}>
+                          Capacité max
+                          <input type="number" min="1" value={zone.capacite}
+                            onChange={e => updateStandingZone(i, 'capacite', e.target.value)}
+                            placeholder="Ex: 500" />
+                        </label>
+                      )}
+                      <label style={{ flex: 1, minWidth: '100px' }}>
+                        Prix unitaire (€)
+                        <input type="number" step="0.01" min="0" value={zone.prix}
+                          onChange={e => updateStandingZone(i, 'prix', e.target.value)} />
+                      </label>
+                    </div>
+                  </div>
+                ))}
+                <button className="btn-secondary" onClick={addStandingZone}>
+                  + Ajouter une zone debout
+                </button>
+              </>
+            ) : form.typeAgencement === 'ASSIS_DEBOUT' ? (
+              <>
+                <h4>Places assises</h4>
+                <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  Salle : {currentSalle?.nomSalle || form.numeroSalle}
+                </p>
+                {selectedSallePlaces.length === 0 ? (
+                  <p>Aucune place trouvée dans cette salle.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {placeTypes.map(type => (
+                      <div key={type} style={{
+                        padding: '16px', border: '1px solid #e0e0e0', borderRadius: '8px', background: '#fafafa',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: typePlaceColors[type] || '#3498db' }}></span>
+                          <strong>{type}</strong>
+                          <span style={{ color: '#666', fontSize: '0.85rem' }}>
+                            ({selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length} places)
+                          </span>
+                        </div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          Prix unitaire :
+                          <input type="number" step="0.01" min="0"
+                            value={placePricing[type] || ''}
+                            onChange={e => setPlacePricing({ ...placePricing, [type]: parseFloat(e.target.value) || 0 })}
+                            style={{ width: '120px' }} /> €
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <hr style={{ margin: '1.5rem 0' }} />
+                <h4>Zones debout</h4>
+                {standingZones.map((zone, i) => (
+                  <div key={i} style={{
+                    padding: '16px', border: '1px solid #e0e0e0', borderRadius: '8px',
+                    background: '#fafafa', marginBottom: '12px',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <strong>Zone debout {i + 1}</strong>
+                      <button className="btn-danger" style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+                        onClick={() => removeStandingZone(i)}>Supprimer</button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      <label style={{ flex: 1, minWidth: '120px' }}>
+                        Nom <input value={zone.nom} onChange={e => updateStandingZone(i, 'nom', e.target.value)} placeholder="Ex: Fosse" />
+                      </label>
+                      <label style={{ flex: 1, minWidth: '100px' }}>
+                        Capacité max <input type="number" min="1" value={zone.capacite}
+                          onChange={e => updateStandingZone(i, 'capacite', e.target.value)} placeholder="Ex: 200" />
+                      </label>
+                      <label style={{ flex: 1, minWidth: '100px' }}>
+                        Prix (€) <input type="number" step="0.01" min="0" value={zone.prix}
+                          onChange={e => updateStandingZone(i, 'prix', e.target.value)} />
+                      </label>
+                    </div>
+                  </div>
+                ))}
+                <button className="btn-secondary" onClick={addStandingZone}>
+                  + Ajouter une zone debout
+                </button>
+              </>
             ) : (
               <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {placeTypes.map(type => (
-                    <div key={type} style={{
-                      padding: '16px', border: '1px solid #e0e0e0', borderRadius: '8px',
-                      background: '#fafafa',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <span style={{
-                          display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%',
-                          background: typePlaceColors[type] || '#3498db',
-                        }}></span>
-                        <strong>{type}</strong>
-                        <span style={{ color: '#666', fontSize: '0.85rem' }}>
-                          ({selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length} places)
-                        </span>
-                      </div>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        Prix unitaire :
-                        <input type="number" step="0.01" min="0"
-                          value={placePricing[type] || ''}
-                          onChange={e => setPlacePricing({ ...placePricing, [type]: parseFloat(e.target.value) || 0 })}
-                          style={{ width: '120px' }} /> €
-                      </label>
-                      <div style={{ display: 'flex', gap: '4px', marginTop: '8px', flexWrap: 'wrap' }}>
-                        {selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).slice(0, 20).map(p => (
-                          <span key={p.numeroPlace} style={{
-                            padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem',
-                            background: `${typePlaceColors[type] || '#3498db'}22`,
-                            border: `1px solid ${typePlaceColors[type] || '#3498db'}`,
-                          }}>{p.numeroPlace}</span>
-                        ))}
-                        {selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length > 20 &&
-                          <span style={{ fontSize: '0.75rem', color: '#666' }}>+{selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length - 20}...</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#666' }}>
-                  Les prix seront appliqués individuellement à chaque place. Vous pouvez aussi modifier les prix
-                  via la section <strong>Gestion des places</strong> après la création.
+                <h4>Tarification par type de place</h4>
+                <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  Salle : {currentSalle?.nomSalle || form.numeroSalle}
                 </p>
+                {selectedSallePlaces.length === 0 ? (
+                  <p>Aucune place trouvée dans cette salle.</p>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {placeTypes.map(type => (
+                        <div key={type} style={{
+                          padding: '16px', border: '1px solid #e0e0e0', borderRadius: '8px',
+                          background: '#fafafa',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <span style={{
+                              display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%',
+                              background: typePlaceColors[type] || '#3498db',
+                            }}></span>
+                            <strong>{type}</strong>
+                            <span style={{ color: '#666', fontSize: '0.85rem' }}>
+                              ({selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length} places)
+                            </span>
+                          </div>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            Prix unitaire :
+                            <input type="number" step="0.01" min="0"
+                              value={placePricing[type] || ''}
+                              onChange={e => setPlacePricing({ ...placePricing, [type]: parseFloat(e.target.value) || 0 })}
+                              style={{ width: '120px' }} /> €
+                          </label>
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '8px', flexWrap: 'wrap' }}>
+                            {selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).slice(0, 20).map(p => (
+                              <span key={p.numeroPlace} style={{
+                                padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem',
+                                background: `${typePlaceColors[type] || '#3498db'}22`,
+                                border: `1px solid ${typePlaceColors[type] || '#3498db'}`,
+                              }}>{p.numeroPlace}</span>
+                            ))}
+                            {selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length > 20 &&
+                              <span style={{ fontSize: '0.75rem', color: '#666' }}>+{selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length - 20}...</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#666' }}>
+                      Les prix seront appliqués individuellement à chaque place. Vous pouvez aussi modifier les prix
+                      via la section <strong>Gestion des places</strong> après la création.
+                    </p>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -283,13 +553,41 @@ export default function EventCreationWizard() {
               <p><strong>Statut:</strong> {form.statut}</p>
               <p><strong>Image:</strong> {form.image || '—'}</p>
               <p><strong>Lieu:</strong> {lieux.find(l => (l.idLieu || l.id) === form.idLieu)?.nomLieu || form.idLieu}</p>
-              <p><strong>Salle:</strong> {salles.find(s => (s.numeroSalle || s.id) === form.numeroSalle)?.nomSalle || form.numeroSalle}</p>
-              <p><strong>Types de places:</strong></p>
-              <ul>
-                {placeTypes.map(type => (
-                  <li key={type}>{type}: {placePricing[type]?.toFixed(2) || '0.00'} € ({selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length} places)</li>
-                ))}
-              </ul>
+              <p><strong>Salle:</strong> {currentSalle?.nomSalle || form.numeroSalle}</p>
+              <p><strong>Type d'agencement:</strong> {TYPE_AGENCEMENT_LABELS[form.typeAgencement] || form.typeAgencement}</p>
+              {Object.keys(caracteristiqueValues).filter(k => caracteristiqueValues[k]).length > 0 && (
+                <>
+                  <p><strong>Caractéristiques:</strong></p>
+                  <ul>
+                    {Object.entries(caracteristiqueValues)
+                      .filter(([, v]) => v)
+                      .map(([k, v]) => {
+                        const c = caracteristiques.find(c => (c.idCaracteristique || c.id) === Number(k))
+                        return <li key={k}>{c?.nom || k}: {v}</li>
+                      })}
+                  </ul>
+                </>
+              )}
+              {!isStandingOnly && placeTypes.length > 0 && (
+                <>
+                  <p><strong>Types de places assises:</strong></p>
+                  <ul>
+                    {placeTypes.map(type => (
+                      <li key={type}>{type}: {placePricing[type]?.toFixed(2) || '0.00'} € ({selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length} places)</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              {standingZones.length > 0 && (
+                <>
+                  <p><strong>Zones debout:</strong></p>
+                  <ul>
+                    {standingZones.map((z, i) => (
+                      <li key={i}>Zone {i + 1} - {z.nom || '(nom à définir)'}: {z.capacite ? z.capacite + ' places max' : 'Sans limite'} - {Number(z.prix).toFixed(2)} €</li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           </div>
         )
@@ -322,7 +620,7 @@ export default function EventCreationWizard() {
           </button>
         ) : (
           <button className="btn-success" onClick={handleSave} disabled={loading}>
-            {loading ? 'Enregistrement...' : isEdit ? 'Mettre à jour' : 'Créer l\'événement'}
+            {loading ? 'Enregistrement...' : isEdit ? 'Mettre à jour' : "Créer l'événement"}
           </button>
         )}
       </div>

@@ -90,6 +90,16 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   ),
                   child: Text(event.statut!, style: TextStyle(color: AppConstants.statutColors[event.statut], fontSize: 12)),
                 ),
+              if (event.typeAgencement != null)
+                Container(
+                  margin: const EdgeInsets.only(left: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(_typeAgencementLabel(event.typeAgencement!), style: TextStyle(color: AppColors.primary, fontSize: 11)),
+                ),
               const Spacer(),
               Text(event.categorieNom ?? '', style: const TextStyle(color: AppColors.textSecondary)),
             ],
@@ -107,13 +117,58 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
             const SizedBox(height: 8),
             Text(event.description!),
           ],
+          if (event.caracteristiqueValeurs != null && event.caracteristiqueValeurs!.isNotEmpty) ...[
+            const Text('Caractéristiques', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ...event.caracteristiqueValeurs!.map((c) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Text('${c.nomCaracteristique ?? "Caractéristique"} : ',
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
+                  Expanded(child: Text(c.valeur)),
+                ],
+              ),
+            )),
+            const SizedBox(height: 16),
+          ],
           const SizedBox(height: 16),
           if (_availableSeats.isNotEmpty) ...[
-            Text('Places disponibles : ${_availableSeats.where((s) => s.disponible).length}/${_availableSeats.length}',
+            Text('Places assises disponibles : ${_availableSeats.where((s) => s.disponible).length}/${_availableSeats.length}',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             if (event.prixMin != null && event.prixMax != null)
               Text('Prix : ${AppConstants.currency}${event.prixMin} - ${AppConstants.currency}${event.prixMax}', style: const TextStyle(fontSize: 16, color: AppColors.secondary)),
             const SizedBox(height: 8),
+          ],
+          if (event.standingZones != null && event.standingZones!.isNotEmpty) ...[
+            const Divider(),
+            const Text('Zones debout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ...event.standingZones!.map((zone) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.accessibility_new, size: 24, color: AppColors.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(zone.nom, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          const SizedBox(height: 2),
+                            Text(
+                              '${zone.capacite != null ? '${zone.placesDisponibles ?? 0}/${zone.capacite} places - ' : 'Places illimitées - '}${AppConstants.currency} ${zone.prix.toStringAsFixed(2)}',
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )),
           ],
           const SizedBox(height: 24),
           SizedBox(
@@ -129,6 +184,17 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
         ],
       ),
     );
+  }
+
+  String _typeAgencementLabel(String? type) {
+    switch (type) {
+      case 'UNIQUEMENT_ASSIS': return 'Assis';
+      case 'TABLE_ASSIS': return 'Table assis';
+      case 'ASSIS_DEBOUT': return 'Assis & Debout';
+      case 'DEBOUT_AVEC_LIMITE': return 'Debout (jaugé)';
+      case 'DEBOUT_SANS_LIMITE': return 'Debout (libre)';
+      default: return type ?? '';
+    }
   }
 
   Widget _buildInfoRow(IconData icon, String text) {

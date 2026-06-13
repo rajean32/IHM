@@ -6,6 +6,7 @@ import '../../widgets/event_card.dart';
 
 import '../../core/services/categorie_service.dart';
 import '../../core/services/lieu_service.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
@@ -89,6 +90,7 @@ class _HomePageState extends State<HomePage> {
       if (_selectedLieu != null) params['codeLieu'] = _selectedLieu;
       if (_prixMin != null) params['prixMin'] = _prixMin;
       if (_prixMax != null) params['prixMax'] = _prixMax;
+      if (userVille != null && _selectedLieu == null) params['ville'] = userVille;
 
       final resp = await dio.get(
         Endpoints.events,
@@ -112,6 +114,38 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _applyFilters() => _loadEvents();
+
+  void _showVilleDialog() {
+    final ctrl = TextEditingController(text: userVille ?? '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Votre ville'),
+        content: TextField(
+          controller: ctrl,
+          decoration: const InputDecoration(
+            hintText: 'Antananarivo, Toamasina...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () async {
+              final ville = ctrl.text.trim();
+              if (ville.isNotEmpty) {
+                await AuthService().updateVille(ville);
+                setState(() {});
+              }
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+            },
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showFilterSheet() {
     showModalBottomSheet(
@@ -340,6 +374,66 @@ class _HomePageState extends State<HomePage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildTicketsTab() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.receipt_long, size: 64, color: AppColors.textSecondary),
+          const SizedBox(height: 16),
+          const Text('Voir vos réservations'),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pushNamed(context, ClientRoutes.profile),
+            icon: const Icon(Icons.receipt_long),
+            label: const Text('Mes Réservations'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfilePage() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const CircleAvatar(
+          radius: 48,
+          child: Icon(Icons.person, size: 48),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          userNom ?? 'Utilisateur',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          userRole ?? 'CLIENT',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 24),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.receipt_long),
+          title: const Text('Mes Réservations'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.pushNamed(context, ClientRoutes.profile),
+        ),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.logout, color: AppColors.error),
+          title: const Text('Déconnexion', style: TextStyle(color: AppColors.error)),
+          onTap: () async {
+            await clearSession();
+            if (!mounted) return;
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          },
+        ),
+      ],
     );
   }
 }
