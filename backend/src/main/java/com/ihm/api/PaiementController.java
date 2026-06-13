@@ -2,6 +2,8 @@ package com.ihm.api;
 
 import com.ihm.schema.ApiResponse;
 import com.ihm.schema.PaiementDTO;
+import com.ihm.schema.PaiementRequestDTO;
+import com.ihm.schema.PaiementResultDTO;
 import com.ihm.service.PaiementService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -18,14 +20,12 @@ import java.util.List;
 public class PaiementController {
 
     private static final Logger log = LoggerFactory.getLogger(PaiementController.class);
-
     private final PaiementService paiementService;
 
     public PaiementController(PaiementService paiementService) {
         this.paiementService = paiementService;
     }
 
-    // tous les paiements
     @GetMapping
     public ResponseEntity<ApiResponse<List<PaiementDTO>>> getAll() {
         log.info("GET /api/paiements");
@@ -33,7 +33,6 @@ public class PaiementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Payments fetched successfully", data));
     }
 
-    // paiement par ID
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<PaiementDTO>> getById(@PathVariable Integer id) {
         log.info("GET /api/paiements/{}", id);
@@ -41,7 +40,6 @@ public class PaiementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Payment fetched successfully", data));
     }
 
-    // creation de paiement
     @PostMapping
     public ResponseEntity<ApiResponse<PaiementDTO>> create(@Valid @RequestBody PaiementDTO dto) {
         log.info("POST /api/paiements - reservation: {}", dto.getIdReservation());
@@ -50,7 +48,6 @@ public class PaiementController {
                 .body(ApiResponse.success(201, "Payment created successfully", data));
     }
 
-    // modification de paiement
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<PaiementDTO>> update(@PathVariable Integer id,
                                                             @Valid @RequestBody PaiementDTO dto) {
@@ -59,7 +56,6 @@ public class PaiementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Payment updated successfully", data));
     }
 
-    // statut du paiement
     @GetMapping("/reservation/{idReservation}/status")
     public ResponseEntity<ApiResponse<PaiementDTO.PaiementStatus>> getPaymentStatus(@PathVariable Integer idReservation) {
         log.info("GET /api/paiements/reservation/{}/status", idReservation);
@@ -67,7 +63,6 @@ public class PaiementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Payment status fetched successfully", data));
     }
 
-    // webhook de paiement
     @PostMapping("/webhook")
     public ResponseEntity<ApiResponse<PaiementDTO.PaiementStatus>> processWebhook(
             @RequestParam String reservationId,
@@ -79,7 +74,38 @@ public class PaiementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Webhook processed successfully", data));
     }
 
-    // suppression de paiement
+    // NOUVEAU: Paiement avec réduction
+    @PostMapping("/process-with-reduction")
+    public ResponseEntity<ApiResponse<PaiementResultDTO>> processPaymentWithReduction(@Valid @RequestBody PaiementRequestDTO request) {
+        log.info("POST /api/paiements/process-with-reduction - client: {}, type: {}", 
+                 request.getCodeClient(), request.getTypePaiement());
+        PaiementResultDTO result = paiementService.processPaymentWithReduction(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(201, "Paiement traité", result));
+    }
+
+    // NOUVEAU: Remboursement
+    @PostMapping("/rembourser/{idReservation}")
+    public ResponseEntity<ApiResponse<PaiementResultDTO>> rembourserReservation(
+            @PathVariable Integer idReservation,
+            @RequestParam String codeClient,
+            @RequestParam(defaultValue = "false") boolean isAnnulationEvenement) {
+        log.info("POST /api/paiements/rembourser/{} - client: {}, annulationEvenement: {}", 
+                 idReservation, codeClient, isAnnulationEvenement);
+        PaiementResultDTO result = paiementService.rembourserReservation(idReservation, codeClient, isAnnulationEvenement);
+        return ResponseEntity.ok(ApiResponse.success(200, "Traitement du remboursement effectué", result));
+    }
+
+    // NOUVEAU: Vérifier transaction mobile money
+    @GetMapping("/transaction/verifier")
+    public ResponseEntity<ApiResponse<PaiementResultDTO>> verifierTransaction(
+            @RequestParam String reference,
+            @RequestParam String typePaiement) {
+        log.info("GET /api/paiements/transaction/verifier - ref: {}, type: {}", reference, typePaiement);
+        PaiementResultDTO result = paiementService.verifierTransactionMobile(reference, typePaiement);
+        return ResponseEntity.ok(ApiResponse.success(200, "Vérification effectuée", result));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Integer id) {
         log.info("DELETE /api/paiements/{}", id);

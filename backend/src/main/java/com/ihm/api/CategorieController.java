@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ihm.schema.ApiResponse;
 import com.ihm.schema.CategorieDTO;
 import com.ihm.service.CategorieService;
+import com.ihm.repository.CategorieRepository;
+import com.ihm.model.Categorie;
 
 import jakarta.validation.Valid;
 
@@ -28,12 +30,13 @@ public class CategorieController {
     private static final Logger log = LoggerFactory.getLogger(CategorieController.class);
 
     private final CategorieService categorieService;
+    private final CategorieRepository categorieRepository;
 
-    public CategorieController(CategorieService categorieService) {
+    public CategorieController(CategorieService categorieService, CategorieRepository categorieRepository) {
         this.categorieService = categorieService;
+        this.categorieRepository = categorieRepository;
     }
 
-    // liste des categories
     @GetMapping
     public ResponseEntity<ApiResponse<List<CategorieDTO>>> getAll() {
         log.info("GET /api/categories");
@@ -41,7 +44,6 @@ public class CategorieController {
         return ResponseEntity.ok(ApiResponse.success(200, "Categories fetched successfully", data));
     }
 
-    // categorie par code
     @GetMapping("/{code}")
     public ResponseEntity<ApiResponse<CategorieDTO>> getById(@PathVariable String code) {
         log.info("GET /api/categories/{}", code);
@@ -52,14 +54,11 @@ public class CategorieController {
     @PostMapping
     public ResponseEntity<ApiResponse<CategorieDTO>> create(@Valid @RequestBody CategorieDTO dto) {
         log.info("POST /api/categories - DTO: {}", dto);
-
         CategorieDTO data = categorieService.create(dto);
-
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(201, "Category created successfully", data));
     }
 
-    // modification de categorie
     @PutMapping("/{code}")
     public ResponseEntity<ApiResponse<CategorieDTO>> update(@PathVariable String code,
                                                              @Valid @RequestBody CategorieDTO dto) {
@@ -68,11 +67,21 @@ public class CategorieController {
         return ResponseEntity.ok(ApiResponse.success(200, "Category updated successfully", data));
     }
 
-    // suppression de categorie
     @DeleteMapping("/{code}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String code) {
         log.info("DELETE /api/categories/{}", code);
         categorieService.delete(code);
         return ResponseEntity.ok(ApiResponse.success(200, "Category deleted successfully"));
+    }
+
+    @PostMapping("/cinema/init")
+    public ResponseEntity<ApiResponse<Void>> initCinemaCategorie() {
+        log.info("POST /api/categories/cinema/init");
+        if (!categorieRepository.existsByCodeCategorie("CINEMA")) {
+            Categorie cinema = new Categorie("CINEMA", "Cinéma");
+            categorieRepository.save(cinema);
+            log.info("Catégorie Cinéma créée");
+        }
+        return ResponseEntity.ok(ApiResponse.success(200, "Catégorie Cinéma initialisée"));
     }
 }

@@ -34,6 +34,7 @@ public class ReservationService {
     private final PlaceRepository placeRepository;
     private final EvenementRepository evenementRepository;
     private final EvenementPlaceConfigurationRepository configRepository;
+    private final PaiementTransactionRepository paiementTransactionRepository;
 
     public ReservationService(ReservationRepository reservationRepository,
                               ClientRepository clientRepository,
@@ -43,7 +44,8 @@ public class ReservationService {
                               ConcernerRepository concernerRepository,
                               PlaceRepository placeRepository,
                               EvenementRepository evenementRepository,
-                              EvenementPlaceConfigurationRepository configRepository) {
+                              EvenementPlaceConfigurationRepository configRepository,
+                              PaiementTransactionRepository paiementTransactionRepository) {
         this.reservationRepository = reservationRepository;
         this.clientRepository = clientRepository;
         this.ticketRepository = ticketRepository;
@@ -53,6 +55,7 @@ public class ReservationService {
         this.placeRepository = placeRepository;
         this.evenementRepository = evenementRepository;
         this.configRepository = configRepository;
+        this.paiementTransactionRepository = paiementTransactionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -169,6 +172,25 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findByIdReservation(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", "idReservation", id));
 
+        // Check if reservation has a payment and if cancellation is allowed on the event day
+        if (paiementRepository.existsByReservation_IdReservation(id)) {
+            LocalDate dateEvenement = null;
+            List<CorrespondA> correspondances = correspondARepository.findByReservation_IdReservation(id);
+            for (CorrespondA ca : correspondances) {
+                List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(ca.getTicket().getCodeTicket());
+                for (Concerner c : concerners) {
+                    dateEvenement = c.getEvenement().getDateEvenement();
+                    break;
+                }
+                if (dateEvenement != null) break;
+            }
+            
+            // Cannot cancel on the day of the event
+            if (dateEvenement != null && dateEvenement.equals(LocalDate.now())) {
+                throw new BadRequestException("Cannot cancel a reservation on the day of the event. Please contact the organizer.");
+            }
+        }
+
         List<CorrespondA> correspondances = correspondARepository.findByReservation_IdReservation(id);
         for (CorrespondA ca : correspondances) {
             List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(ca.getTicket().getCodeTicket());
@@ -186,7 +208,13 @@ public class ReservationService {
 
         correspondances.forEach(correspondARepository::delete);
 
-        paiementRepository.findByReservation_IdReservation(id).ifPresent(paiementRepository::delete);
+        // Mark payment as cancelled if exists
+        paiementRepository.findByReservation_IdReservation(id).ifPresent(paiement -> {
+            paiementTransactionRepository.findByPaiement_IdPaiement(paiement.getIdPaiement()).ifPresent(transaction -> {
+                transaction.setStatut("ANNULE");
+                paiementTransactionRepository.save(transaction);
+            });
+        });
 
         reservationRepository.delete(reservation);
         log.info("Reservation cancelled: id={}", id);

@@ -10,6 +10,7 @@ import '../../pages/client/reservation_page.dart';
 import '../../pages/client/payment_page.dart';
 import '../../pages/client/ticket_page.dart';
 import '../../pages/client/profile_page.dart';
+import '../../pages/client/client_layout.dart';
 import '../../pages/organizer/organizer_layout.dart';
 import '../../pages/organizer/create_event_page.dart';
 import '../../pages/organizer/pricing_page.dart';
@@ -41,7 +42,7 @@ class AppRouter {
       case AuthRoutes.forgotPassword:
         return MaterialPageRoute(builder: (_) => const ForgotPasswordPage());
       case ClientRoutes.home:
-        return MaterialPageRoute(builder: (_) => const HomePage());
+        return MaterialPageRoute(builder: (_) => const ClientLayout());
       case ClientRoutes.homeDetail:
         final a = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(builder: (_) => HomeDetailPage(eventId: a['id'] as int));

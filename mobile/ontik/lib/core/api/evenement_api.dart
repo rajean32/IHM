@@ -45,4 +45,12 @@ class EvenementApi {
     });
     await dio.post(Endpoints.eventImage(eventId), data: formData);
   }
+
+  // AJOUTER cette méthode dans EvenementApi
+
+// NOUVELLE MÉTHODE : Événements cinéma
+  Future<List<dynamic>> getCinemaEvents() async {
+    final resp = await dio.get(Endpoints.cinemaEvents);
+    return (resp.data['data'] as List?) ?? [];
+  }
 }

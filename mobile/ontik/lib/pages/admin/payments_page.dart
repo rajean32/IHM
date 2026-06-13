@@ -7,6 +7,7 @@ import '../../core/utils/error_helper.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
+
   @override
   State<PaymentsPage> createState() => _PaymentsPageState();
 }
@@ -23,7 +24,8 @@ class _PaymentsPageState extends State<PaymentsPage> {
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
-      final paymentsData = await _api.getPayments();
+      // CORRECTION: Utiliser getAllPayments() au lieu de getPayments()
+      final paymentsData = await _api.getAllPayments();
       if (!mounted) return;
       setState(() {
         _payments = paymentsData.map((e) => Paiement.fromJson(e as Map<String, dynamic>)).toList();

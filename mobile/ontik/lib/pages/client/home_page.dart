@@ -27,7 +27,6 @@ class _HomePageState extends State<HomePage> {
   DateTimeRange? _selectedDateRange;
   double? _prixMin;
   double? _prixMax;
-  int _currentIndex = 0;
   List<Lieu> _lieux = [];
   List<Categorie> _categories = [];
   final _scrollCtrl = ScrollController();
@@ -62,6 +61,7 @@ class _HomePageState extends State<HomePage> {
 
   void _onScroll() {
     if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
+      // Pagination possible ici
     }
   }
 
@@ -249,32 +249,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = <Widget>[
-      _buildEventList(),
-      _buildTicketsTab(),
-      _buildProfilePage(),
-    ];
-
     return Scaffold(
-      appBar: AppBar(
-        title: Row(children: [
-          Image.asset('lib/utils/logo_icon.png', height: 24, fit: BoxFit.contain, color: Colors.white),
-          const SizedBox(width: 6),
-          const Text('Ontik'),
-        ]),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await clearSession();
-              if (!mounted) return;
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-            },
-          ),
-        ],
-      ),
       body: Column(
         children: [
+          // Barre de recherche
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Row(
@@ -303,6 +281,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
+          // Chips catégories
           SizedBox(
             height: 48,
             child: ListView(
@@ -314,16 +293,10 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          Expanded(child: pages[_currentIndex]),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.event), label: 'Événements'),
-          NavigationDestination(icon: Icon(Icons.receipt_long), label: 'Réservations'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profil'),
+          // Liste des événements
+          Expanded(
+            child: _buildEventList(),
+          ),
         ],
       ),
     );
@@ -367,66 +340,6 @@ class _HomePageState extends State<HomePage> {
           );
         },
       ),
-    );
-  }
-
-  Widget _buildTicketsTab() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.receipt_long, size: 64, color: AppColors.textSecondary),
-          const SizedBox(height: 16),
-          const Text('Voir vos réservations'),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.pushNamed(context, ClientRoutes.profile),
-            icon: const Icon(Icons.receipt_long),
-            label: const Text('Mes Réservations'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfilePage() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const CircleAvatar(
-          radius: 48,
-          child: Icon(Icons.person, size: 48),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          userNom ?? 'Utilisateur',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        Text(
-          userRole ?? 'CLIENT',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: 24),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.receipt_long),
-          title: const Text('Mes Réservations'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.pushNamed(context, ClientRoutes.profile),
-        ),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.logout, color: AppColors.error),
-          title: const Text('Déconnexion', style: TextStyle(color: AppColors.error)),
-          onTap: () async {
-            await clearSession();
-            if (!mounted) return;
-            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-          },
-        ),
-      ],
     );
   }
 }
