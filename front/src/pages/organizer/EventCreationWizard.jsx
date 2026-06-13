@@ -45,6 +45,7 @@ export default function EventCreationWizard() {
   const [standingZones, setStandingZones] = useState([])
   const [caracteristiques, setCaracteristiques] = useState([])
   const [caracteristiqueValues, setCaracteristiqueValues] = useState({})
+  const [caracteristiquesLoading, setCaracteristiquesLoading] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -57,13 +58,16 @@ export default function EventCreationWizard() {
   }, [])
 
   useEffect(() => {
-    if (!form.codeCategorie) { setCaracteristiques([]); return }
+    if (!form.codeCategorie) { setCaracteristiques([]); setCaracteristiquesLoading(false); return }
+    setCaracteristiquesLoading(true)
+    setCaracteristiqueValues({})
     getAll(`/api/caracteristiques/by-categorie/${form.codeCategorie}`)
       .then(resp => {
         const list = resp?.data || resp || []
         setCaracteristiques(list)
+        setCaracteristiquesLoading(false)
       })
-      .catch(() => setCaracteristiques([]))
+      .catch(() => { setCaracteristiques([]); setCaracteristiquesLoading(false) })
   }, [form.codeCategorie])
 
   useEffect(() => {
@@ -145,30 +149,43 @@ export default function EventCreationWizard() {
 
   function renderCaracteristiques() {
     if (caracteristiques.length === 0) return null
+    const isRequiredEmpty = c => {
+      const id = c.idCaracteristique || c.id
+      const val = caracteristiqueValues[id]
+      if (!c.obligatoire) return false
+      if (c.typeDonnee === 'boolean') return val === undefined
+      return val === undefined || String(val).trim() === ''
+    }
     return (
       <div style={{ marginTop: '1rem' }}>
         <h4>Caractéristiques</h4>
         {caracteristiques.map(c => {
           const id = c.idCaracteristique || c.id
+          const empty = isRequiredEmpty(c)
           const label = `${c.nom}${c.obligatoire ? ' *' : ''}`
           const val = caracteristiqueValues[id] || ''
+          const inputStyle = { width: '100%', marginTop: '4px', ...(empty ? { borderColor: '#e94560', borderWidth: '2px' } : {}) }
           switch (c.typeDonnee) {
             case 'boolean':
               return (
-                <label key={id} style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
-                  <input type="checkbox" checked={val === 'true'} onChange={e => setCaracValue(id, e.target.checked ? 'true' : 'false')} />
-                  {label}
-                </label>
+                <div key={id} style={{ margin: '8px 0' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input type="checkbox" checked={val === 'true'} onChange={e => setCaracValue(id, e.target.checked ? 'true' : 'false')} />
+                    {label}
+                  </label>
+                  {empty && <span style={{ fontSize: '0.75rem', color: '#e94560' }}>Requis</span>}
+                </div>
               )
             case 'select': {
               const options = (c.options || '').split(',').map(s => s.trim()).filter(Boolean)
               return (
                 <label key={id} style={{ display: 'block', margin: '8px 0' }}>
                   {label}
-                  <select value={val} onChange={e => setCaracValue(id, e.target.value)} style={{ width: '100%', marginTop: '4px' }}>
+                  <select value={val} onChange={e => setCaracValue(id, e.target.value)} style={inputStyle}>
                     <option value="">Sélectionner...</option>
                     {options.map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
+                  {empty && <span style={{ fontSize: '0.75rem', color: '#e94560' }}>Ce champ est requis</span>}
                 </label>
               )
             }
@@ -176,21 +193,24 @@ export default function EventCreationWizard() {
               return (
                 <label key={id} style={{ display: 'block', margin: '8px 0' }}>
                   {label}
-                  <input type="number" value={val} onChange={e => setCaracValue(id, e.target.value)} style={{ width: '100%', marginTop: '4px' }} />
+                  <input type="number" value={val} onChange={e => setCaracValue(id, e.target.value)} style={inputStyle} />
+                  {empty && <span style={{ fontSize: '0.75rem', color: '#e94560' }}>Ce champ est requis</span>}
                 </label>
               )
             case 'date':
               return (
                 <label key={id} style={{ display: 'block', margin: '8px 0' }}>
                   {label}
-                  <input type="date" value={val} onChange={e => setCaracValue(id, e.target.value)} style={{ width: '100%', marginTop: '4px' }} />
+                  <input type="date" value={val} onChange={e => setCaracValue(id, e.target.value)} style={inputStyle} />
+                  {empty && <span style={{ fontSize: '0.75rem', color: '#e94560' }}>Ce champ est requis</span>}
                 </label>
               )
             default:
               return (
                 <label key={id} style={{ display: 'block', margin: '8px 0' }}>
                   {label}
-                  <input type="text" value={val} onChange={e => setCaracValue(id, e.target.value)} style={{ width: '100%', marginTop: '4px' }} />
+                  <input type="text" value={val} onChange={e => setCaracValue(id, e.target.value)} style={inputStyle} />
+                  {empty && <span style={{ fontSize: '0.75rem', color: '#e94560' }}>Ce champ est requis</span>}
                 </label>
               )
           }
@@ -256,7 +276,18 @@ export default function EventCreationWizard() {
   }
 
   function canNext() {
-    if (step === 0) return form.titre && form.codeCategorie && form.dateEvenement
+    if (step === 0) {
+      if (!form.titre || !form.codeCategorie || !form.dateEvenement) return false
+      if (caracteristiquesLoading) return false
+      const requiredCaracs = caracteristiques.filter(c => c.obligatoire)
+      if (requiredCaracs.length === 0) return true
+      return requiredCaracs.every(c => {
+        const id = c.idCaracteristique || c.id
+        const val = caracteristiqueValues[id]
+        if (c.typeDonnee === 'boolean') return val !== undefined
+        return val !== undefined && String(val).trim() !== ''
+      })
+    }
     if (step === 2) return form.idLieu && form.numeroSalle
     return true
   }
@@ -611,9 +642,13 @@ export default function EventCreationWizard() {
       <div className="wizard-content">
         {renderStep()}
       </div>
-      <div className="wizard-nav">
-        {step > 0 && <button className="btn-secondary" onClick={() => setStep(step - 1)}>Précédent</button>}
-        <div />
+      <div className="wizard-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn-secondary" onClick={() => navigate('/organizer')}>
+            Annuler
+          </button>
+          {step > 0 && <button className="btn-secondary" onClick={() => setStep(step - 1)}>Précédent</button>}
+        </div>
         {step < STEPS.length - 1 ? (
           <button className="btn-primary" onClick={() => setStep(step + 1)} disabled={!canNext()}>
             Suivant

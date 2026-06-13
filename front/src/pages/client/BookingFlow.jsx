@@ -255,6 +255,9 @@ export default function BookingFlow() {
 
       {step === 1 && (
         <>
+          <button className="btn-secondary" onClick={() => navigate('/client')} style={{ marginBottom: '1rem' }}>
+            &larr; Retour aux événements
+          </button>
           {!isStandingOnly && (
             <>
               <div className="seat-legend">

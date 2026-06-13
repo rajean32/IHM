@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getAll, getById, create, update, remove } from '../../api/entityApi'
 
 const TABS = ['Lieux', 'Salles', 'Places']
@@ -295,11 +296,17 @@ function PlacesTab() {
 }
 
 export default function OrganizerVenueManagement() {
+  const navigate = useNavigate()
   const [tab, setTab] = useState(0)
 
   return (
     <div className="venue-mgmt">
-      <h1>Gestion des Lieux</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+        <button className="btn-secondary" onClick={() => navigate('/organizer')}>
+          &larr; Retour au tableau de bord
+        </button>
+        <h1 style={{ margin: 0 }}>Gestion des Lieux</h1>
+      </div>
       <div className="tabs">
         {TABS.map((t, i) => (
           <button key={i} className={i === tab ? 'active' : ''} onClick={() => setTab(i)}>{t}</button>
