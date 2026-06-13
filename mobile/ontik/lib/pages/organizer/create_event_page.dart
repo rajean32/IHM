@@ -542,7 +542,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
         const SizedBox(width: 8),
         _buildPlacementChip('NUMEROTE', 'Placement\nNuméroté', Icons.event_seat),
         const SizedBox(width: 8),
-        _buildPlacementChip('MIXTE', 'Placement\nMixte', Icons.mixed),
+        _buildPlacementChip('MIXTE', 'Placement\nMixte', Icons.swap_horiz),
       ]),
     ]);
   }
@@ -829,7 +829,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
               ),
             ],
           ],
-        ),
+        ],
       ],
       if (_typePlacement == 'LIBRE' || _typePlacement == 'MIXTE') ...[
         const Divider(),
@@ -840,7 +840,6 @@ class _CreateEventPageState extends State<CreateEventPage> {
       ],
     ]);
   }
-
   Widget _buildRowSelector() {
     final rangs = _places.map((p) => p.range).whereType<String>().toSet().toList()..sort();
     if (rangs.isEmpty) return const Text('Aucune rangée', style: TextStyle(color: AppTheme.textSecondary));
