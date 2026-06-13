@@ -33,6 +33,10 @@ public class Categorie {
     @OneToMany(mappedBy = "categorie", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SalleTypeEvenement> salleTypes = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_agencement", length = 50)
+    private TypeAgencement typeAgencement;
+
     @Column(name = "specificConfig", columnDefinition = "TEXT")
     private String specificConfig;
 
@@ -57,6 +61,8 @@ public class Categorie {
     public void setCaracteristiques(List<Caracteristique> caracteristiques) { this.caracteristiques = caracteristiques; }
     public List<SalleTypeEvenement> getSalleTypes() { return salleTypes; }
     public void setSalleTypes(List<SalleTypeEvenement> salleTypes) { this.salleTypes = salleTypes; }
+    public TypeAgencement getTypeAgencement() { return typeAgencement; }
+    public void setTypeAgencement(TypeAgencement typeAgencement) { this.typeAgencement = typeAgencement; }
     public String getSpecificConfig() { return specificConfig; }
     public void setSpecificConfig(String specificConfig) { this.specificConfig = specificConfig; }
 }

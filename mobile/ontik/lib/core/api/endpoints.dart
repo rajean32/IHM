@@ -11,6 +11,7 @@ class Endpoints {
   static String eventById(int id) => '$base/evenements/$id';
   static String eventValidate(int id) => '$base/evenements/$id/validate';
   static String eventAvailablePlaces(int id) => '$base/evenements/$id/places/available';
+  static String eventStandingZones(int id) => '$base/evenements/$id/zones';
   static String eventImage(int id) => '$base/evenements/$id/image';
 
   static const places = '$base/places';

@@ -36,6 +36,7 @@ public class LieuService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public LieuDTO getById(String code) {
         log.debug("Fetching location by code: {}", code);
         Lieu lieu = lieuRepository.findById(code)
@@ -115,6 +116,8 @@ public class LieuService {
         dto.setNumeroSalle(salle.getNumeroSalle());
         dto.setNomSalle(salle.getNomSalle());
         dto.setCodeLieu(salle.getLieu() != null ? salle.getLieu().getCode() : null);
+        dto.setTypeAgencement(salle.getTypeAgencement());
+        dto.setCapacite(salle.getCapacite());
         return dto;
     }
 }

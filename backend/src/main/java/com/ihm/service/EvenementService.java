@@ -7,6 +7,7 @@ import com.ihm.schema.EvenementCaracteristiqueValeurDTO;
 import com.ihm.schema.SalleDTO;
 import com.ihm.repository.*;
 import com.ihm.model.*;
+import com.ihm.model.TypeAgencement;
 import com.ihm.util.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,8 @@ public class EvenementService {
     private final EvenementPlaceConfigurationRepository configRepository;
     private final CaracteristiqueRepository caracteristiqueRepository;
     private final EvenementCaracteristiqueValeurRepository valeurRepository;
+    private final ZoneStandingRepository zoneStandingRepository;
+    private final StandingZoneService standingZoneService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -68,7 +71,9 @@ public class EvenementService {
                             SalleRepository salleRepository,
                             EvenementPlaceConfigurationRepository configRepository,
                             CaracteristiqueRepository caracteristiqueRepository,
-                            EvenementCaracteristiqueValeurRepository valeurRepository) {
+                            EvenementCaracteristiqueValeurRepository valeurRepository,
+                            ZoneStandingRepository zoneStandingRepository,
+                            StandingZoneService standingZoneService) {
         this.evenementRepository = evenementRepository;
         this.categorieRepository = categorieRepository;
         this.lieuRepository = lieuRepository;
@@ -81,6 +86,8 @@ public class EvenementService {
         this.configRepository = configRepository;
         this.caracteristiqueRepository = caracteristiqueRepository;
         this.valeurRepository = valeurRepository;
+        this.zoneStandingRepository = zoneStandingRepository;
+        this.standingZoneService = standingZoneService;
     }
 
     @Transactional(readOnly = true)
@@ -109,6 +116,7 @@ public class EvenementService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public EvenementDTO getById(Integer id) {
         log.debug("Fetching event by id: {}", id);
         Evenement event = evenementRepository.findByIdEvenement(id)
@@ -160,6 +168,13 @@ public class EvenementService {
         event.setPrix(dto.getPrix());
         event.setCapacite(dto.getCapacite());
         event.setStatut(dto.getStatut() != null ? dto.getStatut() : "planifie");
+
+        if (dto.getTypeAgencement() != null) {
+            event.setTypeAgencement(dto.getTypeAgencement());
+        } else if (dto.getNumeroSalle() != null) {
+            salleRepository.findByNumeroSalle(dto.getNumeroSalle())
+                    .ifPresent(salle -> event.setTypeAgencement(salle.getTypeAgencement()));
+        }
 
         if (dto.getCodeCategorie() != null) {
             Categorie cat = categorieRepository.findByCodeCategorie(dto.getCodeCategorie())
@@ -286,6 +301,7 @@ public class EvenementService {
             throw new ResourceNotFoundException("Evenement", "idEvenement", id);
         }
         valeurRepository.deleteByEvenementIdEvenement(id);
+        zoneStandingRepository.deleteAll(zoneStandingRepository.findByEvenement_IdEvenement(id));
         entityManager.createQuery("DELETE FROM EvenementPlaceConfiguration e WHERE e.evenement.idEvenement = :id")
             .setParameter("id", id)
             .executeUpdate();
@@ -498,15 +514,20 @@ public class EvenementService {
                     }).collect(Collectors.toList()));
         }
 
-        List<Concerner> concerners = concernerRepository.findByEvenement_IdEvenement(idEvent);
-        Set<String> reservedPlaces = new HashSet<>();
-        for (Concerner c : concerners) {
-            reservedPlaces.add(c.getPlace().getNumeroPlace());
+        TypeAgencement agencement = event.getTypeAgencement();
+        if (agencement == TypeAgencement.DEBOUT_AVEC_LIMITE || agencement == TypeAgencement.DEBOUT_SANS_LIMITE) {
+            dto.setPlacesTotal(0L);
+            dto.setPlacesDisponibles(0L);
+        } else {
+            List<Concerner> concerners = concernerRepository.findByEvenement_IdEvenement(idEvent);
+            Set<String> reservedPlaces = new HashSet<>();
+            for (Concerner c : concerners) {
+                reservedPlaces.add(c.getPlace().getNumeroPlace());
+            }
+            long totalPlaces = placeRepository.countPlacesForEventLocation(idEvent);
+            dto.setPlacesTotal(totalPlaces);
+            dto.setPlacesDisponibles(totalPlaces - reservedPlaces.size());
         }
-
-        long totalPlaces = placeRepository.countPlacesForEventLocation(idEvent);
-        dto.setPlacesTotal(totalPlaces);
-        dto.setPlacesDisponibles(totalPlaces - reservedPlaces.size());
 
         List<EvenementPlaceConfiguration> configs = configRepository.findByEvenement_IdEvenement(idEvent);
         BigDecimal minPrice = null;
@@ -521,6 +542,15 @@ public class EvenementService {
         dto.setPrixMin(minPrice);
         dto.setPrixMax(maxPrice);
 
+        dto.setTypeAgencement(event.getTypeAgencement());
+
+        List<ZoneStanding> zones = zoneStandingRepository.findByEvenement_IdEvenement(idEvent);
+        if (!zones.isEmpty()) {
+            dto.setStandingZones(zones.stream()
+                    .map(standingZoneService::toDTO)
+                    .collect(Collectors.toList()));
+        }
+
         return dto;
     }
 
@@ -529,6 +559,11 @@ public class EvenementService {
         log.debug("Fetching available seats for event: {}", idEvent);
         Evenement event = evenementRepository.findByIdEvenement(idEvent)
                 .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", idEvent));
+
+        TypeAgencement agencement = event.getTypeAgencement();
+        if (agencement == TypeAgencement.DEBOUT_AVEC_LIMITE || agencement == TypeAgencement.DEBOUT_SANS_LIMITE) {
+            return Collections.emptyList();
+        }
 
         if (event.getLieu() == null) {
             return Collections.emptyList();
@@ -654,11 +689,18 @@ public class EvenementService {
         dto.setNomSalle(event.getSalle() != null ? event.getSalle().getNomSalle() : null);
         dto.setCodeOrganisateur(event.getOrganisateur().getCodeUtilisateur());
         dto.setOrganisateurNom(event.getOrganisateur().getPrenoms() + " " + event.getOrganisateur().getNom());
+        dto.setTypeAgencement(event.getTypeAgencement());
         if (event.getIdEvenement() != null && event.getLieu() != null) {
-            long total = placeRepository.countPlacesForEventLocation(event.getIdEvenement());
-            long reserved = concernerRepository.findByEvenement_IdEvenement(event.getIdEvenement()).size();
-            dto.setPlacesTotal(total);
-            dto.setPlacesDisponibles(total - reserved);
+            TypeAgencement a = event.getTypeAgencement();
+            if (a == TypeAgencement.DEBOUT_AVEC_LIMITE || a == TypeAgencement.DEBOUT_SANS_LIMITE) {
+                dto.setPlacesTotal(0L);
+                dto.setPlacesDisponibles(0L);
+            } else {
+                long total = placeRepository.countPlacesForEventLocation(event.getIdEvenement());
+                long reserved = concernerRepository.findByEvenement_IdEvenement(event.getIdEvenement()).size();
+                dto.setPlacesTotal(total);
+                dto.setPlacesDisponibles(total - reserved);
+            }
         }
         return dto;
     }

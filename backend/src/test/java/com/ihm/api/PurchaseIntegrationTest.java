@@ -61,6 +61,8 @@ class PurchaseIntegrationTest {
     private PaiementRepository paiementRepository;
     @Autowired
     private EvenementPlaceConfigurationRepository configRepository;
+    @Autowired
+    private ZoneStandingRepository zoneStandingRepository;
 
     private String clientCode;
     private String organisateurCode;
@@ -78,6 +80,7 @@ class PurchaseIntegrationTest {
         reservationRepository.deleteAll();
         ticketRepository.deleteAll();
         configRepository.deleteAll();
+        zoneStandingRepository.deleteAll();
         evenementRepository.deleteAll();
         placeRepository.deleteAll();
         salleRepository.deleteAll();
@@ -132,11 +135,13 @@ class PurchaseIntegrationTest {
         salle.setNumeroSalle("SAL_PUR");
         salle.setNomSalle("Test Room");
         salle.setLieu(lieu);
+        salle.setTypeAgencement(TypeAgencement.UNIQUEMENT_ASSIS);
         salleRepository.save(salle);
         salleNumero = "SAL_PUR";
 
         Place place = new Place();
         place.setNumeroPlace("PLA_PUR");
+        place.setRangePlace("A");
         place.setSalle(salle);
         placeRepository.save(place);
         placeNumero = "PLA_PUR";

@@ -23,6 +23,8 @@ public class TicketDTO {
     private String rang;
     private String typePlace;
     private String statut;
+    private Integer idZone;
+    private String zoneNom;
 
     public TicketDTO() {}
 
@@ -50,6 +52,10 @@ public class TicketDTO {
     public void setTypePlace(String typePlace) { this.typePlace = typePlace; }
     public String getStatut() { return statut; }
     public void setStatut(String statut) { this.statut = statut; }
+    public String getZoneNom() { return zoneNom; }
+    public void setZoneNom(String zoneNom) { this.zoneNom = zoneNom; }
+    public Integer getIdZone() { return idZone; }
+    public void setIdZone(Integer idZone) { this.idZone = idZone; }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class QRResponse {

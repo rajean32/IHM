@@ -2,6 +2,41 @@ import 'lieu_model.dart';
 import 'caracteristique_model.dart';
 import 'package:intl/intl.dart';
 
+class StandingZone {
+  final int? idZone;
+  final int? idEvenement;
+  final String nom;
+  final int? capacite;
+  final double prix;
+  final String? statut;
+  final int? reservationsActuelles;
+  final int? placesDisponibles;
+
+  StandingZone({
+    this.idZone,
+    this.idEvenement,
+    required this.nom,
+    this.capacite,
+    required this.prix,
+    this.statut,
+    this.reservationsActuelles,
+    this.placesDisponibles,
+  });
+
+  factory StandingZone.fromJson(Map<String, dynamic> json) {
+    return StandingZone(
+      idZone: json['idZone'],
+      idEvenement: json['idEvenement'],
+      nom: json['nom'] ?? '',
+      capacite: json['capacite'],
+      prix: double.tryParse(json['prix'].toString()) ?? 0,
+      statut: json['statut'],
+      reservationsActuelles: json['reservationsActuelles'],
+      placesDisponibles: json['placesDisponibles'],
+    );
+  }
+}
+
 class Evenement {
   final int? idEvenement;
   final String titre;
@@ -15,6 +50,7 @@ class Evenement {
   final String? statut;
   final String? codeCategorie;
   final String? codeLieu;
+  final String? typeAgencement;
   final String? numeroSalle;
   final String? nomSalle;
   final String codeOrganisateur;
@@ -39,6 +75,7 @@ class Evenement {
     this.statut,
     this.codeCategorie,
     this.codeLieu,
+    this.typeAgencement,
     this.numeroSalle,
     this.nomSalle,
     required this.codeOrganisateur,
@@ -73,6 +110,7 @@ class Evenement {
       statut: json['statut'],
       codeCategorie: json['codeCategorie'],
       codeLieu: json['codeLieu'],
+      typeAgencement: json['typeAgencement'],
       numeroSalle: json['numeroSalle'],
       nomSalle: json['nomSalle'],
       codeOrganisateur: json['codeOrganisateur'] ?? '',
@@ -104,6 +142,7 @@ class Evenement {
       'statut': statut,
       'codeCategorie': codeCategorie,
       'codeLieu': codeLieu,
+      'typeAgencement': typeAgencement,
       'numeroSalle': numeroSalle,
       'codeOrganisateur': codeOrganisateur,
       'motifAnnulation': motifAnnulation,
@@ -119,6 +158,7 @@ class EventDetail extends Evenement {
   final double? prixMin;
   final double? prixMax;
   final List<SeatingPlace>? places;
+  final List<StandingZone>? standingZones;
 
   EventDetail({
     int? idEvenement,
@@ -133,6 +173,7 @@ class EventDetail extends Evenement {
     String? statut,
     String? codeCategorie,
     String? codeLieu,
+    String? typeAgencement,
     String? numeroSalle,
     String? nomSalle,
     required String codeOrganisateur,
@@ -146,6 +187,7 @@ class EventDetail extends Evenement {
     this.prixMin,
     this.prixMax,
     this.places,
+    this.standingZones,
     List<EvenementCaracteristiqueValeur>? caracteristiqueValeurs,
   }) : super(
           idEvenement: idEvenement,
@@ -160,6 +202,7 @@ class EventDetail extends Evenement {
           statut: statut,
           codeCategorie: codeCategorie,
           codeLieu: codeLieu,
+          typeAgencement: typeAgencement,
           numeroSalle: numeroSalle,
           nomSalle: nomSalle,
           codeOrganisateur: codeOrganisateur,
@@ -212,6 +255,11 @@ class EventDetail extends Evenement {
       places: json['places'] != null
           ? (json['places'] as List)
               .map((e) => SeatingPlace.fromJson(e))
+              .toList()
+          : null,
+      standingZones: json['standingZones'] != null
+          ? (json['standingZones'] as List)
+              .map((e) => StandingZone.fromJson(e as Map<String, dynamic>))
               .toList()
           : null,
       caracteristiqueValeurs: json['caracteristiqueValeurs'] != null

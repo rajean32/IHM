@@ -25,6 +25,10 @@ public class Salle {
     @Column(name = "RangePlace", length = 50)
     private String range;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_agencement", length = 50, nullable = false)
+    private TypeAgencement typeAgencement = TypeAgencement.UNIQUEMENT_ASSIS;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "codeLieu", referencedColumnName = "code", nullable = false)
     private Lieu lieu;
@@ -47,6 +51,8 @@ public class Salle {
     public void setCapacite(Integer capacite) { this.capacite = capacite; }
     public String getRange() { return range; }
     public void setRange(String range) { this.range = range; }
+    public TypeAgencement getTypeAgencement() { return typeAgencement; }
+    public void setTypeAgencement(TypeAgencement typeAgencement) { this.typeAgencement = typeAgencement; }
     public Lieu getLieu() { return lieu; }
     public void setLieu(Lieu lieu) { this.lieu = lieu; }
     public List<Place> getPlaces() { return places; }

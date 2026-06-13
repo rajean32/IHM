@@ -46,6 +46,7 @@ public class ReservationDTO {
             private Integer idEvenement;
             private BigDecimal prix;
             private String idPlaceCombine;
+            private Integer idZone;
             public PurchaseTicketItem() {}
             public String getCodeTicket() { return codeTicket; }
             public void setCodeTicket(String codeTicket) { this.codeTicket = codeTicket; }
@@ -57,6 +58,8 @@ public class ReservationDTO {
             public void setPrix(BigDecimal prix) { this.prix = prix; }
             public String getIdPlaceCombine() { return idPlaceCombine; }
             public void setIdPlaceCombine(String idPlaceCombine) { this.idPlaceCombine = idPlaceCombine; }
+            public Integer getIdZone() { return idZone; }
+            public void setIdZone(Integer idZone) { this.idZone = idZone; }
         }
     }
     @JsonInclude(JsonInclude.Include.NON_NULL)

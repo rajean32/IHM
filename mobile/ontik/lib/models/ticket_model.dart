@@ -11,6 +11,7 @@ class Ticket {
   final String? rang;
   final String? typePlace;
   final String? statut;
+  final String? zoneNom;
 
   Ticket({
     required this.codeTicket,
@@ -25,6 +26,7 @@ class Ticket {
     this.rang,
     this.typePlace,
     this.statut,
+    this.zoneNom,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,7 @@ class Ticket {
       rang: json['rang'],
       typePlace: json['typePlace'],
       statut: json['statut'],
+      zoneNom: json['zoneNom'],
     );
   }
 

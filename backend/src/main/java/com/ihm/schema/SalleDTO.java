@@ -1,6 +1,7 @@
 package com.ihm.schema;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.ihm.model.TypeAgencement;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,6 +14,7 @@ public class SalleDTO {
     private String type;
     private Integer capacite;
     private String range;
+    private TypeAgencement typeAgencement;
     private String codeLieu;
     private String nomLieu;
     private List<String> typesEvenement;
@@ -29,6 +31,8 @@ public class SalleDTO {
     public void setCapacite(Integer capacite) { this.capacite = capacite; }
     public String getRange() { return range; }
     public void setRange(String range) { this.range = range; }
+    public TypeAgencement getTypeAgencement() { return typeAgencement; }
+    public void setTypeAgencement(TypeAgencement typeAgencement) { this.typeAgencement = typeAgencement; }
     public String getCodeLieu() { return codeLieu; }
     public void setCodeLieu(String codeLieu) { this.codeLieu = codeLieu; }
     public String getIdLieu() { return codeLieu; }

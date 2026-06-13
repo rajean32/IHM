@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import com.ihm.model.TypeAgencement;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -32,6 +33,7 @@ public class EvenementDTO {
     @NotBlank(message = "Organizer code is required")
     private String codeOrganisateur;
     private String motifAnnulation;
+    private TypeAgencement typeAgencement;
     private String organisateurNom;
     private String lieuNom;
     private String categorieNom;
@@ -76,6 +78,8 @@ public class EvenementDTO {
     public void setCodeOrganisateur(String codeOrganisateur) { this.codeOrganisateur = codeOrganisateur; }
     public String getMotifAnnulation() { return motifAnnulation; }
     public void setMotifAnnulation(String motifAnnulation) { this.motifAnnulation = motifAnnulation; }
+    public TypeAgencement getTypeAgencement() { return typeAgencement; }
+    public void setTypeAgencement(TypeAgencement typeAgencement) { this.typeAgencement = typeAgencement; }
     public String getOrganisateurNom() { return organisateurNom; }
     public void setOrganisateurNom(String organisateurNom) { this.organisateurNom = organisateurNom; }
     public String getLieuNom() { return lieuNom; }
@@ -116,7 +120,9 @@ public class EvenementDTO {
         private BigDecimal prixMin;
         private BigDecimal prixMax;
         private List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs;
+        private TypeAgencement typeAgencement;
         private List<com.ihm.schema.SalleDTO.SeatingDTO> places;
+        private List<ZoneStandingDTO> standingZones;
 
         public EventDetail() {}
 
@@ -170,8 +176,12 @@ public class EvenementDTO {
         public void setPrixMax(BigDecimal prixMax) { this.prixMax = prixMax; }
         public List<EvenementCaracteristiqueValeurDTO> getCaracteristiqueValeurs() { return caracteristiqueValeurs; }
         public void setCaracteristiqueValeurs(List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs) { this.caracteristiqueValeurs = caracteristiqueValeurs; }
+        public TypeAgencement getTypeAgencement() { return typeAgencement; }
+        public void setTypeAgencement(TypeAgencement typeAgencement) { this.typeAgencement = typeAgencement; }
         public List<com.ihm.schema.SalleDTO.SeatingDTO> getPlaces() { return places; }
         public void setPlaces(List<com.ihm.schema.SalleDTO.SeatingDTO> places) { this.places = places; }
+        public List<ZoneStandingDTO> getStandingZones() { return standingZones; }
+        public void setStandingZones(List<ZoneStandingDTO> standingZones) { this.standingZones = standingZones; }
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

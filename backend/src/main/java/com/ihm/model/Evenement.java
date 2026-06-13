@@ -47,6 +47,10 @@ public class Evenement {
     @Column(name = "motifAnnulation", columnDefinition = "TEXT")
     private String motifAnnulation;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_agencement", length = 50)
+    private TypeAgencement typeAgencement;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CodeCategorie", referencedColumnName = "CodeCategorie")
     private Categorie categorie;
@@ -93,6 +97,8 @@ public class Evenement {
     public void setStatut(String statut) { this.statut = statut; }
     public String getMotifAnnulation() { return motifAnnulation; }
     public void setMotifAnnulation(String motifAnnulation) { this.motifAnnulation = motifAnnulation; }
+    public TypeAgencement getTypeAgencement() { return typeAgencement; }
+    public void setTypeAgencement(TypeAgencement typeAgencement) { this.typeAgencement = typeAgencement; }
     public Categorie getCategorie() { return categorie; }
     public void setCategorie(Categorie categorie) { this.categorie = categorie; }
     public Lieu getLieu() { return lieu; }

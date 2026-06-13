@@ -57,6 +57,7 @@ class _PaymentPageState extends State<PaymentPage> {
         'numeroPlace': seat['numeroPlace'],
         'idEvenement': widget.eventId,
         'prix': (seat['prix'] as num?)?.toDouble() ?? 0.0,
+        if (seat['idZone'] != null) 'idZone': seat['idZone'],
       }).toList();
 
       final _paiementService = PaiementService();

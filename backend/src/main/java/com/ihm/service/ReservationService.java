@@ -6,6 +6,7 @@ import com.ihm.schema.ReservationDTO;
 import com.ihm.schema.ReservationDTO.PurchaseRequest.PurchaseTicketItem;
 import com.ihm.repository.*;
 import com.ihm.model.*;
+import com.ihm.model.ZoneStanding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class ReservationService {
     private final PlaceRepository placeRepository;
     private final EvenementRepository evenementRepository;
     private final EvenementPlaceConfigurationRepository configRepository;
+    private final StandingZoneService standingZoneService;
+    private final ZoneStandingRepository zoneStandingRepository;
     private final TicketService ticketService;
 
     public ReservationService(ReservationRepository reservationRepository,
@@ -45,6 +48,8 @@ public class ReservationService {
                               PlaceRepository placeRepository,
                               EvenementRepository evenementRepository,
                               EvenementPlaceConfigurationRepository configRepository,
+                              StandingZoneService standingZoneService,
+                              ZoneStandingRepository zoneStandingRepository,
                               TicketService ticketService) {
         this.reservationRepository = reservationRepository;
         this.clientRepository = clientRepository;
@@ -55,6 +60,8 @@ public class ReservationService {
         this.placeRepository = placeRepository;
         this.evenementRepository = evenementRepository;
         this.configRepository = configRepository;
+        this.standingZoneService = standingZoneService;
+        this.zoneStandingRepository = zoneStandingRepository;
         this.ticketService = ticketService;
     }
 
@@ -174,7 +181,11 @@ public class ReservationService {
 
         List<CorrespondA> correspondances = correspondARepository.findByReservation_IdReservation(id);
         for (CorrespondA ca : correspondances) {
-            List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(ca.getTicket().getCodeTicket());
+            Ticket t = ca.getTicket();
+            if (t.getZoneStanding() != null) {
+                standingZoneService.decrementReservation(t.getZoneStanding().getIdZone());
+            }
+            List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(t.getCodeTicket());
             for (Concerner c : concerners) {
                 EvenementPlaceConfiguration config = configRepository
                         .findByEvenement_IdEvenementAndPlace_NumeroPlace(
@@ -242,6 +253,14 @@ public class ReservationService {
             Ticket ticket = new Ticket();
             ticket.setCodeTicket(item.getCodeTicket());
             ticket.setPrix(item.getPrix() != null ? item.getPrix() : BigDecimal.ZERO);
+
+            if (item.getIdZone() != null) {
+                ZoneStanding zone = zoneStandingRepository.findById(item.getIdZone())
+                        .orElseThrow(() -> new ResourceNotFoundException("ZoneStanding", "idZone", item.getIdZone()));
+                standingZoneService.incrementReservation(item.getIdZone());
+                ticket.setZoneStanding(zone);
+            }
+
             Ticket saved = ticketRepository.save(ticket);
             tickets.add(saved);
 
