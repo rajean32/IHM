@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/evenement_model.dart';
-import '../../models/lieu_model.dart';
 import '../../core/services/evenement_service.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
@@ -18,7 +17,6 @@ class HomeDetailPage extends StatefulWidget {
 
 class _HomeDetailPageState extends State<HomeDetailPage> {
   EventDetail? _event;
-  List<SeatingPlace> _availableSeats = [];
   bool _isLoading = true;
   String? _error;
 
@@ -33,11 +31,9 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
     try {
       final _eventService = EvenementService();
       final eventData = await _eventService.getEventDetail(widget.eventId);
-      final seatsData = await _eventService.getAvailablePlaces(widget.eventId);
       if (!mounted) return;
       setState(() {
         _event = EventDetail.fromJson(eventData);
-        _availableSeats = seatsData.map((e) => SeatingPlace.fromJson(e as Map<String, dynamic>)).toList();
         _isLoading = false;
         _error = null;
       });
@@ -50,135 +46,205 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
     }
   }
 
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    return DateFormat('d MMMM yyyy', 'fr').format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Détails')),
+      appBar: AppBar(
+        title: const Text('Event Details'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Partager',
+            onPressed: () {},
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                      const SizedBox(height: 12),
+                      Text(_error!, textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(onPressed: _loadDetail, child: const Text('Réessayer')),
+                    ],
+                  ),
+                )
               : _event == null
                   ? const Center(child: Text('Événement non trouvé'))
                   : _buildContent(),
+      bottomNavigationBar: _event != null ? _buildFooter() : null,
     );
   }
 
   Widget _buildContent() {
     final event = _event!;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (event.image != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: eventImageWidget(event.image, height: 200),
-            ),
-          const SizedBox(height: 16),
-          Text(event.titre, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              if (event.statut != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppConstants.statutColors[event.statut]?.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(event.statut!, style: TextStyle(color: AppConstants.statutColors[event.statut], fontSize: 12)),
-                ),
-              if (event.typeAgencement != null)
-                Container(
-                  margin: const EdgeInsets.only(left: 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(_typeAgencementLabel(event.typeAgencement!), style: TextStyle(color: AppColors.primary, fontSize: 11)),
-                ),
-              const Spacer(),
-              Text(event.categorieNom ?? '', style: const TextStyle(color: AppColors.textSecondary)),
-            ],
+          _buildHeroBanner(event),
+          _buildLogisticsRow(event),
+          _buildLocationCard(event),
+          _buildAboutSection(event),
+          if (event.standingZones != null && event.standingZones!.isNotEmpty) _buildStandingZones(event),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroBanner(EventDetail event) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20),
           ),
-          const SizedBox(height: 16),
-          if (event.dateEvenement != null)
-            _buildInfoRow(Icons.calendar_today, DateFormat('EEEE d MMMM yyyy', 'fr').format(event.dateEvenement!)),
-          if (event.heureEvenement != null) _buildInfoRow(Icons.access_time, event.heureEvenement!),
-          if (event.lieuNom != null) _buildInfoRow(Icons.location_on, event.lieuNom!),
-          if (event.lieuAdresse != null) _buildInfoRow(Icons.map, event.lieuAdresse!),
-          if (event.organisateurNom != null) _buildInfoRow(Icons.person, event.organisateurNom!),
-          const SizedBox(height: 16),
-          if (event.description != null) ...[
-            const Text('Description', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(event.description!),
-          ],
-          if (event.caracteristiqueValeurs != null && event.caracteristiqueValeurs!.isNotEmpty) ...[
-            const Text('Caractéristiques', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            ...event.caracteristiqueValeurs!.map((c) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                children: [
-                  Text('${c.nomCaracteristique ?? "Caractéristique"} : ',
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
-                  Expanded(child: Text(c.valeur)),
+          child: event.image != null
+              ? eventImageWidget(event.image, height: 260, width: double.infinity, fit: BoxFit.cover)
+              : Container(
+                  height: 260,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primaryDark,
+                        AppColors.primary,
+                        AppColors.primaryLight,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(Icons.event, size: 80, color: Colors.white.withValues(alpha: 0.3)),
+                  ),
+                ),
+        ),
+        // Gradient overlay for text readability
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.7),
                 ],
               ),
-            )),
-            const SizedBox(height: 16),
-          ],
-          const SizedBox(height: 16),
-          if (_availableSeats.isNotEmpty) ...[
-            Text('Places assises disponibles : ${_availableSeats.where((s) => s.disponible).length}/${_availableSeats.length}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            if (event.prixMin != null && event.prixMax != null)
-              Text('Prix : ${AppConstants.currency}${event.prixMin} - ${AppConstants.currency}${event.prixMax}', style: const TextStyle(fontSize: 16, color: AppColors.secondary)),
-            const SizedBox(height: 8),
-          ],
-          if (event.standingZones != null && event.standingZones!.isNotEmpty) ...[
-            const Divider(),
-            const Text('Zones debout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            ...event.standingZones!.map((zone) => Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    const Icon(Icons.accessibility_new, size: 24, color: AppColors.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(zone.nom, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                          const SizedBox(height: 2),
-                            Text(
-                              '${zone.capacite != null ? '${zone.placesDisponibles ?? 0}/${zone.capacite} places - ' : 'Places illimitées - '}${AppConstants.currency} ${zone.prix.toStringAsFixed(2)}',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+            ),
+          ),
+        ),
+        // Badge + title
+        Positioned(
+          left: 20,
+          right: 20,
+          bottom: 20,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  (event.typeAgencement != null ? event.typeAgencement!.replaceAll('_', ' ') : 'ÉVÉNEMENT').toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
                 ),
               ),
-            )),
-          ],
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: event.idEvenement != null
-                  ? () => Navigator.pushNamed(context, ClientRoutes.reservation, arguments: {'eventId': event.idEvenement})
-                  : null,
-              icon: const Icon(Icons.confirmation_number),
-              label: const Text('Réserver', style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 8),
+              Text(
+                event.titre,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLogisticsRow(EventDetail event) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.calendar_today, size: 20, color: AppColors.primary),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Date',
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _formatDate(event.dateEvenement),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.schedule, size: 20, color: AppColors.primary),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Heure',
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    event.heureEvenement ?? '—',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -186,26 +252,234 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
     );
   }
 
-  String _typeAgencementLabel(String? type) {
-    switch (type) {
-      case 'UNIQUEMENT_ASSIS': return 'Assis';
-      case 'TABLE_ASSIS': return 'Table assis';
-      case 'ASSIS_DEBOUT': return 'Assis & Debout';
-      case 'DEBOUT_AVEC_LIMITE': return 'Debout (jaugé)';
-      case 'DEBOUT_SANS_LIMITE': return 'Debout (libre)';
-      default: return type ?? '';
-    }
+  Widget _buildLocationCard(EventDetail event) {
+    final lieu = event.lieuNom ?? 'Lieu non spécifié';
+    final adresse = event.lieuAdresse ?? '';
+    final ville = event.lieuVille ?? '';
+    final fullAddress = [adresse, ville].where((s) => s.isNotEmpty).join(', ');
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.ticketBorder),
+        ),
+        child: InkWell(
+          onTap: () {},
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.location_on, color: AppColors.primary, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      lieu,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    ),
+                    if (fullAddress.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          fullAddress,
+                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildAboutSection(EventDetail event) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppColors.primary),
-          const SizedBox(width: 8),
-          Text(text, style: const TextStyle(fontSize: 14)),
+          const Text(
+            'À propos de l\'événement',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            event.description ?? 'Aucune description disponible.',
+            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
+          ),
+          if (event.caracteristiqueValeurs != null && event.caracteristiqueValeurs!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            ...event.caracteristiqueValeurs!.map((c) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.fiber_manual_record, size: 8, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                        children: [
+                          TextSpan(
+                            text: '${c.nomCaracteristique ?? "Caractéristique"} : ',
+                            style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                          ),
+                          TextSpan(text: c.valeur),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildStandingZones(EventDetail event) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Zones disponibles',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 12),
+          ...event.standingZones!.map((zone) => Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.ticketBorder),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.accessibility_new, color: AppColors.primary, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(zone.nom, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(
+                        zone.capacite != null
+                            ? '${zone.placesDisponibles ?? 0}/${zone.capacite} places disponibles'
+                            : 'Places illimitées',
+                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${AppConstants.currency}${zone.prix.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    final event = _event!;
+    final hasPrice = event.prixMin != null || event.prixMax != null;
+    final priceText = hasPrice
+        ? (event.prixMin == event.prixMax
+            ? '${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)}'
+            : '${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)} - ${AppConstants.currency}${event.prixMax!.toStringAsFixed(0)}')
+        : 'Prix non disponible';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('À partir de', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                Text(
+                  priceText,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                ),
+              ],
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: event.idEvenement != null
+                      ? () => Navigator.pushNamed(
+                          context,
+                          ClientRoutes.reservation,
+                          arguments: {'eventId': event.idEvenement},
+                        )
+                      : null,
+                  icon: const Icon(Icons.confirmation_number, size: 20),
+                  label: const Text('RÉSERVER MA PLACE', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

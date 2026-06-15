@@ -19,10 +19,12 @@ import '../../pages/organizer/tickets_page.dart';
 import '../../pages/organizer/reservations_page.dart';
 import '../../pages/organizer/reservation_detail_page.dart';
 import '../../pages/admin/admin_layout.dart';
+import '../../pages/shared/notifications_page.dart';
 import 'auth_routes.dart';
 import 'client_routes.dart';
 import 'organizer_routes.dart';
 import 'admin_routes.dart';
+import 'shared_routes.dart';
 import '../api/dio_config.dart';
 
 class AppRouter {
@@ -82,6 +84,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => ReservationDetailPage(id: a['id'] as int));
       case AdminRoutes.layout:
         return MaterialPageRoute(builder: (_) => const AdminLayout());
+      case SharedRoutes.notifications:
+        return MaterialPageRoute(builder: (_) => const NotificationsPage());
       default:
         return _notFound();
     }
@@ -103,6 +107,7 @@ class AppRouter {
       OrganizerRoutes.reservations,
       OrganizerRoutes.reservationDetail,
       AdminRoutes.layout,
+      SharedRoutes.notifications,
     ];
     return protected.contains(name);
   }

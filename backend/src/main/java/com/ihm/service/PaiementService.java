@@ -37,6 +37,7 @@ public class PaiementService {
     private final PlaceRepository placeRepository;
     private final EvenementRepository evenementRepository;
     private final ActionLogService actionLogService;
+    private final NotificationService notificationService;
 
     public PaiementService(PaiementRepository paiementRepository,
                            ReservationRepository reservationRepository,
@@ -49,7 +50,8 @@ public class PaiementService {
                            ConcernerRepository concernerRepository,
                            PlaceRepository placeRepository,
                            EvenementRepository evenementRepository,
-                           ActionLogService actionLogService) {
+                           ActionLogService actionLogService,
+                           NotificationService notificationService) {
         this.paiementRepository = paiementRepository;
         this.reservationRepository = reservationRepository;
         this.reductionService = reductionService;
@@ -62,6 +64,7 @@ public class PaiementService {
         this.placeRepository = placeRepository;
         this.evenementRepository = evenementRepository;
         this.actionLogService = actionLogService;
+        this.notificationService = notificationService;
     }
 
     public List<PaiementDTO> getAll() {
@@ -72,6 +75,7 @@ public class PaiementService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<PaiementDTO> getByClient(String codeClient) {
         log.debug("Fetching payments by client: {}", codeClient);
         return paiementRepository.findByClient(codeClient)
@@ -304,6 +308,14 @@ public class PaiementService {
                 String.valueOf(savedReservation.getIdReservation()),
                 "Type: " + request.getTypePaiement() + ", Montant: " + montantFinal + ", Réduction: " + reduction);
 
+        notificationService.create(
+                request.getCodeClient(),
+                "Paiement confirmé",
+                "Votre paiement de " + montantFinal + " Ar a été confirmé (Réservation #" + savedReservation.getIdReservation() + ").",
+                "PAYMENT_CONFIRMED",
+                String.valueOf(savedReservation.getIdReservation())
+        );
+
         log.info("Payment completed. Reservation ID: {}, Amount: {}", savedReservation.getIdReservation(), montantFinal);
 
         PaiementResultDTO result = new PaiementResultDTO();
@@ -468,6 +480,14 @@ public class PaiementService {
 
         actionLogService.log(codeClient, "REMBOURSEMENT", "Reservation",
                 String.valueOf(idReservation), "Montant: " + paiement.getMontant() + ", Motif: " + motif);
+
+        notificationService.create(
+                codeClient,
+                "Remboursement effectué",
+                "Votre réservation #" + idReservation + " a été remboursée de " + paiement.getMontant() + " Ar. Motif : " + motif,
+                "REFUND_PROCESSED",
+                String.valueOf(idReservation)
+        );
 
         log.info("Remboursement effectué pour réservation: {}, Montant: {}", idReservation, paiement.getMontant());
 

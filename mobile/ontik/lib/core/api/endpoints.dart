@@ -1,5 +1,5 @@
 class Endpoints {
-  static const base = 'http://localhost:8081/api';
+  static const base = 'http://192.168.50.1:8081/api';
 
   static const login = '$base/auth/login';
   static const register = '$base/auth/register';
@@ -20,15 +20,18 @@ class Endpoints {
   static const reservations = '$base/reservations';
   static String reservationById(int id) => '$base/reservations/$id';
 
+  static const paiements = '$base/paiements';
   static const payments = '$base/achat';
 
   static const tickets = '$base/tickets';
   static String ticketByCode(String code) => '$base/tickets/$code';
   static const ticketValidate = '$base/tickets/validate';
 
+  static const utilisateurs = '$base/utilisateurs';
   static const users = '$base/admin/users';
   static const usersAuditLog = '$base/admin/users/audit-log';
   static const usersResetPassword = '$base/admin/users/reset-password';
+  static String auditLogUndo(int id) => '$base/admin/audit-log/$id/undo';
   static const categories = '$base/categories';
   static const lieux = '$base/lieux';
   static const salles = '$base/salles';
@@ -79,4 +82,7 @@ class Endpoints {
 
 // NOUVEAU endpoint pour événements cinéma
   static const cinemaEvents = '$base/evenements/cinema';
+
+  static const notifications = '$base/notifications';
+  static const wsUrl = 'ws://192.168.50.1:8081/ws';
 }

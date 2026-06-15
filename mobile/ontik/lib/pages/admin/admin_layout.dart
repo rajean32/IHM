@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/services/auth_service.dart';
+import '../../core/api/dio_config.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/assets/app_colors.dart';
+import '../../widgets/notification_bell.dart';
 import 'dashboard_page.dart';
 import 'users_page.dart';
 import 'events_page.dart';
@@ -23,17 +25,25 @@ class _AdminLayoutState extends State<AdminLayout> {
   int _selectedIndex = 0;
   String? _placesSalleFilter;
 
+  @override
+  void initState() {
+    super.initState();
+    if (userCode != null) {
+      NotificationManager.connect(userCode!, null);
+    }
+  }
+
+  @override
+  void dispose() {
+    NotificationManager.disconnect();
+    super.dispose();
+  }
+
   void _navigateToPlaces(String? salleFilter) {
     setState(() {
       _placesSalleFilter = salleFilter;
       _selectedIndex = 5;
     });
-  }
-
-  Future<void> _logout() async {
-    await AuthService().logout();
-    if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   @override
@@ -64,7 +74,7 @@ class _AdminLayoutState extends State<AdminLayout> {
       const NavigationRailDestination(icon: Icon(Icons.confirmation_number), label: Text('Billets')),
       const NavigationRailDestination(icon: Icon(Icons.book_online), label: Text('Réservations')),
       const NavigationRailDestination(icon: Icon(Icons.payment), label: Text('Paiements')),
-      const NavigationRailDestination(icon: Icon(Icons.person), label: Text('Profil')),
+      const NavigationRailDestination(icon: Icon(Icons.person), label: Text('Compte')),
     ];
 
     return Scaffold(
@@ -74,12 +84,8 @@ class _AdminLayoutState extends State<AdminLayout> {
           const SizedBox(width: 8),
           const Text('Panneau d\'administration'),
         ]),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Déconnexion',
-            onPressed: _logout,
-          ),
+        actions: const [
+          NotificationBell(),
         ],
       ),
       body: Row(

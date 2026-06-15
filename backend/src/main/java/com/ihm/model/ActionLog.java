@@ -21,6 +21,10 @@ public class ActionLog {
     private String details;
     @Column(name = "DateAction", nullable = false)
     private LocalDateTime dateAction;
+
+    @Column(name = "Reverted")
+    private boolean reverted = false;
+
     public ActionLog() {}
     public ActionLog(String codeUtilisateur, String action, String entityType, String entityId, String details) {
         this.codeUtilisateur = codeUtilisateur;
@@ -44,4 +48,7 @@ public class ActionLog {
     public void setDetails(String details) { this.details = details; }
     public LocalDateTime getDateAction() { return dateAction; }
     public void setDateAction(LocalDateTime dateAction) { this.dateAction = dateAction; }
+
+    public boolean isReverted() { return reverted; }
+    public void setReverted(boolean reverted) { this.reverted = reverted; }
 }

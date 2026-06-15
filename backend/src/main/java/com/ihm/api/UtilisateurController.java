@@ -209,6 +209,15 @@ public class UtilisateurController {
         return ResponseEntity.ok(ApiResponse.success(200, "Audit log fetched successfully", logs));
     }
 
+    // annulation d'une action (undo)
+    @PostMapping("/admin/audit-log/{id}/undo")
+    public ResponseEntity<ApiResponse<String>> undoAction(@PathVariable Long id, Authentication auth) {
+        log.info("POST /api/admin/audit-log/{}/undo", id);
+        String adminCode = auth.getName();
+        String result = actionLogService.undoAction(id, adminCode);
+        return ResponseEntity.ok(ApiResponse.success(200, result, result));
+    }
+
     // verification coherence (admin)
     @GetMapping("/admin/consistency")
     @PreAuthorize("hasRole('ADMINISTRATEUR')")

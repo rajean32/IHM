@@ -1,88 +1,83 @@
-TODO — Projet IHM
-Backend (Spring Boot)
+# TODO — Projet IHM
 
-    [ ] Feature : Moteur de tarification et validation
+## Backend (Spring Boot)
 
-        Implémenter la logique de calcul des prix (Prix de base de la zone + caractéristiques/options de l'événement).
+### [X] Feature : Moteur de tarification et validation
+- [X] Validation stricte capacité max "zones debout" (verrouillage pessimiste `@Lock(PESSIMISTIC_WRITE)`)
+- [ ] Calcul des prix (Prix de base zone + caractéristiques/options)
 
-        Ajouter la validation stricte de la capacité maximale des "zones debout" (empêcher la surréservation au niveau de la base de données via un verrouillage pessimiste/optimiste).
+### [ ] Feature : Gestion des Salles et Configurations
+- [ ] Endpoints CRUD pour templates de salles (Cinéma, Conférence, Concert avec zones debout/assises)
 
-    [ ] Feature : Gestion des Salles et Configurations
+### [X] Feature : Système de Réservation & Expiration
+- [X] Mécanisme de réservation temporaire (panier expire après 10 min) — `ReservationExpirationService`
+- [X] `@Scheduled` cleanup des réservations impayées
 
-        Créer les endpoints pour gérer les templates de salles (Cinéma, Conférence, Concert avec zones debout/assises).
+### [X] Feature : Génération de Tickets & QR Code
+- [X] ZXing intégré pour QR Code unique par ticket
+- [X] QR Code généré à la validation du paiement
 
-    [ ] Feature : Système de Réservation & Expiration
+## Mobile Flutter (ontik)
 
-        Implémenter un mécanisme de réservation temporaire (ex: panier expire après 10 minutes) pour libérer les places/billets non payés (via @Scheduled ou Redis).
+### [X] Fix : payment
+- [X] États loading/success/failure gérés dans `payment_page.dart`
+- [X] Fallback si crash pendant processing
 
-    [ ] Feature : Génération de Tickets & QR Code
+### [ ] Fix : template salle (selon les types de salle)
+- [ ] UI dynamique : Debout → jauge remplissage/capacité, Assis/Mixte → grille interactive (CustomPainter ou LayoutBuilder)
 
-        Intégrer une librairie (ex: ZXing) pour générer un QR Code unique par ticket lors de la validation du paiement.
+### [ ] Fix : selection listes imbriquees caracteristique genre evenement
+- [ ] Remplacer menus déroulants par FilterChip / Tags avec auto-complete
 
-Mobile Flutter (ontik)
+### [ ] Feature : Gestion des réservations utilisateur
+- [ ] Historique des réservations (À venir, Passées, Annulées) avec téléchargement ticket/QR Code
 
-    [ ] Fix : payment
+### [ ] Fix : bouton retour qui donne "page not found"
 
-        Précision : Gérer proprement les états du cycle de vie (loading, success, failure) et sécuriser la validation côté backend. Assurer un fallback si l'application crash pendant le processing.
+## IHM / UX & Wizard (Événementiel)
 
-    [ ] Fix : template salle (selon les types de salle)
+### [X] Optimisation du Wizard multi-étapes (5 parties)
+- [X] Étape 1-2 : Validations cohérence temps réel
+- [X] Étape 3-4 : Sauvegarde brouillon
+- [X] Étape 5 : Résumé complet structuré
 
-        Précision : Adapter dynamiquement l'UI de sélection. Si type = Debout, afficher une jauge de remplissage/capacité. Si type = Assis/Mixte, afficher une grille interactive (CustomPainter ou LayoutBuilder responsive).
+### [ ] Gestion des états vides et de chargement (Error & Empty States)
+- [ ] Shimmers/Squelettes de chargement
 
-    [ ] Fix : selection des listes imbriquees dans caracteristique genre evenement
+## Tests
 
-        Précision : Remplacer les menus déroulants denses par des puces sélectionnables (FilterChip) ou un système de "Tags" avec recherche (Auto-complete) pour respecter les critères d'ergonomie (charge mentale réduite).
+### [X] Backend : test unitaire service EvenementService (5 tests)
+- [X] Création avec caractéristiques
+- [X] Validation champs obligatoires
+- [X] TypeAgencement debout
+- [X] Organisateur manquant
+- [X] Suppression
 
-    [ ] Feature : Gestion des réservations utilisateur
+### [X] Backend : test unitaire TicketService (6 tests)
+- [X] Création ticket zone debout (incrémentation compteur)
+- [X] Code dupliqué
+- [X] Événement passé
+- [X] Événement annulé
+- [X] Validation ticket zone debout
+- [X] QR code zone debout
+- [X] getById not found
 
-        Afficher l'historique des réservations (À venir, Passées, Annulées) avec option de téléchargement du ticket/QR Code hors-ligne.\
+### [ ] Backend : test d'intégration flux complet debout
+- [ ] Scénario : Création événement → Réservation place → Paiement → Validation ticket
 
-    [ ] Fix : bouton retour qui donne page not found
+### [ ] Frontend : tester le rendu du wizard avec différentes catégories
+- [ ] Réactivité layout (Smartphone vs Tablette)
+- [ ] Comportement listes imbriquées avec grands volumes
 
-IHM / UX & Wizard (Événementiel)
+## Sécurité & Nettoyage local
 
-    [X] Optimisation du Wizard multi-étapes (5 parties)
+### [X] Sécurité : Authentification & Autorisations
+- [X] Spring Security avec JWT (déjà configuré)
+- [X] Routes sécurisées Admins/Organisateurs/Clients
 
-        Étape 1 (Général) & Étape 2 (Temporel) : Ajouter des validations de cohérence en temps réel (ex: date de fin après date de début) avec messages d'erreur explicites (Critère Bastien & Scapin : Guidage / Feedback immédiat).
+### [X] Ajouter un .gitignore à la racine
+- [X] Exclure .env, target/, .dart_tool/, ios/.symlinks/, etc.
 
-        Étape 3 (Tarification) & Étape 4 (Localisation) : Permettre la sauvegarde en brouillon à chaque étape pour éviter la perte de données.
-
-        Étape 5 (Récapitulatif) : Afficher un résumé complet et structuré avant la soumission finale.
-
-    [ ] Gestion des états vides et de chargement (Error & Empty States)
-
-        Ajouter des Shimmers/Squelettes de chargement lors de la récupération des listes d'événements.
-
-Tests
-
-    [ ] Backend : test unitaire service EvenementService
-
-        Création avec caractéristiques + zones debout (Vérifier le mapping et les contraintes d'intégrité).
-
-    [ ] Backend : test unitaire TicketService
-
-        Création ticket zone debout (Vérifier l'incrémentation du compteur de places vendues).
-
-    [ ] Backend : test d'intégration flux complet debout
-
-        Scénario : Création événement -> Réservation place -> Paiement -> Validation ticket.
-
-    [ ] Frontend : tester le rendu du wizard avec différentes catégories
-
-        Précision : Tester la réactivité du layout sur différents écrans (Smartphone vs Tablette) et le comportement des listes imbriquées avec de grands volumes de données.
-
-Sécurité & Nettoyage local
-
-    [ ] Sécurité : Authentification & Autorisations
-
-        Configurer Spring Security avec JWT.
-
-        Sécuriser les routes : Seuls les Admins/Organisateurs peuvent créer des salles/événements ; les Clients peuvent réserver.
-
-    [ ] Ajouter un .gitignore à la racine
-
-        Exclure .env, target/, .dart_tool/, ios/.symlinks/, etc.
-
-    [ ] Nettoyer les fichiers inutilisés
-
-        Supprimer chat.json et db.json.
+### [X] Nettoyer les fichiers inutilisés
+- [X] Supprimer chat.json
+- [X] db.json = schéma DB de référence (conservé)

@@ -24,10 +24,10 @@ public class UtilisateurDTO {
     private String email;
     @NotBlank(message = "Phone number is required")
     private String tel;
-    @NotBlank(message = "Password is required")
     private String motDePasse;
     public String getMotDePasse() { return motDePasse; }
     public void setMotDePasse(String motDePasse) { this.motDePasse = motDePasse; }
+    private String ville;
     private String codeAdministrateur;
     public UtilisateurDTO() {}
     public String getCodeUtilisateur() { return codeUtilisateur; }
@@ -44,6 +44,8 @@ public class UtilisateurDTO {
     public void setEmail(String email) { this.email = email; }
     public String getTel() { return tel; }
     public void setTel(String tel) { this.tel = tel; }
+    public String getVille() { return ville; }
+    public void setVille(String ville) { this.ville = ville; }
     public String getCodeAdministrateur() { return codeAdministrateur; }
     public void setCodeAdministrateur(String codeAdministrateur) { this.codeAdministrateur = codeAdministrateur; }
     @JsonInclude(JsonInclude.Include.NON_NULL)

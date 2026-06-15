@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,4 +33,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
 
     @Query("SELECT r FROM Reservation r JOIN FETCH r.correspondances ca JOIN FETCH ca.ticket t WHERE r.idReservation = :id")
     Optional<Reservation> findByIdWithCorrespondances(@Param("id") Integer id);
+
+    @Query("SELECT r FROM Reservation r WHERE r.idReservation NOT IN (SELECT p.reservation.idReservation FROM Paiement p) AND r.dateReservation < :threshold")
+    List<Reservation> findUnpaidOlderThan(@Param("threshold") LocalDateTime threshold);
 }

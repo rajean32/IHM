@@ -6,6 +6,7 @@ import com.ihm.exception.ResourceNotFoundException;
 import com.ihm.schema.TicketDTO;
 import com.ihm.repository.*;
 import com.ihm.model.*;
+import com.ihm.util.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class TicketService {
     private final EvenementPlaceConfigurationRepository configRepository;
     private final StandingZoneService standingZoneService;
     private final ZoneStandingRepository zoneStandingRepository;
+    private final NotificationService notificationService;
 
     public TicketService(TicketRepository ticketRepository,
                          ConcernerRepository concernerRepository,
@@ -39,7 +41,8 @@ public class TicketService {
                          QRCodeService qrCodeService,
                          EvenementPlaceConfigurationRepository configRepository,
                          StandingZoneService standingZoneService,
-                         ZoneStandingRepository zoneStandingRepository) {
+                         ZoneStandingRepository zoneStandingRepository,
+                         NotificationService notificationService) {
         this.ticketRepository = ticketRepository;
         this.concernerRepository = concernerRepository;
         this.evenementRepository = evenementRepository;
@@ -49,6 +52,7 @@ public class TicketService {
         this.configRepository = configRepository;
         this.standingZoneService = standingZoneService;
         this.zoneStandingRepository = zoneStandingRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -285,6 +289,16 @@ public class TicketService {
             String clientNom2 = correspondances.isEmpty() ? "" :
                     correspondances.get(0).getReservation().getClient().getNom() + " "
                     + correspondances.get(0).getReservation().getClient().getPrenoms();
+
+            String orgCode2 = ticket.getZoneStanding().getEvenement().getOrganisateur().getCodeUtilisateur();
+            notificationService.create(
+                    orgCode2,
+                    "Ticket validé (debout)",
+                    "Le ticket " + qrToken + " (zone " + ticket.getZoneStanding().getNom() + ") a été validé à l'entrée.",
+                    "TICKET_VALIDATED",
+                    qrToken
+            );
+
             TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
             r.setStatut("VALID");
             r.setMessage("Ticket validated successfully (standing)");
@@ -309,6 +323,15 @@ public class TicketService {
                 .orElse(null);
 
         if (config != null && "UTILISE".equals(config.getStatut())) {
+            String orgCode3 = concerner.getEvenement().getOrganisateur().getCodeUtilisateur();
+            notificationService.create(
+                    orgCode3,
+                    "Ticket déjà utilisé",
+                    "Le ticket " + qrToken + " (" + concerner.getEvenement().getTitre() + ") a déjà été scanné.",
+                    "TICKET_ALREADY_USED",
+                    qrToken
+            );
+
             TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
             r.setStatut("ALREADY_USED");
             r.setMessage("Ticket has already been used");
@@ -326,6 +349,15 @@ public class TicketService {
 
         String clientNom = correspondances.get(0).getReservation().getClient().getNom() + " "
                 + correspondances.get(0).getReservation().getClient().getPrenoms();
+
+        String orgCode = concerner.getEvenement().getOrganisateur().getCodeUtilisateur();
+        notificationService.create(
+                orgCode,
+                "Ticket validé",
+                "Le ticket " + qrToken + " (" + clientNom + ") a été validé à l'entrée pour \"" + concerner.getEvenement().getTitre() + "\".",
+                "TICKET_VALIDATED",
+                qrToken
+        );
 
         TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
         r.setStatut("VALID");
@@ -350,6 +382,7 @@ public class TicketService {
                 dto.setDateEvenement(ticket.getZoneStanding().getEvenement().getDateEvenement().toString());
             if (ticket.getZoneStanding().getEvenement().getHeureEvenement() != null)
                 dto.setHeureEvenement(ticket.getZoneStanding().getEvenement().getHeureEvenement().toString());
+            dto.setImage(ImageUtils.toDataUrl(ticket.getZoneStanding().getEvenement().getImage()));
             dto.setStatut("VALID");
             return dto;
         }
@@ -370,6 +403,8 @@ public class TicketService {
                     dto.setLieuNom(c.getPlace().getSalle().getLieu().getNomLieu());
                 }
             }
+
+            dto.setImage(ImageUtils.toDataUrl(c.getEvenement().getImage()));
 
             EvenementPlaceConfiguration config = configRepository
                     .findByEvenement_IdEvenementAndPlace_NumeroPlace(

@@ -4,6 +4,7 @@ import com.ihm.schema.ApiResponse;
 import com.ihm.schema.PaiementDTO;
 import com.ihm.schema.PaiementRequestDTO;
 import com.ihm.schema.PaiementResultDTO;
+import com.ihm.service.NotificationService;
 import com.ihm.service.PaiementService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -21,15 +22,25 @@ public class PaiementController {
 
     private static final Logger log = LoggerFactory.getLogger(PaiementController.class);
     private final PaiementService paiementService;
+    private final NotificationService notificationService;
 
-    public PaiementController(PaiementService paiementService) {
+    public PaiementController(PaiementService paiementService,
+                              NotificationService notificationService) {
         this.paiementService = paiementService;
+        this.notificationService = notificationService;
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<PaiementDTO>>> getAll() {
         log.info("GET /api/paiements");
         List<PaiementDTO> data = paiementService.getAll();
+        return ResponseEntity.ok(ApiResponse.success(200, "Payments fetched successfully", data));
+    }
+
+    @GetMapping("/client/{codeClient}")
+    public ResponseEntity<ApiResponse<List<PaiementDTO>>> getByClient(@PathVariable String codeClient) {
+        log.info("GET /api/paiements/client/{}", codeClient);
+        List<PaiementDTO> data = paiementService.getByClient(codeClient);
         return ResponseEntity.ok(ApiResponse.success(200, "Payments fetched successfully", data));
     }
 
@@ -79,9 +90,20 @@ public class PaiementController {
     public ResponseEntity<ApiResponse<PaiementResultDTO>> processPaymentWithReduction(@Valid @RequestBody PaiementRequestDTO request) {
         log.info("POST /api/paiements/process-with-reduction - client: {}, type: {}", 
                  request.getCodeClient(), request.getTypePaiement());
-        PaiementResultDTO result = paiementService.processPaymentWithReduction(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(201, "Paiement traité", result));
+        try {
+            PaiementResultDTO result = paiementService.processPaymentWithReduction(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(201, "Paiement traité", result));
+        } catch (Exception e) {
+            notificationService.create(
+                    request.getCodeClient(),
+                    "Paiement refusé",
+                    "Votre paiement a été refusé : " + e.getMessage(),
+                    "PAYMENT_FAILED",
+                    null
+            );
+            throw e;
+        }
     }
 
     // NOUVEAU: Remboursement

@@ -1,9 +1,14 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/user_service.dart';
 import '../../core/api/dio_config.dart';
+import '../../core/routes/auth_routes.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
+import '../../widgets/profile_body.dart';
+import '../../widgets/two_factor_widget.dart';
+import 'action_history_page.dart';
 
 class AdminProfilePage extends StatefulWidget {
   const AdminProfilePage({super.key});
@@ -14,15 +19,10 @@ class AdminProfilePage extends StatefulWidget {
 
 class _AdminProfilePageState extends State<AdminProfilePage> {
   bool _loading = true;
-  String? _error;
-  final _nomCtrl = TextEditingController();
-  final _prenomsCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _currentPasswordCtrl = TextEditingController();
-  final _newPasswordCtrl = TextEditingController();
-  final _confirmPasswordCtrl = TextEditingController();
-  bool _saving = false;
-  bool _savingPassword = false;
+  bool _is2faEnabled = false;
+  String _nom = '';
+  String _prenoms = '';
+  String _email = '';
 
   @override
   void initState() {
@@ -30,179 +30,284 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     _loadProfile();
   }
 
-  @override
-  void dispose() {
-    _nomCtrl.dispose();
-    _prenomsCtrl.dispose();
-    _emailCtrl.dispose();
-    _currentPasswordCtrl.dispose();
-    _newPasswordCtrl.dispose();
-    _confirmPasswordCtrl.dispose();
-    super.dispose();
-  }
-
   Future<void> _loadProfile() async {
     setState(() => _loading = true);
     try {
       final code = userCode;
-      if (code == null) return;
+      if (code == null) {
+        setState(() => _loading = false);
+        return;
+      }
       final resp = await UserService().getUsers();
       final users = resp.map((e) => Map<String, dynamic>.from(e as Map));
-      final me = users.firstWhere((u) => u['codeUtilisateur'] == code, orElse: () => {});
+      final me = users.firstWhere(
+        (u) => u['codeUtilisateur'] == code,
+        orElse: () => <String, dynamic>{},
+      );
       if (!mounted) return;
       setState(() {
-        _nomCtrl.text = me['nom'] ?? userNom ?? '';
-        _prenomsCtrl.text = me['prenoms'] ?? '';
-        _emailCtrl.text = me['email'] ?? '';
+        _nom = me['nom'] ?? userNom ?? '';
+        _prenoms = me['prenoms'] ?? '';
+        _email = me['email'] ?? '';
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = apiErrorString(e); _loading = false; });
-    }
-  }
-
-  Future<void> _saveInfo() async {
-    if (_nomCtrl.text.trim().isEmpty) return;
-    setState(() => _saving = true);
-    try {
-      await UserService().updateUser(userCode ?? '', {
-        'nom': _nomCtrl.text.trim(),
-        'prenoms': _prenomsCtrl.text.trim(),
-        'email': _emailCtrl.text.trim(),
-        'role': 'ADMINISTRATEUR',
+      setState(() {
+        _nom = userNom ?? '';
+        _loading = false;
       });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Informations mises à jour'), backgroundColor: AppColors.secondary),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
     }
   }
 
-  Future<void> _changePassword() async {
-    if (_newPasswordCtrl.text.length < 6) return;
-    if (_newPasswordCtrl.text != _confirmPasswordCtrl.text) return;
-    setState(() => _savingPassword = true);
-    try {
-      await AuthService().changePassword(
-        _currentPasswordCtrl.text,
-        _newPasswordCtrl.text,
-      );
-      if (!mounted) return;
-      _currentPasswordCtrl.clear();
-      _newPasswordCtrl.clear();
-      _confirmPasswordCtrl.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mot de passe modifié'), backgroundColor: AppColors.secondary),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
-      );
-    } finally {
-      if (mounted) setState(() => _savingPassword = false);
-    }
+  void _showEditInfo() {
+    final origNom = _nom;
+    final origPrenoms = _prenoms;
+    final origEmail = _email;
+    final nomCtrl = TextEditingController(text: _nom);
+    final prenomsCtrl = TextEditingController(text: _prenoms);
+    final emailCtrl = TextEditingController(text: _email);
+    bool saving = false;
+    bool isEditing = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24, right: 24, top: 24,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Informations personnelles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 20),
+                  TextField(controller: nomCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder())),
+                  const SizedBox(height: 12),
+                  TextField(controller: prenomsCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Prénoms', border: OutlineInputBorder())),
+                  const SizedBox(height: 12),
+                  TextField(controller: emailCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: saving ? null : () async {
+                        if (!isEditing) {
+                          setSheetState(() => isEditing = true);
+                          return;
+                        }
+                        final confirmed = await showDialog<bool>(
+                          context: ctx,
+                          builder: (dctx) => AlertDialog(
+                            title: const Text('Confirmer'),
+                            content: const Text('Voulez-vous enregistrer les modifications ?'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(dctx, false), child: const Text('Annuler')),
+                              TextButton(onPressed: () => Navigator.pop(dctx, true), child: const Text('Confirmer')),
+                            ],
+                          ),
+                        );
+                        if (confirmed != true) {
+                          nomCtrl.text = origNom;
+                          prenomsCtrl.text = origPrenoms;
+                          emailCtrl.text = origEmail;
+                          setSheetState(() => isEditing = false);
+                          return;
+                        }
+                        if (nomCtrl.text.trim().isEmpty) return;
+                        setSheetState(() => saving = true);
+                        try {
+                          await UserService().updateUser(userCode ?? '', {
+                            'nom': nomCtrl.text.trim(),
+                            'prenoms': prenomsCtrl.text.trim(),
+                            'email': emailCtrl.text.trim(),
+                            'role': 'ADMINISTRATEUR',
+                          });
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          _loadProfile();
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Informations mises à jour'), backgroundColor: AppColors.secondary),
+                          );
+                        } catch (e) {
+                          setSheetState(() => saving = false);
+                          if (!ctx.mounted) return;
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
+                          );
+                        }
+                      },
+                      child: saving
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          : Text(isEditing ? 'Enregistrer' : 'Modifier'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showPasswordAnd2FA() {
+    showPasswordAnd2FABottomSheet(
+      context,
+      _is2faEnabled,
+      (val) {
+        if (mounted) setState(() => _is2faEnabled = val);
+      },
+    );
+  }
+
+  void _showActionHistory() {
+    Navigator.push(context, MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Historique des actions')),
+        body: const ActionHistoryPage(),
+      ),
+    ));
+  }
+
+  void _showConnectedDevices() {
+    final deviceName = Platform.isAndroid ? 'Android' : Platform.isIOS ? 'iOS' : 'Web';
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Appareils connectés',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Icon(Icons.phone_android, size: 32, color: AppColors.primary),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(deviceName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Text('${userCode ?? "—"} • Appareil actuel',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text('Actif', style: TextStyle(fontSize: 11, color: AppColors.secondary)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  showDialog(
+                    context: context,
+                    builder: (dctx) => AlertDialog(
+                      title: const Text('Déconnexion'),
+                      content: const Text('Voulez-vous déconnecter tous les autres appareils ?'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Annuler')),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(dctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Tous les autres appareils ont été déconnectés'),
+                                backgroundColor: AppColors.secondary,
+                              ),
+                            );
+                          },
+                          child: const Text('Déconnecter', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.logout, size: 18),
+                label: const Text('Déconnecter les autres appareils'),
+                style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _logout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Déconnexion'),
+        content: const Text('Voulez-vous vraiment vous déconnecter ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await AuthService().logout();
+              if (!context.mounted) return;
+              Navigator.pushNamedAndRemoveUntil(context, AuthRoutes.login, (route) => false);
+            },
+            child: const Text('Déconnexion', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_error != null) return Center(child: Text(_error!));
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Mon profil', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text('Code: ${userCode ?? '-'}', style: const TextStyle(color: AppColors.textSecondary)),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Informations personnelles', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _nomCtrl,
-                    decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _prenomsCtrl,
-                    decoration: const InputDecoration(labelText: 'Prénoms', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _saving ? null : _saveInfo,
-                      icon: const Icon(Icons.save, size: 18),
-                      label: Text(_saving ? 'Enregistrement...' : 'Enregistrer'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Changer le mot de passe', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _currentPasswordCtrl,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Mot de passe actuel', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _newPasswordCtrl,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Nouveau mot de passe', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _confirmPasswordCtrl,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Confirmer', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _savingPassword ? null : _changePassword,
-                      icon: const Icon(Icons.lock_outline, size: 18),
-                      label: Text(_savingPassword ? 'Modification...' : 'Changer le mot de passe'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    final displayName = '$_prenoms $_nom'.trim();
+    return ProfileBody(
+      name: displayName.isNotEmpty ? displayName : (userNom ?? 'Administrateur'),
+      email: _email.isNotEmpty ? _email : (userCode ?? '—'),
+      badge: 'ADMINISTRATEUR',
+      badgeColor: const Color(0xFF1565C0),
+      onEditProfile: _showEditInfo,
+      menuGroups: [
+        ProfileMenuGroup('Compte', [
+          ProfileMenuItem('Informations personnelles', Icons.person, onTap: _showEditInfo),
+          ProfileMenuItem('Historique des actions', Icons.history, onTap: _showActionHistory),
+        ]),
+        ProfileMenuGroup('Sécurité', [
+          ProfileMenuItem('Mot de passe & 2FA', Icons.lock, status: 'Sécurisé', onTap: _showPasswordAnd2FA),
+          ProfileMenuItem('Appareils connectés', Icons.devices, onTap: _showConnectedDevices),
+        ]),
+      ],
+      onLogout: _logout,
     );
   }
 }

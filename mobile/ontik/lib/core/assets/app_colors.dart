@@ -43,11 +43,15 @@ class AppColors {
   
   // Place type colors
   static const placeStandard = Color(0xFF1565C0);
-  static const placeVIP = Color(0xFFD32F2F);
+  static const placeVIP = Color(0xFF9C27B0);
   static const placePremium = Color(0xFFFF6F00);
   static const placeOrchestre = Color(0xFF7B1FA2);
   static const placeBalcon = Color(0xFF00897B);
   static const placeLoge = Color(0xFF5C6BC0);
+
+  // Ticket card colors
+  static const ticketBorder = Color(0xFFDFD7E3);
+  static const ticketQrBg = Color(0xFFF9F1FC);
 }
 
 class AppConstants {

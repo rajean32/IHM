@@ -116,27 +116,49 @@ class UserDetail {
 }
 
 class AuditLogEntry {
-  final int? id;
+  final int? idAction;
   final String action;
-  final String utilisateur;
+  final String codeUtilisateur;
+  final String entityType;
+  final String? entityId;
   final String details;
-  final String? timestamp;
+  final String? dateAction;
+  final bool reverted;
 
   AuditLogEntry({
-    this.id,
+    this.idAction,
     required this.action,
-    required this.utilisateur,
+    required this.codeUtilisateur,
+    this.entityType = '',
+    this.entityId,
     required this.details,
-    this.timestamp,
+    this.dateAction,
+    this.reverted = false,
   });
 
   factory AuditLogEntry.fromJson(Map<String, dynamic> json) {
+    String? formattedDate;
+    final rawDate = json['dateAction'];
+    if (rawDate is List) {
+      final parts = rawDate.cast<int>();
+      if (parts.length >= 5) {
+        formattedDate =
+            '${parts[0]}-${parts[1].toString().padLeft(2, '0')}-${parts[2].toString().padLeft(2, '0')} '
+            '${parts[3].toString().padLeft(2, '0')}:${parts[4].toString().padLeft(2, '0')}';
+      }
+    } else if (rawDate is String) {
+      formattedDate = rawDate;
+    }
+
     return AuditLogEntry(
-      id: json['id'],
+      idAction: json['idAction'],
       action: json['action'] ?? '',
-      utilisateur: json['utilisateur'] ?? '',
+      codeUtilisateur: json['codeUtilisateur'] ?? '',
+      entityType: json['entityType'] ?? '',
+      entityId: json['entityId'],
       details: json['details'] ?? '',
-      timestamp: json['timestamp'],
+      dateAction: formattedDate,
+      reverted: json['reverted'] ?? false,
     );
   }
 }

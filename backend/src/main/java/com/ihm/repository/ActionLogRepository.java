@@ -12,4 +12,6 @@ public interface ActionLogRepository extends JpaRepository<ActionLog, Long> {
     List<ActionLog> findByCodeUtilisateurOrderByDateActionDesc(String codeUtilisateur);
 
     List<ActionLog> findTop20ByOrderByDateActionDesc();
+
+    List<ActionLog> findByIdActionIn(List<Long> ids);
 }

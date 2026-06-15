@@ -287,7 +287,7 @@ class _UsersPageState extends State<UsersPage> {
               child: const Icon(Icons.history, size: 20),
             ),
             title: Text(entry.action, style: const TextStyle(fontSize: 14)),
-            subtitle: Text('${entry.utilisateur}  •  ${entry.details}', style: const TextStyle(fontSize: 12)),
+            subtitle: Text('${entry.codeUtilisateur}  •  ${entry.details}', style: const TextStyle(fontSize: 12)),
           ),
         );
       },

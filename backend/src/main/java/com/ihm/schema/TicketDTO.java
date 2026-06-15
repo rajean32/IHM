@@ -25,6 +25,7 @@ public class TicketDTO {
     private String statut;
     private Integer idZone;
     private String zoneNom;
+    private String image;
 
     public TicketDTO() {}
 
@@ -54,6 +55,9 @@ public class TicketDTO {
     public void setStatut(String statut) { this.statut = statut; }
     public String getZoneNom() { return zoneNom; }
     public void setZoneNom(String zoneNom) { this.zoneNom = zoneNom; }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
+
     public Integer getIdZone() { return idZone; }
     public void setIdZone(Integer idZone) { this.idZone = idZone; }
 

@@ -39,6 +39,7 @@ public class ReservationService {
     private final StandingZoneService standingZoneService;
     private final ZoneStandingRepository zoneStandingRepository;
     private final TicketService ticketService;
+    private final NotificationService notificationService;
 
     public ReservationService(ReservationRepository reservationRepository,
                               ClientRepository clientRepository,
@@ -52,7 +53,8 @@ public class ReservationService {
                               PaiementTransactionRepository paiementTransactionRepository,
                               StandingZoneService standingZoneService,
                               ZoneStandingRepository zoneStandingRepository,
-                              TicketService ticketService) {
+                              TicketService ticketService,
+                              NotificationService notificationService) {
         this.reservationRepository = reservationRepository;
         this.clientRepository = clientRepository;
         this.ticketRepository = ticketRepository;
@@ -66,6 +68,7 @@ public class ReservationService {
         this.standingZoneService = standingZoneService;
         this.zoneStandingRepository = zoneStandingRepository;
         this.ticketService = ticketService;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -230,6 +233,14 @@ public class ReservationService {
             });
         });
 
+        notificationService.create(
+                reservation.getClient().getCodeUtilisateur(),
+                "Réservation annulée",
+                "Votre réservation #" + id + " a été annulée.",
+                "RESERVATION_CANCELLED",
+                String.valueOf(id)
+        );
+
         reservationRepository.delete(reservation);
         log.info("Reservation cancelled: id={}", id);
     }
@@ -339,6 +350,14 @@ public class ReservationService {
         paiement.setModePaiement(modePaiement);
         paiement.setReservation(savedReservation);
         paiementRepository.save(paiement);
+
+        notificationService.create(
+                request.getCodeClient(),
+                "Réservation confirmée",
+                "Votre réservation #" + savedReservation.getIdReservation() + " pour " + tickets.size() + " ticket(s) a été confirmée.",
+                "RESERVATION_CONFIRMED",
+                String.valueOf(savedReservation.getIdReservation())
+        );
 
         log.info("Purchase completed: reservation id={}, {} tickets, montant={}",
                 savedReservation.getIdReservation(), tickets.size(), montant);

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
-import '../../core/routes/auth_routes.dart';
-import '../../core/assets/app_colors.dart';
-import 'client_profile_page.dart';
+import '../../core/services/notification_service.dart';
+import '../../widgets/notification_bell.dart';
 import 'home_page.dart';
-import 'profile_page.dart';
 import 'tickets_page.dart';
+import 'client_profile_page.dart';
 
 class ClientLayout extends StatefulWidget {
   const ClientLayout({super.key});
@@ -17,18 +16,26 @@ class ClientLayout extends StatefulWidget {
 class _ClientLayoutState extends State<ClientLayout> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    if (userCode != null) {
+      NotificationManager.connect(userCode!, null);
+    }
+  }
+
+  @override
+  void dispose() {
+    NotificationManager.disconnect();
+    super.dispose();
+  }
+
   // Liste des pages
   final List<Widget> _pages = [
     const HomePage(),
     const MyTicketsPage(), // Page des tickets
     const ClientProfilePage(), // Page profil client
   ];
-
-  void _logout() async {
-    await clearSession();
-    if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, AuthRoutes.login, (route) => false);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +54,7 @@ class _ClientLayoutState extends State<ClientLayout> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Déconnexion',
-            onPressed: _logout,
-          ),
+          const NotificationBell(),
         ],
       ),
       body: IndexedStack(
@@ -76,7 +79,7 @@ class _ClientLayoutState extends State<ClientLayout> {
           ),
           NavigationDestination(
             icon: Icon(Icons.person),
-            label: 'Profil',
+            label: 'Compte',
           ),
         ],
       ),

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/assets/app_colors.dart';
-import '../../core/services/auth_service.dart';
 import '../../core/services/user_service.dart';
 import '../../core/routes/auth_routes.dart';
 import '../../core/utils/error_helper.dart';
+import '../../widgets/profile_body.dart';
+import '../../widgets/two_factor_widget.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -15,46 +16,30 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool _loading = true;
-
-  final _nomCtrl = TextEditingController();
-  final _prenomsCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _telCtrl = TextEditingController();
-  final _currentPasswordCtrl = TextEditingController();
-  final _newPasswordCtrl = TextEditingController();
-  final _confirmPasswordCtrl = TextEditingController();
-  bool _saving = false;
-  bool _savingPassword = false;
-  final _userService = UserService();
+  bool _is2faEnabled = false;
+  String _nom = '';
+  String _prenoms = '';
+  String _email = '';
+  String _tel = '';
 
   @override
-  void initState() { super.initState(); _loadProfile(); }
-
-  @override
-  void dispose() {
-    _nomCtrl.dispose();
-    _prenomsCtrl.dispose();
-    _emailCtrl.dispose();
-    _telCtrl.dispose();
-    _currentPasswordCtrl.dispose();
-    _newPasswordCtrl.dispose();
-    _confirmPasswordCtrl.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadProfile();
   }
 
   Future<void> _loadProfile() async {
     final code = userCode ?? '';
     if (code.isEmpty) return;
-
     setState(() => _loading = true);
     try {
-      final data = await _userService.getOrganizerProfile(code);
+      final data = await UserService().getOrganizerProfile(code);
       if (!mounted) return;
       setState(() {
-        _nomCtrl.text = data['nom'] ?? '';
-        _prenomsCtrl.text = data['prenoms'] ?? '';
-        _emailCtrl.text = data['email'] ?? '';
-        _telCtrl.text = data['tel'] ?? '';
+        _nom = data['nom'] ?? '';
+        _prenoms = data['prenoms'] ?? '';
+        _email = data['email'] ?? '';
+        _tel = data['tel'] ?? '';
         _loading = false;
       });
     } catch (e) {
@@ -63,175 +48,166 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<void> _save() async {
-    final code = userCode ?? '';
+  void _showEditInfo() {
+    final origNom = _nom;
+    final origPrenoms = _prenoms;
+    final origEmail = _email;
+    final origTel = _tel;
+    final nomCtrl = TextEditingController(text: _nom);
+    final prenomsCtrl = TextEditingController(text: _prenoms);
+    final emailCtrl = TextEditingController(text: _email);
+    final telCtrl = TextEditingController(text: _tel);
+    bool saving = false;
+    bool isEditing = false;
 
-    setState(() => _saving = true);
-    try {
-      await _userService.updateOrganizerProfile(code, {
-        'nom': _nomCtrl.text,
-        'prenoms': _prenomsCtrl.text,
-        'email': _emailCtrl.text,
-        'tel': _telCtrl.text,
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil mis à jour'), backgroundColor: AppTheme.secondaryColor));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor));
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24, right: 24, top: 24,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Informations personnelles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 20),
+                  TextField(controller: nomCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder())),
+                  const SizedBox(height: 12),
+                  TextField(controller: prenomsCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Prénoms', border: OutlineInputBorder())),
+                  const SizedBox(height: 12),
+                  TextField(controller: emailCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
+                  const SizedBox(height: 12),
+                  TextField(controller: telCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Téléphone', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: saving ? null : () async {
+                        if (!isEditing) {
+                          setSheetState(() => isEditing = true);
+                          return;
+                        }
+                        final confirmed = await showDialog<bool>(
+                          context: ctx,
+                          builder: (dctx) => AlertDialog(
+                            title: const Text('Confirmer'),
+                            content: const Text('Voulez-vous enregistrer les modifications ?'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(dctx, false), child: const Text('Annuler')),
+                              TextButton(onPressed: () => Navigator.pop(dctx, true), child: const Text('Confirmer')),
+                            ],
+                          ),
+                        );
+                        if (confirmed != true) {
+                          nomCtrl.text = origNom;
+                          prenomsCtrl.text = origPrenoms;
+                          emailCtrl.text = origEmail;
+                          telCtrl.text = origTel;
+                          setSheetState(() => isEditing = false);
+                          return;
+                        }
+                        setSheetState(() => saving = true);
+                        try {
+                          await UserService().updateOrganizerProfile(userCode ?? '', {
+                            'nom': nomCtrl.text,
+                            'prenoms': prenomsCtrl.text,
+                            'email': emailCtrl.text,
+                            'tel': telCtrl.text,
+                          });
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          _loadProfile();
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Profil mis à jour'), backgroundColor: AppTheme.secondaryColor),
+                          );
+                        } catch (e) {
+                          setSheetState(() => saving = false);
+                          if (!ctx.mounted) return;
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
+                          );
+                        }
+                      },
+                      child: saving
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          : Text(isEditing ? 'Enregistrer' : 'Modifier'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
-  Future<void> _changePassword() async {
-    if (_currentPasswordCtrl.text.isEmpty) return;
-    if (_newPasswordCtrl.text.length < 6) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le mot de passe doit contenir au moins 6 caractères'), backgroundColor: AppTheme.errorColor),
-      );
-      return;
-    }
-    if (_newPasswordCtrl.text != _confirmPasswordCtrl.text) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Les mots de passe ne correspondent pas'), backgroundColor: AppTheme.errorColor),
-      );
-      return;
-    }
-    setState(() => _savingPassword = true);
-    try {
-      await AuthService().changePassword(_currentPasswordCtrl.text, _newPasswordCtrl.text);
-      if (!mounted) return;
-      _currentPasswordCtrl.clear();
-      _newPasswordCtrl.clear();
-      _confirmPasswordCtrl.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mot de passe modifié'), backgroundColor: AppTheme.secondaryColor),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
-      );
-    } finally {
-      if (mounted) setState(() => _savingPassword = false);
-    }
+  void _showPasswordAnd2FA() {
+    showPasswordAnd2FABottomSheet(
+      context,
+      _is2faEnabled,
+      (val) {
+        if (mounted) setState(() => _is2faEnabled = val);
+      },
+    );
   }
 
   void _logout() {
-    clearSession();
-    Navigator.of(context).pushNamedAndRemoveUntil(AuthRoutes.login, (route) => false);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Déconnexion'),
+        content: const Text('Voulez-vous vraiment vous déconnecter ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              clearSession();
+              Navigator.of(context).pushNamedAndRemoveUntil(AuthRoutes.login, (route) => false);
+            },
+            child: const Text('Déconnexion', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Center(
-                  child: CircleAvatar(
-                    radius: 48,
-                    child: Text(
-                      (_nomCtrl.text.isNotEmpty ? _nomCtrl.text[0] : '?').toUpperCase(),
-                      style: const TextStyle(fontSize: 32),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '${_prenomsCtrl.text} ${_nomCtrl.text}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  _emailCtrl.text,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppTheme.textSecondary),
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: _nomCtrl,
-                  decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _prenomsCtrl,
-                  decoration: const InputDecoration(labelText: 'Prénoms', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _emailCtrl,
-                  decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _telCtrl,
-                  decoration: const InputDecoration(labelText: 'Téléphone', border: OutlineInputBorder()),
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _saving ? null : _save,
-                    child: _saving
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Enregistrer'),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Changer le mot de passe', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _currentPasswordCtrl,
-                          obscureText: true,
-                          decoration: const InputDecoration(labelText: 'Mot de passe actuel', border: OutlineInputBorder()),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _newPasswordCtrl,
-                          obscureText: true,
-                          decoration: const InputDecoration(labelText: 'Nouveau mot de passe', border: OutlineInputBorder()),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _confirmPasswordCtrl,
-                          obscureText: true,
-                          decoration: const InputDecoration(labelText: 'Confirmer', border: OutlineInputBorder()),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: _savingPassword ? null : _changePassword,
-                            icon: const Icon(Icons.lock_outline, size: 18),
-                            label: Text(_savingPassword ? 'Modification...' : 'Changer le mot de passe'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const Divider(height: 32),
-                ListTile(
-                  leading: const Icon(Icons.logout, color: AppTheme.errorColor),
-                  title: const Text('Déconnexion', style: TextStyle(color: AppTheme.errorColor)),
-                  onTap: _logout,
-                ),
-              ],
-            ),
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final displayName = '$_prenoms $_nom'.trim();
+    return ProfileBody(
+      name: displayName.isNotEmpty ? displayName : (userNom ?? 'Organisateur'),
+      email: _email.isNotEmpty ? _email : (userCode ?? '—'),
+      badge: 'ORGANISATEUR',
+      badgeColor: const Color(0xFF673AB7),
+      onEditProfile: _showEditInfo,
+      menuGroups: [
+        ProfileMenuGroup('Compte', [
+          ProfileMenuItem('Informations personnelles', Icons.person, onTap: _showEditInfo),
+          ProfileMenuItem('Mes événements', Icons.event, onTap: () {}),
+          ProfileMenuItem('Revenus', Icons.payments, onTap: () {}),
+        ]),
+        ProfileMenuGroup('Sécurité', [
+          ProfileMenuItem('Mot de passe & 2FA', Icons.lock, status: 'Sécurisé', onTap: _showPasswordAnd2FA),
+          ProfileMenuItem('Appareils connectés', Icons.devices, onTap: () {}),
+        ]),
+      ],
+      onLogout: _logout,
     );
   }
 }

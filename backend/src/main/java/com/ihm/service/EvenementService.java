@@ -58,6 +58,7 @@ public class EvenementService {
     private final ReservationRepository reservationRepository;
     private final StandingZoneService standingZoneService;
     private final PaiementService paiementService;
+    private final NotificationService notificationService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -77,7 +78,8 @@ public class EvenementService {
                             ZoneStandingRepository zoneStandingRepository,
                             ReservationRepository reservationRepository,
                             StandingZoneService standingZoneService,
-                            PaiementService paiementService) {
+                            PaiementService paiementService,
+                            NotificationService notificationService) {
         this.evenementRepository = evenementRepository;
         this.categorieRepository = categorieRepository;
         this.lieuRepository = lieuRepository;
@@ -94,6 +96,7 @@ public class EvenementService {
         this.reservationRepository = reservationRepository;
         this.standingZoneService = standingZoneService;
         this.paiementService = paiementService;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -203,6 +206,25 @@ public class EvenementService {
         Organisateur org = organisateurRepository.findByCodeUtilisateur(dto.getCodeOrganisateur())
                 .orElseThrow(() -> new ResourceNotFoundException("Organisateur", "codeOrganisateur", dto.getCodeOrganisateur()));
         event.setOrganisateur(org);
+
+        // validate required caracteristiques
+        if (dto.getCodeCategorie() != null) {
+            List<Caracteristique> requiredCaracs = caracteristiqueRepository
+                    .findByCategorieCodeCategorieOrderByOrdreAffichageAsc(dto.getCodeCategorie())
+                    .stream()
+                    .filter(Caracteristique::isObligatoire)
+                    .toList();
+            Set<Integer> providedCaracIds = dto.getCaracteristiqueValeurs() != null
+                    ? dto.getCaracteristiqueValeurs().stream()
+                        .map(EvenementCaracteristiqueValeurDTO::getIdCaracteristique)
+                        .collect(Collectors.toSet())
+                    : Set.of();
+            for (Caracteristique req : requiredCaracs) {
+                if (!providedCaracIds.contains(req.getIdCaracteristique())) {
+                    throw new BadRequestException("Required caracteristique '" + req.getNom() + "' is missing");
+                }
+            }
+        }
 
         Evenement saved = evenementRepository.save(event);
 
@@ -324,6 +346,15 @@ public class EvenementService {
         }
         event.setStatut("valide");
         Evenement saved = evenementRepository.save(event);
+
+        notificationService.create(
+                event.getOrganisateur().getCodeUtilisateur(),
+                "Événement approuvé",
+                "Votre événement \"" + event.getTitre() + "\" a été approuvé par l'administrateur.",
+                "EVENT_APPROVED",
+                String.valueOf(id)
+        );
+
         log.info("Event validated: id={}", id);
         return toDTO(saved);
     }
@@ -338,6 +369,15 @@ public class EvenementService {
         }
         event.setStatut("suspendu");
         Evenement saved = evenementRepository.save(event);
+
+        notificationService.create(
+                event.getOrganisateur().getCodeUtilisateur(),
+                "Événement suspendu",
+                "Votre événement \"" + event.getTitre() + "\" a été suspendu par l'administrateur.",
+                "EVENT_SUSPENDED",
+                String.valueOf(id)
+        );
+
         log.info("Event suspended: id={}", id);
         return toDTO(saved);
     }
@@ -368,7 +408,7 @@ public class EvenementService {
         // Get all reservations for this event
         List<Reservation> reservations = reservationRepository.findByEvenementId(id);
         
-        // Process automatic refunds
+        // Process automatic refunds + notify affected clients
         for (Reservation reservation : reservations) {
             try {
                 paiementService.rembourserReservation(reservation.getIdReservation(), 
@@ -379,6 +419,13 @@ public class EvenementService {
                 log.error("Error processing refund for reservation {}: {}", 
                         reservation.getIdReservation(), e.getMessage());
             }
+            notificationService.create(
+                    reservation.getClient().getCodeUtilisateur(),
+                    "Événement annulé",
+                    "L'événement \"" + event.getTitre() + "\" a été annulé. Votre réservation #" + reservation.getIdReservation() + " a été remboursée.",
+                    "EVENT_CANCELLED",
+                    String.valueOf(id)
+            );
         }
         
         event.setStatut("annule");

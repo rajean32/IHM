@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../core/api/dio_config.dart';
+import '../../core/services/notification_service.dart';
+import '../../widgets/notification_bell.dart';
 import 'dashboard_page.dart';
 import 'event_page.dart';
 import 'profile_page.dart';
@@ -14,6 +17,20 @@ class OrganizerLayout extends StatefulWidget {
 
 class _OrganizerLayoutState extends State<OrganizerLayout> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (userCode != null) {
+      NotificationManager.connect(userCode!, null);
+    }
+  }
+
+  @override
+  void dispose() {
+    NotificationManager.disconnect();
+    super.dispose();
+  }
 
   void _navigateToTicket(int eventId) {
     setState(() => _currentIndex = 2);
@@ -32,6 +49,9 @@ class _OrganizerLayoutState extends State<OrganizerLayout> {
           const SizedBox(width: 8),
           const Text('Ontik - Organisateur'),
         ]),
+        actions: const [
+          NotificationBell(),
+        ],
       ),
       body: IndexedStack(
         index: _currentIndex,

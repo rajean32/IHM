@@ -119,7 +119,9 @@ public class UtilisateurService {
         user.setDateDeNaissance(dto.getDateDeNaissance());
         user.setEmail(dto.getEmail());
         user.setTel(dto.getTel());
-        user.setMotDePasse(passwordEncoder.encode(dto.getMotDePasse()));
+        if (dto.getMotDePasse() != null) {
+            user.setMotDePasse(passwordEncoder.encode(dto.getMotDePasse()));
+        }
         if (dto.getCodeAdministrateur() != null) {
             Administrateur admin = administrateurRepository.findByCodeAdministrateur(dto.getCodeAdministrateur())
                     .orElseThrow(() -> new ResourceNotFoundException("Administrateur", "codeAdministrateur", dto.getCodeAdministrateur()));
@@ -147,6 +149,7 @@ public class UtilisateurService {
             user.setEmail(dto.getEmail());
         }
         if (dto.getTel() != null) user.setTel(dto.getTel());
+        if (dto.getVille() != null) user.setVille(dto.getVille());
         if (dto.getMotDePasse() != null) user.setMotDePasse(passwordEncoder.encode(dto.getMotDePasse()));
         if (dto.getCodeAdministrateur() != null) {
             Administrateur admin = administrateurRepository.findByCodeAdministrateur(dto.getCodeAdministrateur())
@@ -467,6 +470,7 @@ public class UtilisateurService {
         dto.setDateDeNaissance(user.getDateDeNaissance());
         dto.setEmail(user.getEmail());
         dto.setTel(user.getTel());
+        dto.setVille(user.getVille());
         if (user.getAdministrateur() != null) {
             dto.setCodeAdministrateur(user.getAdministrateur().getCodeAdministrateur());
         }

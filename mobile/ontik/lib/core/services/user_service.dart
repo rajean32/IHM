@@ -9,4 +9,7 @@ class UserService {
   Future<void> deleteUser(String code) => _api.deleteUser(code);
   Future<Map<String, dynamic>> getOrganizerProfile(String code) => _api.getOrganizerProfile(code);
   Future<void> updateOrganizerProfile(String code, Map<String, dynamic> data) => _api.updateOrganizerProfile(code, data);
+  Future<Map<String, dynamic>> getUserProfile(String code) => _api.getUserProfile(code);
+  Future<void> updateUserProfile(String code, Map<String, dynamic> data) => _api.updateUserProfile(code, data);
+  Future<List<dynamic>> getUserPayments(String code) => _api.getUserPayments(code);
 }

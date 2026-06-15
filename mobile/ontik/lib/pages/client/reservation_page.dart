@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../models/evenement_model.dart';
 import '../../models/lieu_model.dart';
 import '../../core/services/evenement_service.dart';
@@ -8,7 +9,6 @@ import '../../core/routes/client_routes.dart';
 import '../../widgets/seat_picker.dart';
 import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
-import '../../models/paiement_request_model.dart';
 
 class ReservationPage extends StatefulWidget {
   final int eventId;
@@ -26,6 +26,7 @@ class _ReservationPageState extends State<ReservationPage> {
   String? _error;
   final List<Map<String, dynamic>> _selectedSeats = [];
   final Map<int, int> _zoneQuantities = {};
+  String? _selectedBlockType;
 
   double get _totalAmount {
     final seatTotal = _selectedSeats.fold(0.0, (sum, s) => sum + ((s['prix'] as num?)?.toDouble() ?? 0.0));
@@ -82,6 +83,29 @@ class _ReservationPageState extends State<ReservationPage> {
         _isLoading = false;
       });
     }
+  }
+
+  Set<String> get _blockTypes {
+    return _availableSeats.map((s) => s.typePlace ?? 'STANDARD').toSet();
+  }
+
+  Color _blockColor(String type) {
+    return AppConstants.placeTypeColors[type] ?? AppColors.textMuted;
+  }
+
+  String _blockLabel(String type) {
+    return type.toUpperCase();
+  }
+
+  double _blockPrice(String type) {
+    final seatsOfType = _availableSeats.where((s) => s.typePlace == type).toList();
+    if (seatsOfType.isEmpty) return 0;
+    final prices = seatsOfType.map((s) => s.prix ?? 0.0).toSet().toList()..sort();
+    return prices.isNotEmpty ? prices.first : 0;
+  }
+
+  int _blockCount(String type) {
+    return _availableSeats.where((s) => s.typePlace == type).length;
   }
 
   void _onSeatsSelected(List<SeatingPlace> seats) {
@@ -160,10 +184,28 @@ class _ReservationPageState extends State<ReservationPage> {
     );
   }
 
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    try {
+      return DateFormat('d MMMM yyyy', 'fr').format(date).toUpperCase();
+    } catch (_) {
+      return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Choisir les places')),
+      appBar: AppBar(
+        title: const Text('Event Details'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Partager',
+            onPressed: () {},
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -172,69 +214,286 @@ class _ReservationPageState extends State<ReservationPage> {
                   ? const Center(child: Text('Événement non trouvé'))
                   : Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _event!.titre,
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.event_seat, size: 16),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '$_totalItems place(s) sélectionnée(s)',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    'Ar ${_totalAmount.toStringAsFixed(2)}',
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.secondary),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Divider(),
-                        Expanded(
-                          child: _isStandingOnly
-                              ? _buildStandingZones()
-                              : _isMixed
-                                  ? _buildMixedLayout()
-                                  : _buildSeatPicker(),
-                        ),
-                        SafeArea(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: _hasSelection ? _proceedToPayment : null,
-                                child: Text('Payer (Ar ${_totalAmount.toStringAsFixed(2)})'),
-                              ),
-                            ),
-                          ),
-                        ),
+                        _buildEventSummary(),
+                        Expanded(child: _buildContent()),
+                        _buildFooter(),
                       ],
                     ),
     );
   }
 
-  Widget _buildSeatPicker() {
-    if (_availableSeats.isEmpty) {
-      return const Center(child: Text('Aucune place assise disponible'));
-    }
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: SeatPicker(
-        seats: _availableSeats,
-        onSeatsSelected: _onSeatsSelected,
+  Widget _buildEventSummary() {
+    final event = _event!;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.titre,
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  [event.lieuNom, event.lieuVille].where((s) => s != null && s.isNotEmpty).join(', '),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.accent,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              _formatDate(event.dateEvenement),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isStandingOnly) return _buildStandingZones();
+    if (_isMixed) return _buildMixedLayout();
+    return _buildSeatedLayout();
+  }
+
+  Widget _buildSeatedLayout() {
+    if (_availableSeats.isEmpty) {
+      return const Center(child: Text('Aucune place disponible'));
+    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      child: Column(
+        children: [
+          _buildMapArea(),
+          const SizedBox(height: 16),
+          _buildLegend(),
+          const SizedBox(height: 16),
+          if (_selectedBlockType != null) _buildSeatPickerForBlock(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMapArea() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          // Stage indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.primaryDark,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.theater_comedy, size: 16, color: Colors.white70),
+                SizedBox(width: 8),
+                Text(
+                  'SCÈNE / STAGE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Blocks grid
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+            children: _blockTypes.map((type) => _buildBlock(type)).toList(),
+          ),
+          const SizedBox(height: 16),
+          // Instruction
+          Text(
+            _selectedBlockType != null
+                ? 'Sélectionnez vos places dans le bloc ${_blockLabel(_selectedBlockType!)}'
+                : 'Sélectionnez un bloc pour voir les places disponibles',
+            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBlock(String type) {
+    final isActive = _selectedBlockType == type;
+    final color = _blockColor(type);
+    final price = _blockPrice(type);
+    final count = _blockCount(type);
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedBlockType = _selectedBlockType == type ? null : type;
+          _selectedSeats.clear();
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 90,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isActive ? color : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive ? color : AppColors.ticketBorder,
+            width: isActive ? 1.5 : 1,
+          ),
+          boxShadow: isActive
+              ? [BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))]
+              : null,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.event_seat,
+              size: 22,
+              color: isActive ? Colors.white : color,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _blockLabel(type),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: isActive ? Colors.white : color,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${count} places',
+              style: TextStyle(
+                fontSize: 9,
+                color: isActive ? Colors.white70 : AppColors.textMuted,
+              ),
+            ),
+            if (price > 0)
+              Text(
+                '${AppConstants.currency}${price.toStringAsFixed(0)}',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: isActive ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegend() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: _blockTypes.map((type) {
+        final color = _blockColor(type);
+        final price = _blockPrice(type);
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 10, height: 10, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(width: 4),
+              Text(
+                '${_blockLabel(type)} (${AppConstants.currency}${price.toStringAsFixed(0)})',
+                style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildSeatPickerForBlock() {
+    if (_availableSeats.isEmpty) {
+      return const Center(child: Text('Aucune place disponible dans ce bloc'));
+    }
+
+    final filteredSeats = _selectedBlockType != null
+        ? _availableSeats.where((s) => s.typePlace == _selectedBlockType).toList()
+        : _availableSeats;
+
+    if (filteredSeats.isEmpty) {
+      return const Center(child: Text('Aucune place disponible dans ce bloc'));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.visibility, size: 18, color: AppColors.textSecondary),
+            const SizedBox(width: 6),
+            const Text(
+              'Vue depuis le bloc',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Container(
+          height: 160,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.ticketBorder),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(11),
+            child: SeatPicker(
+              seats: filteredSeats,
+              onSeatsSelected: _onSeatsSelected,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -243,33 +502,31 @@ class _ReservationPageState extends State<ReservationPage> {
       return const Center(child: Text('Aucune zone debout disponible'));
     }
     return ListView(
-      padding: const EdgeInsets.all(16),
-      children: _standingZones.map((zone) => _buildZoneCard(zone)).toList(),
+      padding: const EdgeInsets.all(20),
+      children: [
+        ..._standingZones.map((zone) => _buildZoneCard(zone)),
+      ],
     );
   }
 
   Widget _buildMixedLayout() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_availableSeats.isNotEmpty) ...[
-            const Text('Places assises', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 300,
-              child: SeatPicker(
-                seats: _availableSeats,
-                onSeatsSelected: _onSeatsSelected,
-              ),
-            ),
-            const Divider(height: 24),
+            _buildMapArea(),
+            const SizedBox(height: 16),
+            _buildLegend(),
+            const SizedBox(height: 16),
+            if (_selectedBlockType != null) _buildSeatPickerForBlock(),
+            const Divider(height: 32),
           ],
           if (_standingZones.isNotEmpty) ...[
-            const Text('Zones debout', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            ..._standingZones.map((zone) => _buildZoneCard(zone)),
+            const Text('Zones debout', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            const SizedBox(height: 10),
+            ..._standingZones.map((zone) => _buildZoneCard(zone)).toList(),
           ],
         ],
       ),
@@ -283,65 +540,145 @@ class _ReservationPageState extends State<ReservationPage> {
         ? ((zone.capacite! - (remaining ?? 0)) / zone.capacite!)
         : 0.0;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.accessibility_new, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(zone.nom, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.ticketBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                Text('Ar ${zone.prix.toStringAsFixed(2)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.secondary)),
-              ],
+                child: const Icon(Icons.accessibility_new, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(zone.nom, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                    if (zone.capacite != null)
+                      Text(
+                        '$remaining place(s) restante(s) sur ${zone.capacite}',
+                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      )
+                    else
+                      const Text('Places illimitées', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+              Text(
+                '${AppConstants.currency}${zone.prix.toStringAsFixed(0)}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.primary),
+              ),
+            ],
+          ),
+          if (zone.capacite != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 5,
+                backgroundColor: AppColors.surface,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  progress > 0.8 ? AppColors.error : AppColors.secondary,
+                ),
+              ),
             ),
-            if (zone.capacite != null) ...[
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: AppColors.surface,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    progress > 0.8 ? AppColors.error : AppColors.secondary,
+          ],
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                onPressed: qty > 0 ? () => _onZoneQuantityChanged(zone.idZone!, -1) : null,
+                icon: const Icon(Icons.remove_circle_outline),
+                color: AppColors.primary,
+              ),
+              Container(
+                width: 36,
+                alignment: Alignment.center,
+                child: Text('$qty', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              ),
+              IconButton(
+                onPressed: () => _onZoneQuantityChanged(zone.idZone!, 1),
+                icon: const Icon(Icons.add_circle_outline),
+                color: AppColors.primary,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('PLACES SÉLECTIONNÉES', style: TextStyle(fontSize: 10, color: AppColors.textMuted, letterSpacing: 0.5)),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$_totalItems billet(s)',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'TOTAL ESTIMÉ  ${AppConstants.currency}${_totalAmount.toStringAsFixed(0)}',
+                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 44,
+              child: ElevatedButton(
+                onPressed: _hasSelection ? _proceedToPayment : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+                child: Text(
+                  'Confirmer la sélection',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _hasSelection ? Colors.white : Colors.white38,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                '$remaining place(s) restante(s) sur ${zone.capacite}',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
-            ] else ...[
-              const SizedBox(height: 4),
-              Text('Places illimitées', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-            ],
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  onPressed: qty > 0 ? () => _onZoneQuantityChanged(zone.idZone!, -1) : null,
-                  icon: const Icon(Icons.remove_circle_outline),
-                  color: AppColors.primary,
-                ),
-                Container(
-                  width: 36,
-                  alignment: Alignment.center,
-                  child: Text('$qty', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-                IconButton(
-                  onPressed: () => _onZoneQuantityChanged(zone.idZone!, 1),
-                  icon: const Icon(Icons.add_circle_outline),
-                  color: AppColors.primary,
-                ),
-              ],
             ),
           ],
         ),

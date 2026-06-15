@@ -28,4 +28,20 @@ class UserApi {
   Future<void> updateOrganizerProfile(String code, Map<String, dynamic> data) async {
     await dio.put(Endpoints.organizerProfile(code), data: data);
   }
+
+  Future<Map<String, dynamic>> getUserProfile(String code) async {
+    final resp = await dio.get('${Endpoints.utilisateurs}/$code');
+    return resp.data['data'] as Map<String, dynamic>;
+  }
+
+  Future<void> updateUserProfile(String code, Map<String, dynamic> data) async {
+    await dio.put('${Endpoints.utilisateurs}/$code', data: data);
+  }
+
+  Future<List<dynamic>> getUserPayments(String code) async {
+    final resp = await dio.get('${Endpoints.paiements}/client/$code');
+    final data = resp.data['data'];
+    if (data is List) return data;
+    return [];
+  }
 }

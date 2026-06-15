@@ -99,7 +99,7 @@ public class StandingZoneService {
 
     @Transactional
     public void incrementReservation(Integer idZone) {
-        ZoneStanding zone = zoneStandingRepository.findById(idZone)
+        ZoneStanding zone = zoneStandingRepository.findByIdWithLock(idZone)
                 .orElseThrow(() -> new ResourceNotFoundException("ZoneStanding", "idZone", idZone));
 
         if (zone.getCapacite() != null && zone.getReservationsActuelles() >= zone.getCapacite()) {

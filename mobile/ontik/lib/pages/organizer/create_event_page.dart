@@ -13,9 +13,12 @@ import '../../models/lieu_model.dart';
 import '../../models/categorie_model.dart';
 import '../../models/caracteristique_model.dart';
 import '../../core/assets/app_colors.dart';
-import '../../widgets/event_image_widget.dart';
-import 'pricing_page.dart';
 import '../../core/utils/error_helper.dart';
+import 'create_event_page/step_1_general.dart';
+import 'create_event_page/step_2_date_time.dart';
+import 'create_event_page/step_3_location.dart';
+import 'create_event_page/step_4_pricing.dart';
+import 'create_event_page/step_5_summary.dart';
 
 const _steps = ['Infos', 'Date & Heure', 'Lieu & Places', 'Prix', 'Récapitulatif'];
 
@@ -195,8 +198,27 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   Duration get _dureeCalculee => Duration(hours: _dureeHeures, minutes: _dureeMinutes);
 
-  bool get _step1Valid => _titreCtrl.text.trim().isNotEmpty && _selectedCategorie != null;
+  bool get _step1Valid => _titreCtrl.text.trim().isNotEmpty && _selectedCategorie != null && _requiredCaracteristiquesValid;
+
   bool get _step2Valid => _selectedDate != null && _selectedHeureDebut != null;
+
+  bool get _requiredCaracteristiquesValid {
+    for (final c in _caracteristiques) {
+      if (!c.obligatoire || c.idCaracteristique == null) continue;
+      switch (c.typeDonnee) {
+        case 'boolean':
+          break;
+        case 'select':
+          final value = _caracDropdownValues[c.idCaracteristique!];
+          if (value == null || value.isEmpty) return false;
+          break;
+        default:
+          final value = _caracControllers[c.idCaracteristique!]?.text.trim() ?? '';
+          if (value.isEmpty) return false;
+      }
+    }
+    return true;
+  }
 
   Future<void> _loadSalles(String lieuCode) async {
     setState(() { if (!_isEditing) _selectedSalle = null; _loadingSalles = true; });
@@ -272,63 +294,6 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   void _removeStandingZone(int index) {
     setState(() => _standingZones.removeAt(index));
-  }
-
-  Widget _buildCaracteristiquesInputs() {
-    if (_caracteristiques.isEmpty) return const SizedBox.shrink();
-    final cat = _categories.where((c) => c.codeCategorie == _selectedCategorie).firstOrNull;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Divider(),
-      Text('Caractéristiques ${cat != null ? '- ${cat.nomCategorie}' : ''}',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 8),
-      ..._caracteristiques.map((c) {
-        final id = c.idCaracteristique!;
-        final label = '${c.nom}${c.obligatoire ? ' *' : ''}';
-        switch (c.typeDonnee) {
-          case 'boolean':
-            return SwitchListTile(
-              title: Text(label, style: const TextStyle(fontSize: 14)),
-              value: _caracBooleanValues[id] ?? false,
-              onChanged: (v) => setState(() => _caracBooleanValues[id] = v),
-            );
-          case 'select':
-            final options = (c.options ?? '').split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-            return DropdownButtonFormField<String>(
-              value: (_caracDropdownValues[id]?.isNotEmpty == true) ? _caracDropdownValues[id] : null,
-              isExpanded: true,
-              decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-              items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-              onChanged: (v) => setState(() => _caracDropdownValues[id] = v ?? ''),
-            );
-          case 'number':
-            return TextFormField(
-              controller: _caracControllers[id]!,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-            );
-          case 'date':
-            return InkWell(
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context, initialDate: DateTime.now(),
-                  firstDate: DateTime(2020), lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (picked != null) { _caracControllers[id]!.text = picked.toIso8601String().split('T').first; setState(() {}); }
-              },
-              child: InputDecorator(
-                decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-                child: Text(_caracControllers[id]!.text.isEmpty ? 'Sélectionner une date' : _caracControllers[id]!.text),
-              ),
-            );
-          default:
-            return TextFormField(
-              controller: _caracControllers[id]!,
-              decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-            );
-        }
-      }).toList(),
-    ]);
   }
 
   List<Map<String, dynamic>> _buildCaracteristiqueValeurs() {
@@ -440,26 +405,57 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }).toList();
 
   @override
+  Future<bool> _onWillPop() async {
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+      return false;
+    }
+    final dirty = _titreCtrl.text.isNotEmpty || _descriptionCtrl.text.isNotEmpty;
+    if (!dirty) return true;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Quitter la création ?'),
+        content: const Text('Les informations saisies seront perdues.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Quitter')),
+        ],
+      ),
+    );
+    return confirm ?? false;
+  }
+
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Modifier' : 'Créer un événement')),
-      body: _dataLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                _buildStepper(),
-                Expanded(
-                  child: Form(
-                    key: _formKey,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: _buildCurrentStep(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: Text(_isEditing ? 'Modifier' : 'Créer un événement')),
+        body: _dataLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  _buildStepper(),
+                  Expanded(
+                    child: Form(
+                      key: _formKey,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: _buildCurrentStep(),
+                      ),
                     ),
                   ),
-                ),
-                _buildFooter(),
-              ],
-            ),
+                  _buildFooter(),
+                ],
+              ),
+      ),
     );
   }
 
@@ -520,742 +516,137 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }
 
   Widget _buildStep1() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Informations générales', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 16),
-      TextFormField(
-        controller: _titreCtrl,
-        decoration: const InputDecoration(labelText: 'Titre *', border: OutlineInputBorder()),
-        validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
-      ),
-      const SizedBox(height: 12),
-      TextFormField(
-        controller: _descriptionCtrl,
-        decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-        maxLines: 3,
-      ),
-      const SizedBox(height: 12),
-      InkWell(
-        onTap: () async {
-          final picked = await _imagePicker.pickImage(source: ImageSource.gallery, maxWidth: 1920, maxHeight: 1080);
-          if (picked != null) setState(() => _selectedImagePath = picked.path);
-        },
-        child: Container(
-          height: 120, width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceColor,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppTheme.textSecondary.withValues(alpha: 0.3)),
-          ),
-          child: _hasNewImage
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(File(_selectedImagePath!), height: 120, width: double.infinity, fit: BoxFit.cover),
-                )
-              : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(Icons.add_photo_alternate, size: 40, color: AppTheme.textSecondary),
-                  Text('Ajouter une affiche', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-                ]),
-        ),
-      ),
-      const SizedBox(height: 12),
-      DropdownButtonFormField<String>(
-        value: _selectedCategorie,
-        isExpanded: true,
-        decoration: const InputDecoration(labelText: 'Genre *', border: OutlineInputBorder()),
-        items: _categories.map((c) => DropdownMenuItem(value: c.codeCategorie, child: Text(c.nomCategorie))).toList(),
-        onChanged: (v) {
-          setState(() { _selectedCategorie = v; _caracteristiques = []; });
-          if (v != null) _loadCaracteristiques(v);
-        },
-        validator: (v) => v == null ? 'Requis' : null,
-      ),
-      const SizedBox(height: 12),
-      const Text('Type de placement', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 8),
-      Row(children: [
-        _buildPlacementChip('LIBRE', 'Placement\nLibre', Icons.people),
-        const SizedBox(width: 8),
-        _buildPlacementChip('NUMEROTE', 'Placement\nNuméroté', Icons.event_seat),
-        const SizedBox(width: 8),
-        _buildPlacementChip('MIXTE', 'Placement\nMixte', Icons.swap_horiz),
-      ]),
-      if (_loadingCaracteristiques)
-        const Padding(padding: EdgeInsets.only(top: 12), child: LinearProgressIndicator())
-      else
-        _buildCaracteristiquesInputs(),
-    ]);
-  }
-
-  Widget _buildPlacementChip(String value, String label, IconData icon) {
-    final selected = _typePlacement == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _typePlacement = value),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-          decoration: BoxDecoration(
-            color: selected ? AppTheme.primaryColor.withValues(alpha: 0.1) : AppTheme.surfaceColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: selected ? AppTheme.primaryColor : AppTheme.dividerColor, width: selected ? 2 : 1),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: selected ? AppTheme.primaryColor : AppTheme.textSecondary, size: 24),
-              const SizedBox(height: 6),
-              Text(label, textAlign: TextAlign.center, style: TextStyle(
-                fontSize: 11, fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                color: selected ? AppTheme.primaryColor : AppTheme.textSecondary,
-              )),
-            ],
-          ),
-        ),
-      ),
+    return buildStep1(
+      titreCtrl: _titreCtrl,
+      descriptionCtrl: _descriptionCtrl,
+      selectedCategorie: _selectedCategorie,
+      categories: _categories,
+      selectedImagePath: _selectedImagePath,
+      hasNewImage: _hasNewImage,
+      typePlacement: _typePlacement,
+      caracteristiques: _caracteristiques,
+      caracControllers: _caracControllers,
+      caracDropdownValues: _caracDropdownValues,
+      caracBooleanValues: _caracBooleanValues,
+      loadingCaracteristiques: _loadingCaracteristiques,
+      imagePicker: _imagePicker,
+      onCategorieChanged: (v) {
+        setState(() { _selectedCategorie = v; _caracteristiques = []; });
+        if (v != null) _loadCaracteristiques(v);
+      },
+      onPlacementChanged: (v) => setState(() => _typePlacement = v),
+      onImagePicked: (path) => setState(() => _selectedImagePath = path),
+      onRefresh: () => setState(() {}),
     );
   }
 
   Widget _buildStep2() {
-    final duree = _dureeCalculee;
-    final dateFin = _selectedDate != null ? _selectedDate!.add(Duration(days: _nombreJours - 1)) : null;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Date & Heure', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 16),
-      InkWell(
-        onTap: () async {
-          final picked = await showDatePicker(
-            context: context, initialDate: _selectedDate ?? DateTime.now().add(const Duration(days: 1)),
-            firstDate: _isEditing ? DateTime(2020) : DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 365)),
-          );
-          if (picked != null) setState(() => _selectedDate = picked);
-        },
-        child: InputDecorator(
-          decoration: const InputDecoration(labelText: 'Date *', border: OutlineInputBorder()),
-          child: Text(_selectedDate != null
-              ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-              : 'Sélectionner la date'),
-        ),
-      ),
-      const SizedBox(height: 12),
-      TextFormField(
-        initialValue: _nombreJours.toString(),
-        decoration: const InputDecoration(labelText: 'Nombre de jours *', border: OutlineInputBorder(),
-            helperText: '1 = un seul jour'),
-        keyboardType: TextInputType.number,
-        onChanged: (v) => setState(() => _nombreJours = int.tryParse(v) ?? 1),
-        validator: (v) {
-          final n = int.tryParse(v ?? '');
-          if (n == null || n < 1) return 'Minimum 1 jour';
-          return null;
-        },
-      ),
-      const SizedBox(height: 12),
-      InkWell(
-        onTap: () async {
-          final picked = await showTimePicker(context: context, initialTime: _selectedHeureDebut ?? TimeOfDay.now());
-          if (picked != null) setState(() => _selectedHeureDebut = picked);
-        },
-        child: InputDecorator(
-          decoration: const InputDecoration(labelText: 'Heure début *', border: OutlineInputBorder()),
-          child: Text(_selectedHeureDebut != null
-              ? '${_selectedHeureDebut!.hour.toString().padLeft(2, '0')}:${_selectedHeureDebut!.minute.toString().padLeft(2, '0')}'
-              : 'Sélectionner l\'heure'),
-        ),
-      ),
-      const SizedBox(height: 12),
-      Row(children: [
-        Expanded(
-          child: TextFormField(
-            initialValue: _dureeHeures.toString(),
-            decoration: const InputDecoration(labelText: 'Durée (heures)', border: OutlineInputBorder(), isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
-            keyboardType: TextInputType.number,
-            onChanged: (v) => setState(() => _dureeHeures = int.tryParse(v) ?? 0),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextFormField(
-            initialValue: _dureeMinutes.toString(),
-            decoration: const InputDecoration(labelText: 'Durée (minutes)', border: OutlineInputBorder(), isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
-            keyboardType: TextInputType.number,
-            onChanged: (v) => setState(() => _dureeMinutes = int.tryParse(v) ?? 0),
-          ),
-        ),
-      ]),
-      const SizedBox(height: 8),
-      Card(
-        color: AppTheme.primaryColor.withValues(alpha: 0.08),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              const Icon(Icons.timer, size: 20, color: AppTheme.primaryColor),
-              const SizedBox(width: 8),
-              Text('Durée : ${duree.inHours}h ${duree.inMinutes.remainder(60)}min',
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-            ]),
-            if (dateFin != null) ...[
-              const SizedBox(height: 4),
-              Row(children: [
-                const Icon(Icons.date_range, size: 20, color: AppTheme.primaryColor),
-                const SizedBox(width: 8),
-                Text('Du ${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year} '
-                    'au ${dateFin.day}/${dateFin.month}/${dateFin.year} ($_nombreJours jour${_nombreJours > 1 ? 's' : ''})',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              ]),
-            ],
-          ]),
-        ),
-      ),
-    ]);
+    return buildStep2(
+      selectedDate: _selectedDate,
+      nombreJours: _nombreJours,
+      selectedHeureDebut: _selectedHeureDebut,
+      dureeHeures: _dureeHeures,
+      dureeMinutes: _dureeMinutes,
+      isEditing: _isEditing,
+      onDateChanged: (v) => setState(() => _selectedDate = v),
+      onNombreJoursChanged: (v) => setState(() => _nombreJours = v),
+      onHeureChanged: (v) => setState(() => _selectedHeureDebut = v),
+      onDureeHeuresChanged: (v) => setState(() => _dureeHeures = v),
+      onDureeMinutesChanged: (v) => setState(() => _dureeMinutes = v),
+    );
   }
 
   Widget _buildStep3() {
-    final lieuxFiltres = _lieux;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Lieu & Configuration', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 16),
-      DropdownButtonFormField<String>(
-        value: _selectedLieu,
-        isExpanded: true,
-        decoration: const InputDecoration(labelText: 'Lieu / Bâtiment', border: OutlineInputBorder()),
-        items: lieuxFiltres.map((l) => DropdownMenuItem(value: l.code, child: Text(l.nomLieu))).toList(),
-        onChanged: (v) {
-          setState(() { _selectedLieu = v; _selectedSalle = null; _salles = []; });
-          if (v != null) _loadSalles(v);
-        },
-      ),
-      const SizedBox(height: 12),
-      if (_typePlacement == 'LIBRE') _buildLibreSection(),
-      if (_typePlacement == 'NUMEROTE') _buildNumeroteSection(),
-      if (_typePlacement == 'MIXTE') _buildMixteSection(),
-    ]);
-  }
-
-  Widget _buildLibreSection() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      SwitchListTile(
-        title: const Text('Sans salle spécifique', style: TextStyle(fontSize: 14)),
-        value: _salleOptionnelle,
-        onChanged: (v) => setState(() { _salleOptionnelle = v; _selectedSalle = null; _salles = []; }),
-        contentPadding: EdgeInsets.zero,
-      ),
-      if (!_salleOptionnelle && _selectedLieu != null) ...[
-        if (_loadingSalles)
-          const Center(child: CircularProgressIndicator(strokeWidth: 2))
-        else if (_salles.isEmpty)
-          Text('Aucune salle disponible', style: TextStyle(color: AppTheme.textSecondary))
-        else ...[
-          const Text('Salle', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          ..._salles.map(_buildSalleTile),
-        ],
-      ],
-      const SizedBox(height: 16),
-      const Text('Capacité', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 8),
-      SwitchListTile(
-        title: const Text('Sans limite de personnes', style: TextStyle(fontSize: 14)),
-        value: _capaciteIllimitee,
-        onChanged: (v) => setState(() => _capaciteIllimitee = v),
-        contentPadding: EdgeInsets.zero,
-      ),
-      if (!_capaciteIllimitee)
-        TextFormField(
-          controller: _capaciteLibreCtrl,
-          decoration: const InputDecoration(labelText: 'Nombre max de personnes', border: OutlineInputBorder(),
-              helperText: 'Laissez vide pour illimité'),
-          keyboardType: TextInputType.number,
-        ),
-      const SizedBox(height: 8),
-      if (_typePlacement == 'LIBRE') ...[
-        const Divider(),
-        const Text('Types de places tarifs', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        ..._placeTypes.map((type) {
-          _typePriceCtrls.putIfAbsent(type, () => TextEditingController());
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(children: [
-                Expanded(child: Text(type, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
-                SizedBox(
-                  width: 100,
-                  child: TextField(
-                    controller: _typePriceCtrls[type]!,
-                    decoration: const InputDecoration(hintText: 'Prix', border: OutlineInputBorder(), isDense: true,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8), prefixText: 'Ar '),
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-              ]),
-            ),
-          );
-        }),
-      ],
-      _buildPlaceTypeManager(),
-    ]);
-  }
-
-  Widget _buildNumeroteSection() {
-    if (_selectedLieu == null) return const SizedBox.shrink();
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      if (_loadingSalles)
-        const Center(child: CircularProgressIndicator(strokeWidth: 2))
-      else if (_salles.isEmpty)
-        Text('Aucune salle disponible', style: TextStyle(color: AppTheme.textSecondary))
-      else ...[
-        const Text('Salle *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        ..._salles.map(_buildSalleTile),
-      ],
-      _buildPlaceTypeManager(),
-    ]);
-  }
-
-  Widget _buildMixteSection() {
-    if (_selectedLieu == null) return const SizedBox.shrink();
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      if (_loadingSalles)
-        const Center(child: CircularProgressIndicator(strokeWidth: 2))
-      else if (_salles.isEmpty)
-        Text('Aucune salle disponible', style: TextStyle(color: AppTheme.textSecondary))
-      else ...[
-        const Text('Salle *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        ..._salles.map(_buildSalleTile),
-      ],
-      _buildPlaceTypeManager(),
-      const SizedBox(height: 16),
-      const Divider(),
-      const Text('Zones debout', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 8),
-      ..._standingZones.asMap().entries.map((entry) {
-        final i = entry.key;
-        final z = entry.value;
-        return Card(
-          margin: const EdgeInsets.only(bottom: 6),
-          child: ListTile(
-            dense: true,
-            title: Text(z['nom'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(
-              '${z['capacite'] != null ? '${z['capacite']} pers. max' : 'Sans limite'}'
-              ' — Ar ${(z['prix'] as num).toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 12),
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-              onPressed: () => _removeStandingZone(i),
-            ),
-          ),
-        );
-      }),
-      _buildAddZoneForm(),
-    ]);
-  }
-
-  Widget _buildAddZoneForm() {
-    return Card(
-      margin: const EdgeInsets.only(top: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Ajouter une zone debout', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _zoneNomCtrl,
-            decoration: const InputDecoration(labelText: 'Nom de la zone', border: OutlineInputBorder(), isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10), hintText: 'Fosse, Balcon...'),
-            style: const TextStyle(fontSize: 13),
-          ),
-          const SizedBox(height: 8),
-          Row(children: [
-            Expanded(
-              child: TextField(
-                controller: _zoneCapaciteCtrl,
-                decoration: const InputDecoration(labelText: 'Capacité max', border: OutlineInputBorder(), isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
-                keyboardType: TextInputType.number,
-                enabled: !_zoneCapaciteIllimitee,
-                style: const TextStyle(fontSize: 13),
-              ),
-            ),
-            const SizedBox(width: 8),
-            TextButton(
-              onPressed: () => setState(() => _zoneCapaciteIllimitee = !_zoneCapaciteIllimitee),
-              child: Text(_zoneCapaciteIllimitee ? 'Illimité' : 'Limitée', style: const TextStyle(fontSize: 12)),
-            ),
-          ]),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _zonePrixCtrl,
-            decoration: const InputDecoration(labelText: 'Prix unitaire (Ar)', border: OutlineInputBorder(), isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
-            keyboardType: TextInputType.number,
-            style: const TextStyle(fontSize: 13),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              onPressed: _zoneNomCtrl.text.trim().isEmpty ? null : _addStandingZone,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Ajouter la zone', style: TextStyle(fontSize: 12)),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-
-  Widget _buildSalleTile(Map<String, dynamic> s) {
-    final id = s['numeroSalle'] as String? ?? '';
-    final nom = s['nomSalle'] as String? ?? id;
-    final capacite = s['capacite'];
-    final selected = _selectedSalle == id;
-    return GestureDetector(
-      onTap: () {
-        setState(() { _selectedSalle = id; });
+    return buildStep3(
+      selectedLieu: _selectedLieu,
+      lieux: _lieux,
+      selectedSalle: _selectedSalle,
+      salles: _salles,
+      loadingSalles: _loadingSalles,
+      typePlacement: _typePlacement,
+      salleOptionnelle: _salleOptionnelle,
+      capaciteIllimitee: _capaciteIllimitee,
+      capaciteLibreCtrl: _capaciteLibreCtrl,
+      placeTypes: _placeTypes,
+      typePriceCtrls: _typePriceCtrls,
+      standingZones: _standingZones,
+      zoneNomCtrl: _zoneNomCtrl,
+      zoneCapaciteCtrl: _zoneCapaciteCtrl,
+      zonePrixCtrl: _zonePrixCtrl,
+      zoneCapaciteIllimitee: _zoneCapaciteIllimitee,
+      newPlaceTypeCtrl: _newPlaceTypeCtrl,
+      places: _places,
+      onLieuChanged: (v) {
+        setState(() { _selectedLieu = v; _selectedSalle = null; _salles = []; });
+        if (v != null) _loadSalles(v);
+      },
+      onSalleChanged: (v) {
+        setState(() => _selectedSalle = v);
         _loadPlaces();
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.primaryColor.withValues(alpha: 0.08) : AppTheme.surfaceColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: selected ? AppTheme.primaryColor : AppTheme.dividerColor),
-        ),
-        child: Row(children: [
-          Icon(Icons.meeting_room, size: 20, color: selected ? AppTheme.primaryColor : AppTheme.textSecondary),
-          const SizedBox(width: 10),
-          Expanded(child: Text(nom, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
-          if (capacite != null) Text('$capacite pl.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-        ]),
-      ),
+      onSalleOptionnelleChanged: (v) => setState(() { _salleOptionnelle = v; _selectedSalle = null; _salles = []; }),
+      onCapaciteIllimiteeChanged: (v) => setState(() => _capaciteIllimitee = v),
+      onAddPlaceType: _addPlaceType,
+      onRemovePlaceType: _removePlaceType,
+      onAddStandingZone: _addStandingZone,
+      onRemoveStandingZone: _removeStandingZone,
+      onToggleCapaciteIllimitee: (v) => setState(() => _zoneCapaciteIllimitee = v),
+      onRefresh: () => setState(() {}),
     );
-  }
-
-  Widget _buildPlaceTypeManager() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const SizedBox(height: 16),
-      const Text('Types de places', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 4),
-      Text('Créez les catégories de places (Standard, VIP, Fosse, Balcon...)',
-          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-      const SizedBox(height: 8),
-      Wrap(spacing: 8, runSpacing: 8, children: _placeTypes.map((type) {
-        final isDefault = type == 'Standard' || type == 'VIP';
-        return Chip(
-          label: Text(type, style: TextStyle(fontSize: 12, color: isDefault ? Colors.white : null)),
-          backgroundColor: isDefault ? AppTheme.primaryColor : AppTheme.surfaceColor,
-          deleteIcon: isDefault ? null : const Icon(Icons.close, size: 16),
-          onDeleted: isDefault ? null : () => _removePlaceType(type),
-        );
-      }).toList()),
-      const SizedBox(height: 8),
-      Row(children: [
-        Expanded(
-          child: TextField(
-            controller: _newPlaceTypeCtrl,
-            decoration: const InputDecoration(hintText: 'Nouveau type...', border: OutlineInputBorder(), isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
-            style: const TextStyle(fontSize: 13),
-          ),
-        ),
-        const SizedBox(width: 8),
-        IconButton.filled(
-          onPressed: _addPlaceType,
-          icon: const Icon(Icons.add, size: 20),
-        ),
-      ]),
-    ]);
   }
 
   Widget _buildStep4() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Tarification', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 4),
-      Text('Définissez le prix pour chaque type de place.',
-          style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-      const SizedBox(height: 16),
-      if (_typePlacement == 'LIBRE') ...[
-        ..._placeTypes.map(_buildPriceCard),
-        if (_standingZones.isNotEmpty) ...[
-          const Divider(),
-          const Text('Zones debout', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          ..._standingZones.map((z) => Card(
-            margin: const EdgeInsets.only(bottom: 6),
-            child: ListTile(
-              dense: true,
-              title: Text(z['nom'] as String),
-              trailing: Text('Ar ${(z['prix'] as num).toStringAsFixed(2)}',
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-            ),
-          )),
-        ],
-      ],
-      if (_typePlacement == 'NUMEROTE' || _typePlacement == 'MIXTE') ...[
-        if (_selectedSalle == null)
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text('Veuillez d\'abord sélectionner une salle à l\'étape précédente.',
-                style: TextStyle(color: AppTheme.textSecondary)),
-          )
-        else ...[
-          ..._placeTypes.map(_buildPriceCard),
-          const SizedBox(height: 8),
-          if (_places.isNotEmpty) ...[
-            const Text('Configurer le plan de salle', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            _buildRowSelector(),
-            const SizedBox(height: 4),
-            InkWell(
-              onTap: () => setState(() => _gridExpanded = !_gridExpanded),
-              child: Row(children: [
-                Icon(_gridExpanded ? Icons.expand_less : Icons.expand_more, size: 18),
-                Text('Places individuelles', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.primaryColor)),
-                const SizedBox(width: 8),
-                Text('${_selectedPlaceIds.length} sélectionnée(s)', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-              ]),
-            ),
-            if (_gridExpanded) ...[const SizedBox(height: 4), _buildSeatGrid()],
-            const SizedBox(height: 8),
-            Row(children: [
-              Expanded(child: DropdownButtonFormField<String>(
-                value: _availableTypes.contains(_assignType) ? _assignType : null,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder(), isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6)),
-                items: _availableTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(fontSize: 12)))).toList(),
-                onChanged: (v) => setState(() => _assignType = v!),
-              )),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: _selectedRows.isEmpty && _selectedPlaceIds.isEmpty ? null : _addPendingAssignment,
-                child: const Text('Affecter', style: TextStyle(fontSize: 12)),
-              ),
-            ]),
-            if (_pendingRowAssignments.isNotEmpty || _pendingPlaceAssignments.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Icon(Icons.pending, size: 14, color: AppTheme.primaryColor),
-                      const SizedBox(width: 4),
-                      Text('Assignations (${_pendingRowAssignments.length + _pendingPlaceAssignments.length})',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.primaryColor)),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => setState(() { _pendingRowAssignments.clear(); _pendingPlaceAssignments.clear(); }),
-                        child: Text('Effacer', style: TextStyle(fontSize: 10, color: AppTheme.errorColor)),
-                      ),
-                    ]),
-                    ..._pendingRowAssignments.entries.map((e) => Text('  Rangée ${e.key} → ${e.value}', style: const TextStyle(fontSize: 10))),
-                    ..._pendingPlaceAssignments.entries.map((e) => Text('  Place ${e.key} → ${e.value}', style: const TextStyle(fontSize: 10))),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ],
-      ],
-      if (_typePlacement == 'MIXTE') ...[
-        const Divider(),
-        const Text('Zones debout', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        ..._standingZones.asMap().entries.map((entry) {
-          final i = entry.key;
-          final z = entry.value;
-          return Card(
-            margin: const EdgeInsets.only(bottom: 6),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(children: [
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(z['nom'] as String, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                    Text(z['capacite'] != null ? '${z['capacite']} pers. max' : 'Sans limite',
-                        style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                  ]),
-                ),
-                Text('Ar ${(z['prix'] as num).toStringAsFixed(2)}',
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(width: 4),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                  onPressed: () => _removeStandingZone(i),
-                ),
-              ]),
-            ),
-          );
-        }),
-      ],
-    ]);
-  }
-
-  Widget _buildPriceCard(String type) {
-    _typePriceCtrls.putIfAbsent(type, () => TextEditingController());
-    final count = _places.where((p) => (p.typePlace ?? 'Standard') == type).length;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(type, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              if (_typePlacement != 'LIBRE')
-                Text('$count place(s)', style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-            ]),
-          ),
-          SizedBox(
-            width: 100,
-            child: TextField(
-              controller: _typePriceCtrls[type]!,
-              decoration: const InputDecoration(
-                hintText: 'Prix', border: OutlineInputBorder(), isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                prefixText: 'Ar ',
-              ),
-              keyboardType: TextInputType.number,
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-        ]),
-      ),
+    return buildStep4(
+      typePlacement: _typePlacement,
+      placeTypes: _placeTypes,
+      typePriceCtrls: _typePriceCtrls,
+      standingZones: _standingZones,
+      selectedSalle: _selectedSalle,
+      places: _places,
+      selectedRows: _selectedRows,
+      selectedPlaceIds: _selectedPlaceIds,
+      assignType: _assignType,
+      availableTypes: _availableTypes,
+      gridExpanded: _gridExpanded,
+      pendingRowAssignments: _pendingRowAssignments,
+      pendingPlaceAssignments: _pendingPlaceAssignments,
+      onAssignTypeChanged: (v) => setState(() => _assignType = v),
+      onAddPendingAssignment: _addPendingAssignment,
+      onClearPendingAssignments: () => setState(() { _pendingRowAssignments.clear(); _pendingPlaceAssignments.clear(); }),
+      onToggleRow: (v) => setState(() { if (_selectedRows.contains(v)) _selectedRows.remove(v); else _selectedRows.add(v); }),
+      onTogglePlace: (v) => setState(() { if (_selectedPlaceIds.contains(v)) _selectedPlaceIds.remove(v); else _selectedPlaceIds.add(v); }),
+      onToggleGridExpanded: (v) => setState(() => _gridExpanded = v),
+      onRemoveStandingZone: _removeStandingZone,
+      onRefresh: () => setState(() {}),
     );
   }
 
-  Widget _buildRowSelector() {
-    final rangs = _places.map((p) => p.range).whereType<String>().toSet().toList()..sort();
-    if (rangs.isEmpty) return const Text('Aucune rangée', style: TextStyle(color: AppTheme.textSecondary));
-    return Wrap(spacing: 6, runSpacing: 4, children: rangs.map((rang) {
-      final selected = _selectedRows.contains(rang);
-      final count = _places.where((p) => p.range == rang).length;
-      return FilterChip(
-        label: Text('$rang ($count)', style: TextStyle(fontSize: 11, color: selected ? Colors.white : null)),
-        selected: selected,
-        onSelected: (v) { setState(() { if (v) _selectedRows.add(rang); else _selectedRows.remove(rang); }); },
-      );
-    }).toList());
-  }
-
-  Widget _buildSeatGrid() {
-    final rangs = _places.map((p) => p.range).whereType<String>().toSet().toList()..sort();
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rangs.map((rang) {
-      final rowPlaces = _places.where((p) => p.range == rang).toList()..sort((a, b) => a.numeroPlace.compareTo(b.numeroPlace));
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Rangée $rang', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-          const SizedBox(height: 2),
-          Wrap(spacing: 3, runSpacing: 3, children: rowPlaces.map((p) {
-            final selected = _selectedPlaceIds.contains(p.numeroPlace);
-            return GestureDetector(
-              onTap: () => setState(() { if (selected) _selectedPlaceIds.remove(p.numeroPlace); else _selectedPlaceIds.add(p.numeroPlace); }),
-              child: Container(
-                width: 34, height: 26,
-                decoration: BoxDecoration(
-                  color: selected ? AppTheme.primaryColor.withValues(alpha: 0.3) : AppTheme.surfaceColor,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: selected ? AppTheme.primaryColor : AppTheme.dividerColor, width: selected ? 2 : 0.5),
-                ),
-                child: Center(child: Text(p.numeroPlace.replaceAll(rang, ''),
-                    style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: selected ? AppTheme.primaryColor : AppTheme.textSecondary))),
-              ),
-            );
-          }).toList()),
-        ]),
-      );
-    }).toList());
-  }
-
   Widget _buildStep5() {
-    final duree = _dureeCalculee;
-    final cat = _categories.where((c) => c.codeCategorie == _selectedCategorie).firstOrNull;
-    final salle = _salles.where((s) => (s['numeroSalle'] as String?) == _selectedSalle).firstOrNull;
-    final lieu = _lieux.where((l) => l.code == _selectedLieu).firstOrNull;
-    final dateFin = _selectedDate?.add(Duration(days: _nombreJours - 1));
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Récapitulatif', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 16),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            if (_hasNewImage)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(File(_selectedImagePath!), height: 140, width: double.infinity, fit: BoxFit.cover),
-              ),
-            if (_hasNewImage) const SizedBox(height: 12),
-            Text(_titreCtrl.text, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            if (cat != null) ...[
-              const SizedBox(height: 4),
-              Text(cat.nomCategorie, style: TextStyle(color: AppTheme.textSecondary)),
-            ],
-            const Divider(),
-            _recapRow(Icons.calendar_today, _selectedDate != null
-                ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                : '—'),
-            if (dateFin != null && _nombreJours > 1)
-              _recapRow(Icons.date_range, 'Jusqu\'au ${dateFin.day}/${dateFin.month}/${dateFin.year} ($_nombreJours jours)'),
-            if (_selectedHeureDebut != null)
-              _recapRow(Icons.access_time,
-                  '${_selectedHeureDebut!.hour.toString().padLeft(2, '0')}:${_selectedHeureDebut!.minute.toString().padLeft(2, '0')}'
-                  ' — ${duree.inHours}h${duree.inMinutes.remainder(60)}min'),
-            if (lieu != null) _recapRow(Icons.location_on, lieu.nomLieu),
-            if (salle != null || (_typePlacement == 'LIBRE' && !_salleOptionnelle && _selectedSalle != null))
-              _recapRow(Icons.meeting_room, salle?['nomSalle'] as String? ?? _selectedSalle ?? ''),
-            if (_typePlacement == 'LIBRE' && !_capaciteIllimitee && _capaciteLibreCtrl.text.isNotEmpty)
-              _recapRow(Icons.people, 'Capacité : ${_capaciteLibreCtrl.text} personnes'),
-            const Divider(),
-            _recapRow(Icons.people, _typePlacement == 'LIBRE' ? 'Placement libre' : (_typePlacement == 'MIXTE' ? 'Mixte' : 'Numéroté')),
-            _recapRow(Icons.category, _placeTypes.join(', ')),
-            if (_typePlacement == 'MIXTE' && _standingZones.isNotEmpty)
-              _recapRow(Icons.accessibility_new, '${_standingZones.length} zone(s) debout'),
-            if (_typePriceCtrls.entries.any((e) => e.value.text.isNotEmpty)) ...[
-              const Divider(),
-              ..._typePriceCtrls.entries.where((e) => e.value.text.isNotEmpty).map((e) =>
-                _recapRow(Icons.monetization_on, '${e.key} : Ar ${double.tryParse(e.value.text)?.toStringAsFixed(2) ?? e.value.text}')),
-            ],
-            if (_standingZones.isNotEmpty) ...[
-              ..._standingZones.map((z) =>
-                _recapRow(Icons.accessibility_new, '${z['nom']} : Ar ${(z['prix'] as num).toStringAsFixed(2)}')),
-            ],
-            if (_caracteristiques.isNotEmpty && _buildCaracteristiqueValeurs().isNotEmpty) ...[
-              const Divider(),
-              ..._buildCaracteristiqueValeurs().map((v) {
-                final nom = _caracteristiques
-                    .where((c) => c.idCaracteristique == v['idCaracteristique'])
-                    .firstOrNull?.nom ?? '';
-                return _recapRow(Icons.info_outline, '$nom : ${v['valeur']}');
-              }),
-            ],
-          ]),
-        ),
-      ),
-    ]);
-  }
-
-  Widget _recapRow(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(children: [
-        Icon(icon, size: 16, color: AppTheme.textSecondary),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
-      ]),
+    return buildStep5(
+      titreCtrl: _titreCtrl,
+      selectedImagePath: _selectedImagePath,
+      hasNewImage: _hasNewImage,
+      selectedCategorie: _selectedCategorie,
+      categories: _categories,
+      selectedDate: _selectedDate,
+      nombreJours: _nombreJours,
+      selectedHeureDebut: _selectedHeureDebut,
+      dureeCalculee: _dureeCalculee,
+      selectedLieu: _selectedLieu,
+      lieux: _lieux,
+      selectedSalle: _selectedSalle,
+      salles: _salles,
+      typePlacement: _typePlacement,
+      salleOptionnelle: _salleOptionnelle,
+      capaciteIllimitee: _capaciteIllimitee,
+      capaciteLibreCtrl: _capaciteLibreCtrl,
+      placeTypes: _placeTypes,
+      typePriceCtrls: _typePriceCtrls,
+      standingZones: _standingZones,
+      caracteristiques: _caracteristiques,
+      caracDropdownValues: _caracDropdownValues,
+      caracControllers: _caracControllers,
+      caracBooleanValues: _caracBooleanValues,
     );
   }
 

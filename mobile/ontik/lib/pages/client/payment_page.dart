@@ -36,8 +36,7 @@ class _PaymentPageState extends State<PaymentPage> {
   String? _nomComplet;
   Map<String, String>? _carteInfo;
   String? _codePromo;
-  bool _estEtudiant = false;
-  double _reduction = 0;
+  final bool _estEtudiant = false;
   double _montantFinal = 0;
 
   @override
@@ -114,7 +113,6 @@ class _PaymentPageState extends State<PaymentPage> {
 
       if (!mounted) return;
 
-      final montantFinal = result['montantFinal'] ?? widget.amount;
       final reduction = result['reductionAppliquee'] ?? 0.0;
 
       String message = 'Réservation réussie !';
@@ -153,7 +151,6 @@ class _PaymentPageState extends State<PaymentPage> {
     if (_codePromo != null && _codePromo!.isNotEmpty) reduction += widget.amount * 0.20;
     if (reduction > widget.amount * 0.50) reduction = widget.amount * 0.50;
     setState(() {
-      _reduction = reduction;
       _montantFinal = widget.amount - reduction;
     });
   }
@@ -167,164 +164,435 @@ class _PaymentPageState extends State<PaymentPage> {
     if (isValid && code != null) _updateMontant();
   }
 
+  String get _firstTypePlace =>
+      widget.tickets.isNotEmpty
+          ? (widget.tickets.first['typePlace'] as String? ?? 'STANDARD')
+          : 'STANDARD';
+
+  String get _firstNumeroPlace =>
+      widget.tickets.isNotEmpty
+          ? (widget.tickets.first['numeroPlace'] as String? ?? '—')
+          : '—';
+
+  Color _badgeColor(String? typePlace) {
+    switch (typePlace?.toUpperCase()) {
+      case 'VIP':
+        return const Color(0xFF9C27B0);
+      case 'PREMIUM':
+        return const Color(0xFFFF6F00);
+      case 'ORCHESTRE':
+        return const Color(0xFF7B1FA2);
+      case 'BALCON':
+        return const Color(0xFF00897B);
+      case 'LOGE':
+        return const Color(0xFF5C6BC0);
+      default:
+        return const Color(0xFF00796B);
+    }
+  }
+
+  String _formatAmount(double amount) {
+    return '${amount.toStringAsFixed(0)} ${AppConstants.currency}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Paiement')),
-      body: _processing
-          ? const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Traitement du paiement...'),
+    return PopScope(
+      canPop: !_processing,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text('Event Details'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.share),
+              onPressed: () {},
+            ),
           ],
         ),
-      )
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+        body: _processing
+            ? const Center(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Montant initial:', style: TextStyle(fontSize: 16)),
-                        Text('${widget.amount.toStringAsFixed(0)} Ar',
-                            style: const TextStyle(fontSize: 16)),
-                      ],
-                    ),
-                    if (_reduction > 0) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Réduction:', style: TextStyle(color: AppColors.secondary)),
-                          Text('- ${_reduction.toStringAsFixed(0)} Ar',
-                              style: TextStyle(color: AppColors.secondary)),
-                        ],
-                      ),
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Traitement du paiement...'),
+                  ],
+                ),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildRecapHeader(),
+                    const SizedBox(height: 20),
+                    _buildSummaryCard(),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle('Mode de paiement'),
+                    const SizedBox(height: 12),
+                    _buildPaymentMethods(),
+                    const SizedBox(height: 16),
+                    _buildPaymentForm(),
+                    const SizedBox(height: 20),
+                    _buildCodePromo(),
+                    const SizedBox(height: 24),
+                    _buildSecurityBadges(),
+                    const SizedBox(height: 16),
+                    _buildLegalDisclaimer(),
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: 16),
+                      _buildErrorMessage(),
                     ],
-                    const Divider(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Total à payer:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text('${_montantFinal.toStringAsFixed(0)} Ar',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.secondary)),
-                      ],
-                    ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+        bottomNavigationBar: _processing ? null : _buildFooter(),
+      ),
+    );
+  }
 
+  Widget _buildRecapHeader() {
+    return Row(
+      children: [
+        const Expanded(
+          child: Text(
+            'Récapitulatif',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          ),
+        ),
+        _buildBadge(_firstTypePlace),
+      ],
+    );
+  }
 
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: CodePromoField(
-                  onCodeChanged: _onCodeChanged,
-                  onValidate: _onCodeValidate,
-                  eventId: widget.eventId,
+  Widget _buildBadge(String typePlace) {
+    final color = _badgeColor(typePlace);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        typePlace,
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color, letterSpacing: 0.5),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard() {
+    final seatCount = widget.tickets.length;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.ticketBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _summaryRow('SALLE', 'Événement #${widget.eventId}', AppColors.textSecondary),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          _summaryRow('PRIX', _formatAmount(_montantFinal), AppColors.primary, highlight: true),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          _summaryRow('RANG', '—', AppColors.textSecondary),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          _summaryRow('PLACE', _firstNumeroPlace, AppColors.textSecondary),
+          if (seatCount > 1) ...[
+            const Divider(height: 1, indent: 16, endIndent: 16),
+            _summaryRow('BILLETS', '$seatCount places', AppColors.textSecondary),
+          ],
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, size: 16, color: AppColors.secondary),
+                const SizedBox(width: 6),
+                Text(
+                  'Commande vérifiée',
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
-              ),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            const SizedBox(height: 16),
-
-            PaymentMethodSelector(
-              initialValue: _selectedMethod,
-              onChanged: (method) => setState(() => _selectedMethod = method),
+  Widget _summaryRow(String label, String value, Color valueColor, {bool highlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted, letterSpacing: 0.5),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: highlight ? 16 : 13,
+              fontWeight: highlight ? FontWeight.w700 : FontWeight.w600,
+              color: valueColor,
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            const SizedBox(height: 16),
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+    );
+  }
 
-            if (_selectedMethod != PaymentMethod.carte) ...[
-              Card(
+  Widget _buildPaymentMethods() {
+    final methods = [
+      ('card', 'Carte Bancaire', 'Visa, Mastercard, AMEX', Icons.credit_card, PaymentMethod.carte),
+      ('mvola', 'MVola', 'Paiement mobile MVola', Icons.phone_android, PaymentMethod.mvola),
+      ('orange', 'Orange Money', 'Paiement mobile Orange', Icons.phone_iphone, PaymentMethod.orange),
+      ('airtel', 'Airtel Money', 'Paiement mobile Airtel', Icons.phone, PaymentMethod.airtel),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.ticketBorder),
+      ),
+      child: Column(
+        children: List.generate(methods.length, (i) {
+          final (id, title, subtitle, icon, method) = methods[i];
+          final isSelected = _selectedMethod == method;
+          return Column(
+            children: [
+              if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
+              InkWell(
+                onTap: () => setState(() => _selectedMethod = method),
+                borderRadius: BorderRadius.vertical(
+                  top: i == 0 ? const Radius.circular(11) : Radius.zero,
+                  bottom: i == methods.length - 1 ? const Radius.circular(11) : Radius.zero,
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
                     children: [
-                      TextField(
-                        decoration: const InputDecoration(
-                          labelText: 'Référence de transaction',
-                          hintText: 'Ex: MV123456789',
-                          border: OutlineInputBorder(),
+                      Icon(icon, size: 22, color: isSelected ? AppColors.primary : AppColors.textMuted),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                              ),
+                            ),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                            ),
+                          ],
                         ),
-                        onChanged: (v) => _referenceTransaction = v,
                       ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        decoration: const InputDecoration(
-                          labelText: 'Numéro de téléphone',
-                          hintText: '0341234567',
-                          border: OutlineInputBorder(),
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? AppColors.primary : AppColors.textMuted,
+                            width: isSelected ? 6 : 1.5,
+                          ),
                         ),
-                        keyboardType: TextInputType.phone,
-                        onChanged: (v) => _numeroTelephone = v,
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        decoration: const InputDecoration(
-                          labelText: 'Nom complet',
-                          hintText: 'Jean Rakoto',
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (v) => _nomComplet = v,
                       ),
                     ],
                   ),
                 ),
               ),
-            ] else ...[
-              CarteBancaireForm(
-                onChanged: (carte) => _carteInfo = carte,
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildPaymentForm() {
+    if (_selectedMethod != PaymentMethod.carte) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.ticketBorder),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Référence de transaction',
+                  hintText: 'Ex: MV123456789',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                onChanged: (v) => _referenceTransaction = v,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Numéro de téléphone',
+                  hintText: '0341234567',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                keyboardType: TextInputType.phone,
+                onChanged: (v) => _numeroTelephone = v,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Nom complet',
+                  hintText: 'Jean Rakoto',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                onChanged: (v) => _nomComplet = v,
               ),
             ],
+          ),
+        ),
+      );
+    }
+    return CarteBancaireForm(
+      onChanged: (carte) => _carteInfo = carte,
+    );
+  }
 
-            const SizedBox(height: 24),
+  Widget _buildCodePromo() {
+    return CodePromoField(
+      onCodeChanged: _onCodeChanged,
+      onValidate: _onCodeValidate,
+      eventId: widget.eventId,
+    );
+  }
 
-            if (_errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline, color: AppColors.error),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(_errorMessage!, style: const TextStyle(color: AppColors.error))),
-                  ],
-                ),
-              ),
+  Widget _buildSecurityBadges() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          _badgeItem(Icons.lock, 'SECURED BY BCRYPT'),
+          const SizedBox(width: 16),
+          _badgeItem(Icons.verified_user, 'JWT PROTECTED'),
+        ],
+      ),
+    );
+  }
 
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _processPayment,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(
-                  'Payer ${_montantFinal.toStringAsFixed(0)} Ar',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
+  Widget _badgeItem(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: AppColors.textMuted),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textMuted, letterSpacing: 0.3),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegalDisclaimer() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.security, size: 14, color: AppColors.textMuted),
+        const SizedBox(width: 4),
+        Icon(Icons.verified, size: 14, color: AppColors.textMuted),
+        const SizedBox(width: 4),
+        Icon(Icons.payment, size: 14, color: AppColors.textMuted),
+        const SizedBox(width: 8),
+        const Expanded(
+          child: Text(
+            'Vos données de paiement sont cryptées de bout en bout. Nous sommes certifiés PCI-DSS Level 1.',
+            style: TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildErrorMessage() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(_errorMessage!, style: const TextStyle(fontSize: 13, color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            onPressed: _processPayment,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
-          ],
+            child: Text('Payer ${_formatAmount(_montantFinal)}'),
+          ),
         ),
       ),
     );

@@ -1,0 +1,51 @@
+# Environnement
+.env
+.env.local
+*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.metadata
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Node
+node_modules/
+front/node_modules/
+npm-debug.log*
+
+# Java / Maven
+backend/target/
+backend/*.jar
+backend/*.war
+backend/.mvn/
+*.class
+*.jar
+*.war
+
+# Flutter / Dart
+mobile/ontik/.dart_tool/
+mobile/ontik/.packages
+mobile/ontik/.pub/
+mobile/ontik/build/
+mobile/ontik/.flutter-plugins
+mobile/ontik/.flutter-plugins-dependencies
+mobile/ontik/*.iml
+mobile/ontik/pubspec.lock
+
+# Docker
+docker-data/
+
+# React build
+front/dist/
+
+# Logs
+chat.json
