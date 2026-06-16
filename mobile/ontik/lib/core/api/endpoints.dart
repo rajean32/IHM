@@ -1,5 +1,5 @@
 class Endpoints {
-  static const base = 'http://192.168.50.1:8081/api';
+  static const base = 'http://localhost:8081/api';
 
   static const login = '$base/auth/login';
   static const register = '$base/auth/register';

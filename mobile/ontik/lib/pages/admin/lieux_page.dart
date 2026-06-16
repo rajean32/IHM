@@ -5,7 +5,6 @@ import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
 import '../../models/lieu_model.dart';
-import '../../widgets/crud_list_view.dart';
 
 class LieuxPage extends StatefulWidget {
   final void Function(String? salleFilter)? onGestionPlaces;
@@ -21,6 +20,7 @@ class _LieuxPageState extends State<LieuxPage> {
   List<Salle> _allSalles = [];
   List<Place> _allPlaces = [];
   final _api = LieuService();
+  String _filter = '';
 
   @override
   void initState() { super.initState(); _loadData(); }
@@ -149,107 +149,532 @@ class _LieuxPageState extends State<LieuxPage> {
     );
   }
 
-  Future<void> _add(Map<String, dynamic> data) async {
-    await _api.createLieu(data);
-    _loadData();
-  }
-
-  void _showAddSalleDialog(Lieu lieu) {
+  void _showAddDialog() {
+    final codeCtrl = TextEditingController();
     final nomCtrl = TextEditingController();
-    showDialog(
+    final adresseCtrl = TextEditingController();
+    final villeCtrl = TextEditingController();
+
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Ajouter une salle'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nomCtrl,
-              decoration: const InputDecoration(labelText: 'Nom de la salle', border: OutlineInputBorder()),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-          ElevatedButton(
-            onPressed: () async {
-              if (nomCtrl.text.trim().isEmpty) return;
-              try {
-                await _api.createSalle({
-                  'nomSalle': nomCtrl.text.trim(),
-                  'codeLieu': lieu.code,
-                });
-                if (!ctx.mounted) return;
-                Navigator.pop(ctx);
-                _loadData();
-              } catch (e) {
-                if (!ctx.mounted) return;
-                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
-              }
-            },
-            child: const Text('Ajouter'),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (ctx, scrollCtrl) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
           ),
-        ],
+          child: SingleChildScrollView(
+            controller: scrollCtrl,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text('Ajouter un lieu',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const Divider(height: 24),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: codeCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Code lieu',
+                    border: OutlineInputBorder(),
+                    hintText: 'LIEU01',
+                  ),
+                  maxLength: 10,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nomCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 100,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: adresseCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Adresse',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 200,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: villeCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Ville',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 100,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Annuler'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (codeCtrl.text.isEmpty || nomCtrl.text.isEmpty || villeCtrl.text.isEmpty) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              const SnackBar(content: Text('Veuillez remplir tous les champs obligatoires')),
+                            );
+                            return;
+                          }
+                          try {
+                            await _api.createLieu({
+                              'code': codeCtrl.text,
+                              'nomLieu': nomCtrl.text,
+                              'adresse': adresseCtrl.text.isEmpty ? null : adresseCtrl.text,
+                              'ville': villeCtrl.text,
+                            });
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            _loadData();
+                          } catch (e) {
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Ajouter'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Future<bool> _delete(String code) async {
+  void _showEditDialog(Lieu lieu) {
+    final codeCtrl = TextEditingController(text: lieu.code);
+    final nomCtrl = TextEditingController(text: lieu.nomLieu);
+    final adresseCtrl = TextEditingController(text: lieu.adresse ?? '');
+    final villeCtrl = TextEditingController(text: lieu.ville ?? '');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (ctx, scrollCtrl) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            controller: scrollCtrl,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text('Modifier le lieu',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const Divider(height: 24),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: codeCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Code lieu',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 10,
+                  enabled: false,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nomCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 100,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: adresseCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Adresse',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 200,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: villeCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Ville',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 100,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Annuler'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (nomCtrl.text.isEmpty || villeCtrl.text.isEmpty) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              const SnackBar(content: Text('Veuillez remplir tous les champs obligatoires')),
+                            );
+                            return;
+                          }
+                          try {
+                            // Utilisation directe de dio car updateLieu n'existe pas dans LieuService
+                            await dio.put(
+                              '${Endpoints.lieux}/${lieu.code}',
+                              data: {
+                                'nomLieu': nomCtrl.text,
+                                'adresse': adresseCtrl.text.isEmpty ? null : adresseCtrl.text,
+                                'ville': villeCtrl.text,
+                              },
+                            );
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            _loadData();
+                          } catch (e) {
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Modifier'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDeleteDialog(Lieu lieu) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer le lieu'),
+        content: Text('Êtes-vous sûr de vouloir supprimer "${lieu.nomLieu}" ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Supprimer', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     try {
-      await _api.deleteLieu(code);
+      await _api.deleteLieu(lieu.code);
       _loadData();
-      return true;
-    } catch (_) { return false; }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lieu supprimé')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
+      );
+    }
+  }
+
+  void _showAddSalleDialog(Lieu lieu) {
+    final nomCtrl = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.3,
+        maxChildSize: 0.7,
+        expand: false,
+        builder: (ctx, scrollCtrl) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            controller: scrollCtrl,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text('Ajouter une salle',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const Divider(height: 24),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: nomCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom de la salle',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Annuler'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (nomCtrl.text.trim().isEmpty) return;
+                          try {
+                            await _api.createSalle({
+                              'nomSalle': nomCtrl.text.trim(),
+                              'codeLieu': lieu.code,
+                            });
+                            if (!ctx.mounted) return;
+                            Navigator.pop(ctx);
+                            _loadData();
+                          } catch (e) {
+                            if (!ctx.mounted) return;
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Ajouter'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return CrudListView(
-      title: 'Lieux',
-      showAppBar: false,
-      isLoading: _loading,
-      error: _error,
-      items: _lieux.map((l) => CrudItem(
-        id: l.code,
-        title: l.nomLieu,
-        subtitle: '${l.ville ?? ''}  •  ${l.adresse ?? ''}',
-        leading: const CircleAvatar(child: Icon(Icons.location_city)),
-        data: {'code': l.code, 'nomLieu': l.nomLieu, 'adresse': l.adresse ?? '', 'ville': l.ville ?? ''},
-      )).toList(),
-      formFields: [
-        CrudField(key: 'code', label: 'Code lieu', required: true),
-        CrudField(key: 'nomLieu', label: 'Nom', required: true),
-        CrudField(key: 'adresse', label: 'Adresse'),
-        CrudField(key: 'ville', label: 'Ville', required: true),
-      ],
-      onAdd: _add,
-      onDelete: _delete,
-      onRefresh: _loadData,
-      emptyMessage: 'Aucun lieu trouvé',
-      itemBuilder: (item, onEdit, onDelete) {
-        final lieu = _lieux.firstWhere((l) => l.code == item.id);
-        final salles = _sallesForLieu(lieu.code);
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          child: ListTile(
-            leading: item.leading,
-            title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: Text('${item.subtitle ?? ''}  •  ${salles.length} salle(s)', style: const TextStyle(fontSize: 12)),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton.icon(
-                  onPressed: () => _showSallesModal(lieu),
-                  icon: const Icon(Icons.info_outline, size: 18),
-                  label: const Text('Info', style: TextStyle(fontSize: 12)),
-                ),
-                IconButton(icon: const Icon(Icons.edit, size: 20), onPressed: onEdit),
-                IconButton(icon: const Icon(Icons.delete, size: 20, color: AppColors.error), onPressed: onDelete),
-              ],
+    final filtered = _filter.isEmpty ? _lieux : _lieux.where((l) =>
+    l.nomLieu.toLowerCase().contains(_filter.toLowerCase()) ||
+        l.code.toLowerCase().contains(_filter.toLowerCase()) ||
+        (l.ville?.toLowerCase().contains(_filter.toLowerCase()) ?? false)
+    ).toList();
+
+    return Scaffold(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(children: [
+              const Text('Lieux', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Rechercher...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onChanged: (v) => setState(() => _filter = v),
             ),
           ),
-        );
-      },
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                ? Center(child: Text(_error!))
+                : filtered.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.location_city, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
+                  const SizedBox(height: 12),
+                  const Text('Aucun lieu trouvé', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                ],
+              ),
+            )
+                : RefreshIndicator(
+              onRefresh: _loadData,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: filtered.length,
+                itemBuilder: (ctx, i) {
+                  final lieu = filtered[i];
+                  final salles = _sallesForLieu(lieu.code);
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                        child: Text(lieu.code.isNotEmpty ? lieu.code[0].toUpperCase() : '?',
+                            style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                      ),
+                      title: Text(lieu.nomLieu, style: const TextStyle(fontWeight: FontWeight.w500)),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (lieu.adresse != null && lieu.adresse!.isNotEmpty)
+                            Text(lieu.adresse!, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          Text('${lieu.ville ?? ''}  •  ${salles.length} salle(s)',
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => _showSallesModal(lieu),
+                            icon: const Icon(Icons.info_outline, size: 18),
+                            label: const Text('Info', style: TextStyle(fontSize: 11)),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 20),
+                            onPressed: () => _showEditDialog(lieu),
+                            tooltip: 'Modifier',
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, size: 20, color: AppColors.error),
+                            onPressed: () => _showDeleteDialog(lieu),
+                            tooltip: 'Supprimer',
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddDialog,
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }

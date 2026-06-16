@@ -17,12 +17,24 @@ class _UsersPageState extends State<UsersPage> {
   bool _loading = true;
   String? _error;
   List<UserDetail> _users = [];
+  List<UserDetail> _filteredUsers = [];
   List<AuditLogEntry> _auditLog = [];
   bool _showAudit = false;
   final _api = UserService();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
-  void initState() { super.initState(); _loadData(); }
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Future<void> _loadData() async {
     setState(() => _loading = true);
@@ -33,12 +45,324 @@ class _UsersPageState extends State<UsersPage> {
       if (!mounted) return;
       setState(() {
         _users = usersData.map((e) => UserDetail.fromJson(e as Map<String, dynamic>)).toList();
+        _filteredUsers = _users;
         _auditLog = auditData.map((e) => AuditLogEntry.fromJson(e as Map<String, dynamic>)).toList();
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() { _error = apiErrorString(e); _loading = false; });
+    }
+  }
+
+  void _filterUsers(String query) {
+    setState(() {
+      _searchQuery = query;
+      if (query.isEmpty) {
+        _filteredUsers = _users;
+      } else {
+        final lowerQuery = query.toLowerCase();
+        _filteredUsers = _users.where((user) =>
+        user.nom.toLowerCase().contains(lowerQuery) ||
+            user.prenoms.toLowerCase().contains(lowerQuery) ||
+            user.email.toLowerCase().contains(lowerQuery) ||
+            user.codeUtilisateur.toLowerCase().contains(lowerQuery) ||
+            user.role.toLowerCase().contains(lowerQuery)
+        ).toList();
+      }
+    });
+  }
+
+  Future<void> _showUserInfoModal(UserDetail user) async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (ctx, scrollCtrl) => SingleChildScrollView(
+          controller: scrollCtrl,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // En-tête avec avatar et nom
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.2),
+                    child: Text(
+                      user.prenoms.isNotEmpty ? user.prenoms[0].toUpperCase() : '?',
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: _getRoleColor(user.role)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${user.prenoms} ${user.nom}',
+                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getRoleColor(user.role).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(_getRoleIcon(user.role), size: 14, color: _getRoleColor(user.role)),
+                              const SizedBox(width: 6),
+                              Text(
+                                user.role,
+                                style: TextStyle(color: _getRoleColor(user.role), fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Statut
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: user.actif ? AppColors.secondary.withValues(alpha: 0.15) : AppColors.error.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      user.actif ? Icons.check_circle : Icons.cancel,
+                      size: 16,
+                      color: user.actif ? AppColors.secondary : AppColors.error,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      user.actif ? 'Actif' : 'Inactif',
+                      style: TextStyle(
+                        color: user.actif ? AppColors.secondary : AppColors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (user.premiereConnexion) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Première connexion',
+                          style: TextStyle(fontSize: 10, color: AppColors.accent),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const Divider(height: 24),
+
+              // Section Informations personnelles
+              _sectionTitle('Informations personnelles', Icons.person_outline),
+              const SizedBox(height: 8),
+              _infoCard([
+                _infoRow(Icons.badge, 'Code utilisateur', user.codeUtilisateur),
+                _infoRow(Icons.email, 'Email', user.email),
+                _infoRow(Icons.phone, 'Téléphone', user.tel),
+                if (user.sexe != null) _infoRow(Icons.wc, 'Sexe', user.sexe!),
+                if (user.dateDeNaissance != null) _infoRow(Icons.cake, 'Date de naissance', user.dateDeNaissance!),
+              ]),
+              const SizedBox(height: 16),
+
+              // Section Compte (CORRIGÉ)
+              _sectionTitle('Informations du compte', Icons.account_circle),
+              const SizedBox(height: 8),
+              _infoCard([
+                _infoRow(Icons.admin_panel_settings, 'Rôle', user.role),
+                _infoRow(
+                  Icons.circle,
+                  'Statut',
+                  user.actif ? 'Actif' : 'Inactif',
+                  color: user.actif ? AppColors.secondary : AppColors.error,
+                ),
+                _infoRow(
+                  Icons.history,
+                  'Première connexion',
+                  user.premiereConnexion ? 'Oui' : 'Non',
+                  color: user.premiereConnexion ? AppColors.accent : AppColors.textSecondary,
+                ),
+                // codeAdministrateur n'existe pas dans UserDetail, on utilise une valeur par défaut
+                _infoRow(Icons.admin_panel_settings, 'Type', user.role),
+              ]),
+              const SizedBox(height: 16),
+
+              // Section Actions rapides
+              _sectionTitle('Actions', Icons.settings),
+              const SizedBox(height: 8),
+              _actionButton(
+                icon: Icons.swap_horiz,
+                label: 'Changer le rôle',
+                color: AppColors.primary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _changeRole(user);
+                },
+              ),
+              _actionButton(
+                icon: user.actif ? Icons.block : Icons.check_circle,
+                label: user.actif ? 'Désactiver' : 'Activer',
+                color: user.actif ? AppColors.error : AppColors.secondary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _toggleActive(user);
+                },
+              ),
+              _actionButton(
+                icon: Icons.lock_reset,
+                label: 'Réinitialiser le mot de passe',
+                color: AppColors.accent,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _resetPassword(user);
+                },
+              ),
+              _actionButton(
+                icon: Icons.delete,
+                label: 'Supprimer l\'utilisateur',
+                color: AppColors.error,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _deleteUser(user);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  Widget _infoCard(List<Widget> children) {
+    return Card(
+      elevation: 0,
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppColors.divider.withValues(alpha: 0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value, {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.textSecondary),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: color ?? AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: onTap,
+          icon: Icon(icon, size: 18),
+          label: Text(label),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: color,
+            side: BorderSide(color: color.withValues(alpha: 0.4)),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getRoleColor(String role) {
+    switch (role) {
+      case 'ADMINISTRATEUR': return AppColors.error;
+      case 'ORGANISATEUR': return AppColors.accent;
+      case 'CLIENT': return AppColors.primary;
+      default: return AppColors.textSecondary;
+    }
+  }
+
+  IconData _getRoleIcon(String role) {
+    switch (role) {
+      case 'ADMINISTRATEUR': return Icons.admin_panel_settings;
+      case 'ORGANISATEUR': return Icons.badge;
+      case 'CLIENT': return Icons.person;
+      default: return Icons.help;
     }
   }
 
@@ -165,45 +489,89 @@ class _UsersPageState extends State<UsersPage> {
             IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
           ]),
         ),
+        if (!_showAudit)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Rechercher un utilisateur...',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () {
+                    _searchController.clear();
+                    _filterUsers('');
+                  },
+                )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: AppColors.fieldFill,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                isDense: true,
+              ),
+              onChanged: _filterUsers,
+            ),
+          ),
+        if (!_showAudit && _searchQuery.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              '${_filteredUsers.length} utilisateur(s) trouvé(s)',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+          ),
         Expanded(
           child: _showAudit
               ? _buildAuditLog()
               : RefreshIndicator(
-                  onRefresh: _loadData,
-                  child: _users.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.people_outline, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
-                              const SizedBox(height: 12),
-                              const Text('Aucun utilisateur trouvé', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(8),
-                          itemCount: _users.length,
-                          itemBuilder: (ctx, i) => _buildUserCard(_users[i]),
-                        ),
-                ),
+            onRefresh: _loadData,
+            child: _filteredUsers.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _searchQuery.isEmpty ? Icons.people_outline : Icons.search_off,
+                    size: 48,
+                    color: AppColors.textSecondary.withValues(alpha: 0.4),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _searchQuery.isEmpty
+                        ? 'Aucun utilisateur trouvé'
+                        : 'Aucun utilisateur ne correspond à votre recherche',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                  ),
+                ],
+              ),
+            )
+                : ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: _filteredUsers.length,
+              itemBuilder: (ctx, i) => _buildUserCard(_filteredUsers[i]),
+            ),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildUserCard(UserDetail user) {
-    final roleColor = user.role == AppConstants.roleAdmin
-        ? AppColors.error : user.role == AppConstants.roleOrganisateur
-            ? AppColors.accent : AppColors.primary;
+    final roleColor = _getRoleColor(user.role);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-      child: ExpansionTile(
+      child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: roleColor.withValues(alpha: 0.2),
-          child: Icon(Icons.person, color: roleColor),
+          backgroundColor: roleColor.withValues(alpha: 0.15),
+          child: Icon(_getRoleIcon(user.role), color: roleColor),
         ),
-        title: Text('${user.nom} ${user.prenoms}'),
+        title: Text('${user.prenoms} ${user.nom}', style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text('${user.email}  •  ${user.role}', style: const TextStyle(fontSize: 12)),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -211,61 +579,36 @@ class _UsersPageState extends State<UsersPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: user.actif ? AppColors.secondary.withValues(alpha: 0.2) : AppColors.error.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
+                color: user.actif ? AppColors.secondary.withValues(alpha: 0.15) : AppColors.error.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Text(user.actif ? 'Actif' : 'Inactif', style: TextStyle(fontSize: 11, color: user.actif ? AppColors.secondary : AppColors.error)),
+              child: Text(
+                user.actif ? 'Actif' : 'Inactif',
+                style: TextStyle(fontSize: 10, color: user.actif ? AppColors.secondary : AppColors.error, fontWeight: FontWeight.w600),
+              ),
             ),
             if (user.premiereConnexion)
               Container(
                 margin: const EdgeInsets.only(left: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text('Nouveau', style: TextStyle(fontSize: 11, color: AppColors.accent)),
+                child: const Text(
+                  'Nouveau',
+                  style: TextStyle(fontSize: 9, color: AppColors.accent, fontWeight: FontWeight.w600),
+                ),
               ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.info_outline, size: 20),
+              tooltip: 'Voir les informations',
+              onPressed: () => _showUserInfoModal(user),
+            ),
           ],
         ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Code: ${user.codeUtilisateur}', style: const TextStyle(fontSize: 13)),
-                Text('Tél: ${user.tel}', style: const TextStyle(fontSize: 13)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    ActionChip(
-                      avatar: const Icon(Icons.swap_horiz, size: 16),
-                      label: const Text('Rôle'),
-                      onPressed: () => _changeRole(user),
-                    ),
-                    ActionChip(
-                      avatar: Icon(user.actif ? Icons.block : Icons.check_circle, size: 16),
-                      label: Text(user.actif ? 'Désactiver' : 'Activer'),
-                      onPressed: () => _toggleActive(user),
-                    ),
-                    ActionChip(
-                      avatar: const Icon(Icons.lock_reset, size: 16),
-                      label: const Text('Reset MDP'),
-                      onPressed: () => _resetPassword(user),
-                    ),
-                    ActionChip(
-                      avatar: const Icon(Icons.delete, size: 16),
-                      label: const Text('Supprimer'),
-                      onPressed: () => _deleteUser(user),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+        onTap: () => _showUserInfoModal(user),
       ),
     );
   }

@@ -68,7 +68,7 @@ class _PlacesPageState extends State<PlacesPage> {
         _error = null;
         if (widget.initialSalleFilter != null && _selectedSalle == null) {
           _selectedSalle = _salles.cast<Salle?>().firstWhere(
-            (s) => s!.numeroSalle == widget.initialSalleFilter,
+                (s) => s!.numeroSalle == widget.initialSalleFilter,
             orElse: () => null,
           );
           if (_selectedSalle != null) _selectedLieuCode = _selectedSalle!.codeLieu;
@@ -88,8 +88,8 @@ class _PlacesPageState extends State<PlacesPage> {
     final q = _salleSearchCtrl.text.toLowerCase().trim();
     if (q.isNotEmpty) {
       list = list.where((s) =>
-        s.nomSalle.toLowerCase().contains(q) ||
-        s.numeroSalle.toLowerCase().contains(q)
+      s.nomSalle.toLowerCase().contains(q) ||
+          s.numeroSalle.toLowerCase().contains(q)
       ).toList();
     }
     return list;
@@ -178,98 +178,335 @@ class _PlacesPageState extends State<PlacesPage> {
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 16, right: 16, top: 16),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 20, right: 20, top: 20),
         child: Form(
           key: formKey,
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            const Text('Modifier la place', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Modifier la place', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            const SizedBox(height: 8),
             TextFormField(
               controller: numCtrl,
               decoration: const InputDecoration(labelText: 'Numéro de place', border: OutlineInputBorder()),
               validator: (v) => v == null || v.trim().isEmpty ? 'Requis' : null,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextFormField(
               controller: rangCtrl,
               decoration: const InputDecoration(labelText: 'Rang', border: OutlineInputBorder()),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                if (!formKey.currentState!.validate()) return;
-                try {
-                  await _placeService.deletePlace(place.numeroPlace);
-                  await _placeService.createPlace({
-                    'numeroPlace': numCtrl.text.trim(),
-                    'range': rangCtrl.text.trim().isEmpty ? null : rangCtrl.text.trim(),
-                    'typePlace': place.typePlace,
-                    'numeroSalle': place.numeroSalle,
-                  });
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _loadData();
-                } catch (e) {
-                  if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              child: const Text('Enregistrer'),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Annuler'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (!formKey.currentState!.validate()) return;
+                      try {
+                        await _placeService.deletePlace(place.numeroPlace);
+                        await _placeService.createPlace({
+                          'numeroPlace': numCtrl.text.trim(),
+                          'range': rangCtrl.text.trim().isEmpty ? null : rangCtrl.text.trim(),
+                          'typePlace': place.typePlace,
+                          'numeroSalle': place.numeroSalle,
+                        });
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        _loadData();
+                      } catch (e) {
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Enregistrer'),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
           ]),
         ),
       ),
     );
   }
 
-  void _showSalleForm({Salle? salle}) {
-    final nomCtrl = TextEditingController(text: salle?.nomSalle ?? '');
-    String? lieuCode = salle?.codeLieu;
+  void _showAddSalleDialog() {
+    final nomCtrl = TextEditingController();
+    String? lieuCode;
     final formKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 16, right: 16, top: 16),
-        child: Form(
-          key: formKey,
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text(salle != null ? 'Modifier la salle' : 'Ajouter une salle', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: nomCtrl,
-              decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()),
-              validator: (v) => v == null || v.trim().isEmpty ? 'Requis' : null,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.8,
+        expand: false,
+        builder: (ctx, scrollCtrl) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            controller: scrollCtrl,
+            child: Form(
+              key: formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text('Ajouter une salle',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: nomCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom de la salle',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) => v == null || v.trim().isEmpty ? 'Requis' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: lieuCode,
+                    decoration: const InputDecoration(
+                      labelText: 'Lieu parent',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _lieux.map((l) => DropdownMenuItem(
+                        value: l.code,
+                        child: Text(l.nomLieu)
+                    )).toList(),
+                    onChanged: (v) => lieuCode = v,
+                    validator: (v) => v == null ? 'Requis' : null,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Annuler'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (!formKey.currentState!.validate()) return;
+                            try {
+                              await dio.post(Endpoints.salles, data: {
+                                'nomSalle': nomCtrl.text.trim(),
+                                'codeLieu': lieuCode,
+                              });
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              _loadData();
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Ajouter'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: lieuCode,
-              decoration: const InputDecoration(labelText: 'Lieu parent', border: OutlineInputBorder()),
-              items: _lieux.map((l) => DropdownMenuItem(value: l.code, child: Text(l.nomLieu))).toList(),
-              onChanged: (v) => lieuCode = v,
-              validator: (v) => v == null ? 'Requis' : null,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditSalleDialog(Salle salle) {
+    final nomCtrl = TextEditingController(text: salle.nomSalle);
+    final codeCtrl = TextEditingController(text: salle.numeroSalle);
+    String? lieuCode = salle.codeLieu;
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.65,
+        minChildSize: 0.4,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (ctx, scrollCtrl) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            controller: scrollCtrl,
+            child: Form(
+              key: formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text('Modifier la salle',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: codeCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Numéro de salle',
+                      border: OutlineInputBorder(),
+                    ),
+                    enabled: false,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: nomCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom de la salle',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) => v == null || v.trim().isEmpty ? 'Requis' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: lieuCode,
+                    decoration: const InputDecoration(
+                      labelText: 'Lieu parent',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _lieux.map((l) => DropdownMenuItem(
+                        value: l.code,
+                        child: Text(l.nomLieu)
+                    )).toList(),
+                    onChanged: (v) => lieuCode = v,
+                    validator: (v) => v == null ? 'Requis' : null,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Annuler'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (!formKey.currentState!.validate()) return;
+                            try {
+                              await dio.delete('${Endpoints.salles}/${salle.numeroSalle}');
+                              await dio.post(Endpoints.salles, data: {
+                                'nomSalle': nomCtrl.text.trim(),
+                                'codeLieu': lieuCode,
+                              });
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              _loadData();
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Enregistrer'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                if (!formKey.currentState!.validate()) return;
-                final data = {'nomSalle': nomCtrl.text.trim(), 'codeLieu': lieuCode};
-                if (salle != null) {
-                  await dio.delete('${Endpoints.salles}/${salle.numeroSalle}');
-                }
-                await dio.post(Endpoints.salles, data: data);
-                if (ctx.mounted) Navigator.pop(ctx);
-                _loadData();
-              },
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              child: Text(salle != null ? 'Enregistrer' : 'Ajouter'),
-            ),
-            const SizedBox(height: 16),
-          ]),
+          ),
         ),
       ),
     );
@@ -280,68 +517,83 @@ class _PlacesPageState extends State<PlacesPage> {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) return ErrorState(message: _error!, onRetry: _loadData);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      body: Column(
         children: [
-          Row(children: [
-            const Text('Salles & Places', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const Spacer(),
-            IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
-          ]),
-          const SizedBox(height: 8),
-          _buildLieuFilter(),
-          const SizedBox(height: 8),
-          _buildSearchBar(_salleSearchCtrl, 'Rechercher une salle...', () => setState(() {})),
-          const SizedBox(height: 8),
-          _buildSallesSection(),
-          if (_selectedSalle != null) ...[
-            const Divider(height: 32),
-            _buildPlacesSection(),
-          ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(children: [
+              const Text('Salles & Places', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: TextField(
+                    controller: _salleSearchCtrl,
+                    decoration: const InputDecoration(
+                      hintText: 'Rechercher une salle...',
+                      prefixIcon: Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 1,
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedLieuCode,
+                    decoration: const InputDecoration(
+                      labelText: 'Lieu',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    isExpanded: true,
+                    items: [
+                      const DropdownMenuItem<String>(value: null, child: Text('Tous')),
+                      ..._lieux.map((l) => DropdownMenuItem(value: l.code, child: Text(l.nomLieu))),
+                    ],
+                    onChanged: (v) => setState(() {
+                      _selectedLieuCode = v;
+                      _selectedSalle = null;
+                      _selectedPlaceIds.clear();
+                      _bulkMode = false;
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSallesSection(),
+                  if (_selectedSalle != null) ...[
+                    const Divider(height: 32),
+                    _buildPlacesSection(),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSearchBar(TextEditingController ctrl, String hint, VoidCallback onChanged) {
-    return TextField(
-      controller: ctrl,
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixIcon: const Icon(Icons.search, size: 20),
-        suffixIcon: ctrl.text.isNotEmpty
-            ? IconButton(icon: const Icon(Icons.clear, size: 18), onPressed: () { ctrl.clear(); setState(() {}); })
-            : null,
-        border: const OutlineInputBorder(),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddSalleDialog,
+        child: const Icon(Icons.add),
       ),
-      onChanged: (_) => setState(() {}),
-    );
-  }
-
-  Widget _buildLieuFilter() {
-    return DropdownButtonFormField<String>(
-      value: _selectedLieuCode,
-      decoration: const InputDecoration(
-        labelText: 'Filtrer par lieu',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.filter_alt),
-        isDense: true,
-      ),
-      isExpanded: true,
-      items: [
-        const DropdownMenuItem<String>(value: null, child: Text('Tous les lieux')),
-        ..._lieux.map((l) => DropdownMenuItem(value: l.code, child: Text(l.nomLieu))),
-      ],
-      onChanged: (v) => setState(() {
-        _selectedLieuCode = v;
-        _selectedSalle = null;
-        _selectedPlaceIds.clear();
-        _bulkMode = false;
-      }),
     );
   }
 
@@ -356,11 +608,6 @@ class _PlacesPageState extends State<PlacesPage> {
           children: [
             Text('Salles (${filtered.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const Spacer(),
-            TextButton.icon(
-              onPressed: () => _showSalleForm(),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Ajouter'),
-            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -401,11 +648,11 @@ class _PlacesPageState extends State<PlacesPage> {
                       _finCtrl.text = '10';
                     }),
                     child: Text(
-                      _selectedSalle?.numeroSalle == s.numeroSalle ? 'Fermer' : 'Gérer les places',
+                      _selectedSalle?.numeroSalle == s.numeroSalle ? 'Fermer' : 'Gérer',
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
-                  IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _showSalleForm(salle: s)),
+                  IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _showEditSalleDialog(s)),
                   IconButton(icon: const Icon(Icons.delete, size: 18, color: AppColors.error), onPressed: () async {
                     final confirm = await showDialog<bool>(
                       context: context,
@@ -443,7 +690,7 @@ class _PlacesPageState extends State<PlacesPage> {
           children: [
             Expanded(
               child: Text(
-                'Gestion des places pour la salle : ${_selectedSalle!.nomSalle}',
+                'Places - ${_selectedSalle!.nomSalle}',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -454,7 +701,7 @@ class _PlacesPageState extends State<PlacesPage> {
                   if (!_bulkMode) _selectedPlaceIds.clear();
                 }),
                 icon: Icon(_bulkMode ? Icons.close : Icons.checklist, size: 18),
-                label: Text(_bulkMode ? 'Annuler' : 'Sélection multiple', style: const TextStyle(fontSize: 12)),
+                label: Text(_bulkMode ? 'Annuler' : 'Sélection', style: const TextStyle(fontSize: 12)),
               ),
           ],
         ),
@@ -512,7 +759,7 @@ class _PlacesPageState extends State<PlacesPage> {
           ),
         ),
 
-        _buildSearchBar(_placeSearchCtrl, 'Rechercher une place...', () => setState(() {})),
+        _buildPlaceSearchBar(),
         const SizedBox(height: 8),
 
         if (places.isEmpty && _placeSearchCtrl.text.isEmpty)
@@ -587,6 +834,23 @@ class _PlacesPageState extends State<PlacesPage> {
     );
   }
 
+  Widget _buildPlaceSearchBar() {
+    return TextField(
+      controller: _placeSearchCtrl,
+      decoration: InputDecoration(
+        hintText: 'Rechercher une place...',
+        prefixIcon: const Icon(Icons.search, size: 20),
+        suffixIcon: _placeSearchCtrl.text.isNotEmpty
+            ? IconButton(icon: const Icon(Icons.clear, size: 18), onPressed: () { _placeSearchCtrl.clear(); setState(() {}); })
+            : null,
+        border: const OutlineInputBorder(),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+      ),
+      onChanged: (_) => setState(() {}),
+    );
+  }
+
   Widget _emptyState(String message, IconData icon) {
     return Card(
       child: Padding(
@@ -611,28 +875,28 @@ class _PlacesPageState extends State<PlacesPage> {
       onLongPress: _bulkMode
           ? null
           : () => showMenu(
-              context: context,
-              position: RelativeRect.fromLTRB(100, 300, 100, 300),
-              items: [
-                const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text('Modifier'), dense: true)),
-                const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: AppColors.error), title: Text('Supprimer'), dense: true)),
+        context: context,
+        position: RelativeRect.fromLTRB(100, 300, 100, 300),
+        items: [
+          const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text('Modifier'), dense: true)),
+          const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: AppColors.error), title: Text('Supprimer'), dense: true)),
+        ],
+      ).then((v) {
+        if (v == 'edit') _editPlace(place);
+        else if (v == 'delete') {
+          showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Supprimer'),
+              content: Text('Supprimer la place ${place.numeroPlace} ?'),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: AppColors.error))),
               ],
-            ).then((v) {
-              if (v == 'edit') _editPlace(place);
-              else if (v == 'delete') {
-                showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Supprimer'),
-                    content: Text('Supprimer la place ${place.numeroPlace} ?'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-                      TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: AppColors.error))),
-                    ],
-                  ),
-                ).then((v) { if (v == true) _deletePlace(place.numeroPlace); });
-              }
-            }),
+            ),
+          ).then((v) { if (v == true) _deletePlace(place.numeroPlace); });
+        }
+      }),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
@@ -663,9 +927,9 @@ class _PlacesPageState extends State<PlacesPage> {
             GestureDetector(
               onTap: _bulkMode
                   ? () => setState(() {
-                      if (isSelected) _selectedPlaceIds.remove(place.numeroPlace);
-                      else _selectedPlaceIds.add(place.numeroPlace);
-                    })
+                if (isSelected) _selectedPlaceIds.remove(place.numeroPlace);
+                else _selectedPlaceIds.add(place.numeroPlace);
+              })
                   : () => _editPlace(place),
               child: Text(place.numeroPlace, style: TextStyle(
                 fontSize: 13,

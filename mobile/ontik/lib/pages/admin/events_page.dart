@@ -166,72 +166,7 @@ class _EventsPageState extends State<EventsPage> {
                 const SizedBox(height: 12),
               ],
 
-              _sectionTitle('Actions'),
-              const SizedBox(height: 8),
-              _adminActionButton(
-                icon: Icons.verified,
-                label: 'Valider / Approuver',
-                color: AppColors.secondary,
-                enabled: detail.statut == 'planifie',
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  await _performAction(() => _api.validateEvent(detail.idEvenement!), 'Événement validé');
-                },
-              ),
-              if (detail.statut == 'suspendu')
-                _adminActionButton(
-                  icon: Icons.play_arrow,
-                  label: 'Réactiver',
-                  color: AppColors.primary,
-                  enabled: true,
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    await _performAction(
-                      () => dio.put('${Endpoints.events}/${detail.idEvenement}/resume'),
-                      'Événement réactivé',
-                    );
-                  },
-                )
-              else
-                _adminActionButton(
-                  icon: Icons.pause_circle,
-                  label: 'Suspendre',
-                  color: AppColors.accent,
-                  enabled: detail.statut == 'valide' || detail.statut == 'planifie' || detail.statut == 'en_cours',
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    await _performAction(
-                      () => dio.put('${Endpoints.events}/${detail.idEvenement}/suspend'),
-                      'Événement suspendu',
-                    );
-                  },
-                ),
-              _adminActionButton(
-                icon: Icons.cancel,
-                label: 'Annuler l\'événement',
-                color: AppColors.error,
-                enabled: detail.statut != 'annule' && detail.statut != 'termine',
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final motif = await _showCancelDialog();
-                  if (motif != null) {
-                    await _performAction(
-                      () => dio.put('${Endpoints.events}/${detail.idEvenement}/cancel', data: {'motifAnnulation': motif}),
-                      'Événement annulé',
-                    );
-                  }
-                },
-              ),
-              _adminActionButton(
-                icon: Icons.email,
-                label: 'Contacter l\'Organisateur',
-                color: AppColors.primary,
-                enabled: true,
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showContactDialog(detail);
-                },
-              ),
+              // Section Actions supprimée
               const SizedBox(height: 16),
             ],
           ),
@@ -259,118 +194,10 @@ class _EventsPageState extends State<EventsPage> {
     );
   }
 
-  Widget _adminActionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required bool enabled,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: enabled ? onTap : null,
-          icon: Icon(icon, size: 18),
-          label: Text(label),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: enabled ? color : AppColors.textSecondary,
-            side: BorderSide(color: enabled ? color.withValues(alpha: 0.5) : AppColors.textSecondary.withValues(alpha: 0.3)),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<String?> _showCancelDialog() async {
-    final ctrl = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Annuler l\'événement'),
-        content: TextField(
-          controller: ctrl,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            labelText: 'Motif d\'annulation *',
-            hintText: 'Raison obligatoire',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-          TextButton(
-            onPressed: () => ctrl.text.isNotEmpty ? Navigator.pop(ctx, ctrl.text) : null,
-            child: const Text('Confirmer', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
-    return result;
-  }
-
-  void _showContactDialog(Evenement event) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Contacter l\'Organisateur'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _infoRow(Icons.person, 'Nom', event.organisateurNom ?? event.codeOrganisateur),
-            _infoRow(Icons.badge, 'Code', event.codeOrganisateur),
-            const SizedBox(height: 12),
-            const Text('Options de contact :', style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.email, color: AppColors.primary),
-              title: const Text('Envoyer un email'),
-              subtitle: Text('À ${event.codeOrganisateur}'),
-              onTap: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Fonctionnalité email à implémenter')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.chat, color: AppColors.primary),
-              title: const Text('Discussion interne'),
-              subtitle: const Text('Ouvrir un chat'),
-              onTap: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Fonctionnalité chat à implémenter')),
-                );
-              },
-            ),
-          ],
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fermer'))],
-      ),
-    );
-  }
-
-  Future<void> _performAction(Future<dynamic> Function() action, String successMsg) async {
-    try {
-      await action();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(successMsg), backgroundColor: AppColors.secondary));
-      _loadData();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final filtered = _filter.isEmpty ? _events : _events.where((e) =>
-      e.titre.toLowerCase().contains(_filter.toLowerCase())
+        e.titre.toLowerCase().contains(_filter.toLowerCase())
     ).toList();
 
     if (_loading) return const Center(child: CircularProgressIndicator());
@@ -402,56 +229,56 @@ class _EventsPageState extends State<EventsPage> {
           onRefresh: _loadData,
           child: filtered.isEmpty
               ? Center(
-                  child: Column(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.event_busy, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
+                const SizedBox(height: 12),
+                const Text('Aucun événement trouvé', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+              ],
+            ),
+          )
+              : ListView.builder(
+            padding: const EdgeInsets.all(8),
+            itemCount: filtered.length,
+            itemBuilder: (ctx, i) {
+              final event = filtered[i];
+              final statusColor = AppConstants.statutColors[event.statut] ?? AppColors.textSecondary;
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: statusColor.withValues(alpha: 0.2),
+                    child: Icon(AppConstants.statutIcons[event.statut] ?? Icons.event, color: statusColor),
+                  ),
+                  title: Text(event.titre, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(
+                    '${event.dateEvenement?.toIso8601String().split('T').first ?? ''}  •  ${event.organisateurNom ?? event.codeOrganisateur}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.event_busy, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
-                      const SizedBox(height: 12),
-                      const Text('Aucun événement trouvé', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(event.statut ?? '', style: TextStyle(fontSize: 11, color: statusColor)),
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: const Icon(Icons.info_outline, size: 20),
+                        tooltip: 'Détails',
+                        onPressed: () => _showInfoModal(event),
+                      ),
                     ],
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: filtered.length,
-                  itemBuilder: (ctx, i) {
-                    final event = filtered[i];
-                    final statusColor = AppConstants.statutColors[event.statut] ?? AppColors.textSecondary;
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: statusColor.withValues(alpha: 0.2),
-                          child: Icon(AppConstants.statutIcons[event.statut] ?? Icons.event, color: statusColor),
-                        ),
-                        title: Text(event.titre, style: const TextStyle(fontWeight: FontWeight.w600)),
-                        subtitle: Text(
-                          '${event.dateEvenement?.toIso8601String().split('T').first ?? ''}  •  ${event.organisateurNom ?? event.codeOrganisateur}',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: statusColor.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(event.statut ?? '', style: TextStyle(fontSize: 11, color: statusColor)),
-                            ),
-                            const SizedBox(width: 4),
-                            IconButton(
-                              icon: const Icon(Icons.info_outline, size: 20),
-                              tooltip: 'Détails',
-                              onPressed: () => _showInfoModal(event),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
                 ),
+              );
+            },
+          ),
         ),
       ),
     ]);
