@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/assets/app_colors.dart';
+import '../../core/services/app_config.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/utils/error_helper.dart';
+import '../../core/routes/client_routes.dart';
 import '../../models/notification_model.dart';
 import '../../widgets/error_state.dart';
+import '../../localization/app_localizations.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -19,7 +23,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
   List<InAppNotification> _notifications = [];
   String? _filterType;
   bool? _filterIsRead;
-  bool _showFilters = false;
 
   static const _types = [
     null,
@@ -29,24 +32,40 @@ class _NotificationsPageState extends State<NotificationsPage> {
     'RESERVATION_CANCELLED',
     'EVENT_CANCELLED',
     'EVENT_APPROVED',
+    'EVENT_UPDATED',
     'EVENT_SUSPENDED',
     'TICKET_VALIDATED',
     'TICKET_ALREADY_USED',
     'REFUND_PROCESSED',
   ];
 
-  static const _typeLabels = {
-    null: 'Tous',
-    'PAYMENT_CONFIRMED': 'Paiement',
-    'PAYMENT_FAILED': 'Échec',
-    'RESERVATION_CONFIRMED': 'Réservation',
-    'RESERVATION_CANCELLED': 'Annulation',
-    'EVENT_CANCELLED': 'Événement',
-    'EVENT_APPROVED': 'Approuvé',
-    'EVENT_SUSPENDED': 'Suspendu',
-    'TICKET_VALIDATED': 'Scanné',
-    'TICKET_ALREADY_USED': 'Réutilisé',
-    'REFUND_PROCESSED': 'Remboursé',
+  static Map<String?, String> get _typeLabels => {
+    null: tr('notifications.filterAll'),
+    'PAYMENT_CONFIRMED': tr('notifications.filterPayments'),
+    'PAYMENT_FAILED': tr('notifications.filterFailed'),
+    'RESERVATION_CONFIRMED': tr('notifications.filterReservations'),
+    'RESERVATION_CANCELLED': tr('notifications.filterCancellations'),
+    'EVENT_CANCELLED': tr('notifications.filterCancelled'),
+    'EVENT_APPROVED': tr('notifications.filterApproved'),
+    'EVENT_UPDATED': tr('notifications.filterUpdated'),
+    'EVENT_SUSPENDED': tr('notifications.filterSuspended'),
+    'TICKET_VALIDATED': tr('notifications.filterScanned'),
+    'TICKET_ALREADY_USED': tr('notifications.filterReused'),
+    'REFUND_PROCESSED': tr('notifications.filterRefunded'),
+  };
+
+  static final _typeConfig = <String, _TypeConfig>{
+    'PAYMENT_CONFIRMED': _TypeConfig(Icons.payment, AppColors.secondary),
+    'PAYMENT_FAILED': _TypeConfig(Icons.payment, AppColors.error),
+    'RESERVATION_CONFIRMED': _TypeConfig(Icons.receipt_long, AppColors.primary),
+    'RESERVATION_CANCELLED': _TypeConfig(Icons.event_busy, AppColors.accent),
+    'EVENT_CANCELLED': _TypeConfig(Icons.cancel, AppColors.error),
+    'EVENT_APPROVED': _TypeConfig(Icons.check_circle, AppColors.secondary),
+    'EVENT_UPDATED': _TypeConfig(Icons.update, AppColors.primary),
+    'EVENT_SUSPENDED': _TypeConfig(Icons.pause_circle, AppColors.accent),
+    'TICKET_VALIDATED': _TypeConfig(Icons.qr_code_scanner, AppColors.statusPlanned),
+    'TICKET_ALREADY_USED': _TypeConfig(Icons.warning, AppColors.error),
+    'REFUND_PROCESSED': _TypeConfig(Icons.undo, AppColors.statusPlanned),
   };
 
   @override
@@ -64,7 +83,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
     if (uid == null) {
       setState(() {
-        _error = "Utilisateur non connecté";
+        _error = tr('notifications.notConnected');
         _loading = false;
       });
       return;
@@ -72,8 +91,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     try {
       final svc = NotificationService();
       final list = await svc.getNotifications(uid,
-          type: _filterType,
-          isRead: _filterIsRead);
+          type: _filterType, isRead: _filterIsRead);
       if (!mounted) return;
       setState(() {
         _notifications = list;
@@ -82,8 +100,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
       await NotificationManager.refreshNow();
     } catch (e) {
       if (!mounted) return;
+      String msg = apiErrorString(e);
+      if (e is DioException && e.response != null) {
+        msg += ' (${e.response?.statusCode})';
+      }
       setState(() {
-        _error = apiErrorString(e);
+        _error = msg;
         _loading = false;
       });
     }
@@ -101,13 +123,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
           n.isRead = true;
         }
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tout marquer comme lu'), backgroundColor: AppColors.secondary),
+        SnackBar(
+          content: Text(tr('notifications.markAllRead')),
+          backgroundColor: AppColors.secondary,
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
+        SnackBar(
+          content: Text(apiErrorString(e)),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
@@ -122,6 +151,24 @@ class _NotificationsPageState extends State<NotificationsPage> {
     } catch (_) {}
   }
 
+  void _onNotificationTap(InAppNotification n) async {
+    await _markAsRead(n);
+    if (!mounted) return;
+    if (n.idCible == null) return;
+    final eventId = int.tryParse(n.idCible!);
+    if (eventId == null) return;
+    if (userRole == 'ORGANISATEUR' || userRole == 'ADMINISTRATEUR') {
+      Navigator.pop(context);
+      setActiveEvent(eventId, n.title);
+    } else if (userRole == 'CLIENT') {
+      Navigator.pushNamed(
+        context,
+        ClientRoutes.homeDetail,
+        arguments: {'id': eventId},
+      );
+    }
+  }
+
   Future<void> _delete(InAppNotification n) async {
     if (n.id == null) return;
     try {
@@ -132,64 +179,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
     } catch (_) {}
   }
 
-  IconData _iconForType(String type) {
-    switch (type) {
-      case 'PAYMENT_CONFIRMED':
-        return Icons.payment;
-      case 'PAYMENT_FAILED':
-        return Icons.payment;
-      case 'RESERVATION_CONFIRMED':
-        return Icons.receipt_long;
-      case 'RESERVATION_CANCELLED':
-        return Icons.event_busy;
-      case 'EVENT_CANCELLED':
-        return Icons.cancel;
-      case 'EVENT_APPROVED':
-        return Icons.check_circle;
-      case 'EVENT_SUSPENDED':
-        return Icons.pause_circle;
-      case 'TICKET_VALIDATED':
-        return Icons.qr_code_scanner;
-      case 'TICKET_ALREADY_USED':
-        return Icons.warning;
-      case 'REFUND_PROCESSED':
-        return Icons.undo;
-      default:
-        return Icons.notifications;
-    }
-  }
+  IconData _iconForType(String type) =>
+      _typeConfig[type]?.icon ?? Icons.notifications;
 
-  Color _colorForType(String type) {
-    switch (type) {
-      case 'PAYMENT_CONFIRMED':
-        return AppColors.secondary;
-      case 'PAYMENT_FAILED':
-        return AppColors.error;
-      case 'RESERVATION_CONFIRMED':
-        return AppColors.primary;
-      case 'RESERVATION_CANCELLED':
-        return AppColors.accent;
-      case 'EVENT_CANCELLED':
-        return AppColors.error;
-      case 'EVENT_APPROVED':
-        return AppColors.secondary;
-      case 'EVENT_SUSPENDED':
-        return AppColors.accent;
-      case 'TICKET_VALIDATED':
-        return AppColors.statusPlanned;
-      case 'TICKET_ALREADY_USED':
-        return AppColors.error;
-      case 'REFUND_PROCESSED':
-        return AppColors.statusPlanned;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
+  Color _colorForType(String type) =>
+      _typeConfig[type]?.color ?? AppColors.textSecondary;
 
   String _timeAgo(DateTime? dt) {
     if (dt == null) return '';
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'À l\'instant';
+    if (diff.inMinutes < 1) return "À l'instant";
     if (diff.inMinutes < 60) return 'Il y a ${diff.inMinutes} min';
     if (diff.inHours < 24) return 'Il y a ${diff.inHours}h';
     if (diff.inDays < 7) return 'Il y a ${diff.inDays}j';
@@ -198,183 +197,215 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final unreadCount = _notifications.where((n) => !n.isRead).length;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: Text(tr('notifications.title')),
         actions: [
-          if (_notifications.any((n) => !n.isRead))
+          if (unreadCount > 0)
             TextButton.icon(
               onPressed: _markAllRead,
-              icon: const Icon(Icons.done_all, size: 18, color: Colors.white),
-              label: const Text('Tout lire', style: TextStyle(color: Colors.white, fontSize: 13)),
+              icon: const Icon(Icons.done_all, size: 18),
+              label: Text(tr('notifications.markAllReadShort')),
             ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _notifications.isEmpty
-                  ? _buildEmpty()
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: CustomScrollView(
-                        slivers: [
-                          SliverToBoxAdapter(
-                            child: _buildFilterBar(),
-                          ),
-                          SliverList.separated(
-                            itemCount: _notifications.length,
-                            separatorBuilder: (_, _) => const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                          final n = _notifications[index];
-                          return Dismissible(
-                            key: ValueKey(n.id),
-                            direction: DismissDirection.endToStart,
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 24),
-                              color: AppColors.error,
-                              child: const Icon(Icons.delete, color: Colors.white),
-                            ),
-                            onDismissed: (_) => _delete(n),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: _colorForType(n.type).withValues(alpha: 0.15),
-                                child: Icon(
-                                  _iconForType(n.type),
-                                  color: _colorForType(n.type),
-                                  size: 20,
-                                ),
-                              ),
-                              title: Text(
-                                n.title,
-                                style: TextStyle(
-                                  fontWeight: n.isRead ? FontWeight.normal : FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    n.message,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: n.isRead ? AppColors.textMuted : AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _timeAgo(n.createdAt),
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AppColors.textMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                              tileColor: n.isRead ? null : AppColors.primary.withValues(alpha: 0.03),
-                              onTap: () {
-                                _markAsRead(n);
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+      body: _buildBody(unreadCount),
     );
   }
 
-  Widget _buildEmpty() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.notifications_off, size: 64, color: AppColors.textMuted),
-          const SizedBox(height: 16),
-          const Text(
-            'Aucune notification',
-            style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Vous serez notifié ici des mises à jour importantes.',
-            style: TextStyle(fontSize: 13, color: AppColors.textMuted),
-            textAlign: TextAlign.center,
-          ),
+  Widget _buildBody(int unreadCount) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return ErrorState(message: _error!, onRetry: _load);
+    }
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: _buildFilterBar(unreadCount)),
+          if (_notifications.isEmpty)
+            SliverFillRemaining(child: _buildEmpty())
+          else
+            SliverList.separated(
+              itemCount: _notifications.length,
+              separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
+              itemBuilder: (_, index) {
+                final n = _notifications[index];
+                return Dismissible(
+                  key: ValueKey(n.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 24),
+                    color: Theme.of(context).colorScheme.error,
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  onDismissed: (_) => _delete(n),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: _colorForType(n.type).withValues(alpha: 0.15),
+                      child: Icon(
+                        _iconForType(n.type),
+                        color: _colorForType(n.type),
+                        size: 20,
+                      ),
+                    ),
+                    title: Text(
+                      n.title,
+                      style: TextStyle(
+                        fontWeight: n.isRead ? FontWeight.w500 : FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          n.message,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: n.isRead
+                                ? AppColors.textMuted
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _timeAgo(n.createdAt),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    tileColor: n.isRead
+                        ? null
+                        : AppColors.primary.withValues(alpha: 0.03),
+                    onTap: () => _onNotificationTap(n),
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterBar() {
+  Widget _buildFilterBar(int unreadCount) {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              _buildReadChip('Toutes', null),
-              const SizedBox(width: 6),
-              _buildReadChip('Non lues', false),
-              const SizedBox(width: 6),
-              _buildReadChip('Lues', true),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: () => setState(() => _showFilters = !_showFilters),
-                icon: Icon(
-                  _showFilters ? Icons.filter_list_off : Icons.filter_list,
-                  size: 18,
-                  color: AppColors.textSecondary,
-                ),
-                label: Text(
-                  _showFilters ? 'Masquer' : 'Filtrer',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                ),
-              ),
-            ],
-          ),
-          if (_showFilters) ...[
-            const SizedBox(height: 6),
-            SizedBox(
-              height: 32,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _types.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 6),
-                itemBuilder: (context, index) {
-                  final t = _types[index];
-                  final selected = _filterType == t;
-                  return FilterChip(
-                    label: Text(
-                      _typeLabels[t] ?? 'Tous',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: selected ? Colors.white : AppColors.textSecondary,
-                      ),
-                    ),
-                    selected: selected,
-                    onSelected: (val) {
-                      setState(() => _filterType = t);
-                      _load();
-                    },
-                    selectedColor: AppColors.primary,
-                    checkmarkColor: Colors.white,
-                    side: BorderSide.none,
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  );
-                },
+          if (unreadCount > 0) _buildUnreadBanner(unreadCount),
+          _buildFilterChips(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnreadBanner(int unreadCount) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.mark_email_unread, size: 18, color: AppColors.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '$unreadCount notification${unreadCount > 1 ? 's' : ''}'
+              ' non lue${unreadCount > 1 ? 's' : ''}',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          ],
+          ),
+          TextButton(
+            onPressed: _markAllRead,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(tr('notifications.markAllReadShort'), style: const TextStyle(fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChips() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildReadChip(tr('notifications.all'), null),
+          const SizedBox(width: 8),
+          _buildReadChip(tr('notifications.unread'), false),
+          const SizedBox(width: 8),
+          _buildReadChip(tr('notifications.read'), true),
+          const SizedBox(width: 12),
+          SizedBox(
+            height: 24,
+            child: VerticalDivider(
+              width: 1,
+              thickness: 1,
+              color: AppColors.textMuted.withValues(alpha: 0.3),
+            ),
+          ),
+          const SizedBox(width: 12),
+          ..._types.map((t) {
+            final selected = _filterType == t;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(
+                  _typeLabels[t] ?? tr('notifications.filterAll'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: selected ? Colors.white : AppColors.textSecondary,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+                selected: selected,
+                onSelected: (_) {
+                  setState(() => _filterType = t);
+                  _load();
+                },
+                selectedColor: AppColors.primary,
+                checkmarkColor: Colors.white,
+                side: BorderSide.none,
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -388,16 +419,72 @@ class _NotificationsPageState extends State<NotificationsPage> {
         style: TextStyle(
           fontSize: 12,
           color: selected ? Colors.white : AppColors.textSecondary,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
         ),
       ),
       selected: selected,
       onSelected: (val) {
-        setState(() => _filterIsRead = value);
+        setState(() {
+          _filterIsRead = val ? value : null;
+        });
         _load();
       },
       selectedColor: AppColors.primary,
       visualDensity: VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
     );
   }
+
+  Widget _buildEmpty() {
+    final hasActiveFilters = _filterType != null || _filterIsRead != null;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              hasActiveFilters ? Icons.filter_list_off : Icons.notifications_off,
+              size: 48,
+              color: AppColors.textMuted,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              hasActiveFilters ? tr('notifications.noResults') : tr('notifications.empty'),
+              style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasActiveFilters
+                  ? tr('notifications.emptyFiltered')
+                  : tr('notifications.emptyGeneral'),
+              style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+              textAlign: TextAlign.center,
+            ),
+            if (hasActiveFilters) ...[
+              const SizedBox(height: 16),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _filterType = null;
+                    _filterIsRead = null;
+                  });
+                  _load();
+                },
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(tr('notifications.resetFilters')),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TypeConfig {
+  final IconData icon;
+  final Color color;
+  const _TypeConfig(this.icon, this.color);
 }

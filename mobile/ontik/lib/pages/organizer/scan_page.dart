@@ -6,6 +6,7 @@ import '../../core/assets/app_colors.dart';
 import '../../models/api_wrapper_model.dart';
 import '../../models/ticket_model.dart';
 import '../../core/utils/error_helper.dart';
+import '../../generated/app_localizations.dart';
 
 class ScanPage extends StatefulWidget {
   final int? eventId;
@@ -67,7 +68,14 @@ class _ScanPageState extends State<ScanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scanner un billet'),
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: Text(AppLocalizations.of(context)!.scanTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on),
@@ -105,7 +113,7 @@ class _ScanPageState extends State<ScanPage> {
               child: ElevatedButton.icon(
                 onPressed: _resetScanner,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Scanner suivant'),
+                label: Text(AppLocalizations.of(context)!.scanNext),
               ),
             ),
         ],
@@ -127,14 +135,14 @@ class _ScanPageState extends State<ScanPage> {
               border: Border.all(color: Colors.white, width: 2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.qr_code_scanner, size: 64, color: Colors.white70),
-                SizedBox(height: 8),
+                const Icon(Icons.qr_code_scanner, size: 64, color: Colors.white70),
+                const SizedBox(height: 8),
                 Text(
-                  'Alignez le code QR dans le cadre',
-                  style: TextStyle(color: Colors.white70),
+                  AppLocalizations.of(context)!.scanAlignQr,
+                  style: const TextStyle(color: Colors.white70),
                 ),
               ],
             ),
@@ -159,7 +167,7 @@ class _ScanPageState extends State<ScanPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            isValid ? 'Billet valide' : 'Billet invalide',
+            isValid ? AppLocalizations.of(context)!.scanValid : AppLocalizations.of(context)!.scanInvalid,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -200,11 +208,11 @@ class _ScanPageState extends State<ScanPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Code : ${r.codeTicket}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.scanCodeLabel(r.codeTicket), style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            if (r.evenementTitre.isNotEmpty) Text('Événement : ${r.evenementTitre}'),
-            if (r.placeNumero.isNotEmpty) Text('Place : ${r.placeNumero}'),
-            if (r.clientNom != null) Text('Client : ${r.clientNom}'),
+            if (r.evenementTitre.isNotEmpty) Text(AppLocalizations.of(context)!.scanEventLabel(r.evenementTitre)),
+            if (r.placeNumero.isNotEmpty) Text(AppLocalizations.of(context)!.scanPlaceLabel(r.placeNumero)),
+            if (r.clientNom != null) Text(AppLocalizations.of(context)!.scanClientLabel(r.clientNom!)),
           ],
         ),
       ),

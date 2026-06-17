@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { getAll, getUserInfo } from '../../api/entityApi'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function MyReservations() {
+  const { t } = useLanguage()
   const [tab, setTab] = useState('reservations')
   const [reservations, setReservations] = useState([])
   const [tickets, setTickets] = useState([])
@@ -55,34 +57,34 @@ export default function MyReservations() {
     })
   }
 
-  if (loading) return <div className="loading">Chargement de vos réservations...</div>
-  if (error) return <div className="msg error">{error}</div>
+  if (loading) return <div className="loading">{t('client.reservations.loading')}</div>
+  if (error) return <div className="error-msg">{error}</div>
 
   return (
     <div className="my-reservations">
+      <h1>{t('client.reservations.title')}</h1>
       <div className="auth-tabs">
         <button className={tab === 'reservations' ? 'active' : ''} onClick={() => setTab('reservations')}>
-          Réservations
+          {t('client.reservations.tabReservations')}
         </button>
         <button className={tab === 'tickets' ? 'active' : ''} onClick={() => setTab('tickets')}>
-          Tickets
+          {t('client.reservations.tabTickets')}
         </button>
       </div>
 
       {tab === 'reservations' && (
         <div className="section-container">
-          <h2>Mes Réservations</h2>
           {reservations.length === 0 ? (
-            <div className="empty">Aucune réservation trouvée.</div>
+            <div className="empty">{t('client.reservations.noReservations')}</div>
           ) : (
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Référence</th>
-                    <th>Date</th>
-                    <th>Statut</th>
-                    <th>Montant</th>
+                    <th>{t('client.reservations.reference')}</th>
+                    <th>{t('client.reservations.date')}</th>
+                    <th>{t('client.reservations.status')}</th>
+                    <th>{t('client.reservations.amount')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -103,21 +105,20 @@ export default function MyReservations() {
 
       {tab === 'tickets' && (
         <div className="section-container">
-          <h2>Mes Tickets</h2>
+          <h2>{t('client.reservations.myTickets')}</h2>
           {tickets.length === 0 ? (
-            <div className="empty">Aucun ticket trouvé.</div>
+            <div className="empty">{t('client.reservations.noTickets')}</div>
           ) : (
-            <div className="ticket-grid">
+            <div className="tickets-list">
               {tickets.map(ticket => {
                 const code = ticket.codeTicket || ticket.code
                 const qr = qrCodes[code]
                 return (
                   <div key={code} className="ticket-card">
-                    <div>
-                      <strong>#{code}</strong>
-                      <span>{ticket.eventTitre || ticket.evenement?.titre || '-'}</span>
-                      <span>{ticket.numeroPlace || ticket.place?.numeroPlace || '-'}</span>
-                      <span className="price">{ticket.prix || ticket.prixPlace || '-'} €</span>
+                    <div className="ticket-info">
+                      <h4>#{code}</h4>
+                      <p>{ticket.eventTitre || ticket.evenement?.titre || '-'}</p>
+                      <p>{ticket.numeroPlace || ticket.place?.numeroPlace || '-'} · {ticket.prix || ticket.prixPlace || '-'} €</p>
                       <span className={`badge badge-${(ticket.statut || 'actif').toLowerCase()}`}>
                         {ticket.statut || 'Actif'}
                       </span>
@@ -125,7 +126,7 @@ export default function MyReservations() {
                         <img
                           src={`data:image/png;base64,${qr.qrCodeBase64}`}
                           alt={`QR ${code}`}
-                          style={{ width: 80, height: 80, marginTop: 4 }}
+                          style={{ width: 80, height: 80, marginTop: 8 }}
                         />
                       )}
                     </div>

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../pages/auth/login_page.dart';
 import '../../pages/splash_page.dart';
-import '../assets/app_colors.dart';
 import '../../pages/auth/register_page.dart';
 import '../../pages/auth/forgot_password_page.dart';
 import '../../pages/client/home_page.dart';
@@ -20,6 +19,7 @@ import '../../pages/organizer/reservations_page.dart';
 import '../../pages/organizer/reservation_detail_page.dart';
 import '../../pages/admin/admin_layout.dart';
 import '../../pages/shared/notifications_page.dart';
+import '../../pages/shared/settings_page.dart';
 import 'auth_routes.dart';
 import 'client_routes.dart';
 import 'organizer_routes.dart';
@@ -72,7 +72,7 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ScanPage());
       case OrganizerRoutes.pricing:
         final a = settings.arguments as Map<String, dynamic>?;
-        if (a == null) return _notFound();
+        if (a == null) return MaterialPageRoute(builder: (_) => const LoginPage());
         return MaterialPageRoute(builder: (_) => PricingPage(eventId: a['eventId'] as int));
       case OrganizerRoutes.tickets:
         return MaterialPageRoute(builder: (_) => const TicketsPage());
@@ -80,14 +80,16 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ReservationsPage());
       case OrganizerRoutes.reservationDetail:
         final a = settings.arguments as Map<String, dynamic>?;
-        if (a == null) return _notFound();
+        if (a == null) return MaterialPageRoute(builder: (_) => const LoginPage());
         return MaterialPageRoute(builder: (_) => ReservationDetailPage(id: a['id'] as int));
       case AdminRoutes.layout:
         return MaterialPageRoute(builder: (_) => const AdminLayout());
+      case SharedRoutes.settings:
+        return MaterialPageRoute(builder: (_) => const SettingsPage());
       case SharedRoutes.notifications:
         return MaterialPageRoute(builder: (_) => const NotificationsPage());
       default:
-        return _notFound();
+        return MaterialPageRoute(builder: (_) => const LoginPage());
     }
   }
 
@@ -108,31 +110,8 @@ class AppRouter {
       OrganizerRoutes.reservationDetail,
       AdminRoutes.layout,
       SharedRoutes.notifications,
+      SharedRoutes.settings,
     ];
     return protected.contains(name);
-  }
-
-  static Route<dynamic> _notFound() {
-    return MaterialPageRoute(
-      builder: (context) => Scaffold(
-        appBar: AppBar(title: const Text('Page introuvable')),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.search_off, size: 64, color: AppColors.textSecondary),
-              const SizedBox(height: 16),
-              const Text('Page introuvable', style: TextStyle(fontSize: 18, color: AppColors.textSecondary)),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(AuthRoutes.splash, (route) => false),
-                icon: const Icon(Icons.home),
-                label: const Text('Accueil'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

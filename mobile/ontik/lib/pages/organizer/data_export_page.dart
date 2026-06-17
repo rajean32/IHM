@@ -9,6 +9,7 @@ import '../../models/evenement_model.dart';
 import '../../core/assets/app_colors.dart';
 import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
+import '../../generated/app_localizations.dart';
 
 class DataExportPage extends StatefulWidget {
   const DataExportPage({super.key});
@@ -55,7 +56,7 @@ class _DataExportPageState extends State<DataExportPage> {
       await _saveFile('tickets_${event.titre.replaceAll(' ', '_')}.csv', buffer.toString());
     } catch (e) {
       if (!mounted) return;
-      setState(() => _exportMessage = 'Erreur: ${apiErrorString(e)}');
+      setState(() => _exportMessage = AppLocalizations.of(context)!.exportErrorPrefix(apiErrorString(e)));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -79,7 +80,7 @@ class _DataExportPageState extends State<DataExportPage> {
       await _saveFile('reservations_${event.titre.replaceAll(' ', '_')}.csv', buffer.toString());
     } catch (e) {
       if (!mounted) return;
-      setState(() => _exportMessage = 'Erreur: ${apiErrorString(e)}');
+      setState(() => _exportMessage = AppLocalizations.of(context)!.exportErrorPrefix(apiErrorString(e)));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -99,7 +100,7 @@ class _DataExportPageState extends State<DataExportPage> {
     setState(() => _exportMessage = 'Exporté: ${file.path}');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Fichier sauvegardé: $filename'),
+        content: Text(AppLocalizations.of(context)!.exportSavedMessage('$filename')),
         backgroundColor: AppTheme.secondaryColor,
       ),
     );
@@ -108,18 +109,27 @@ class _DataExportPageState extends State<DataExportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Export des données')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: Text(AppLocalizations.of(context)!.exportTitle),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? ErrorState(message: _error!, onRetry: _loadEvents)
               : _events.isEmpty
-                  ? const Center(child: Text('Aucun événement', style: TextStyle(color: AppTheme.textSecondary)))
+                  ? Center(child: Text(AppLocalizations.of(context)!.noEventsExport, style: TextStyle(color: AppTheme.textSecondary)))
                   : ListView(
                       padding: const EdgeInsets.all(16),
                       children: [
-                        const Text(
-                          'Sélectionnez un événement pour exporter les données',
+                        Text(
+                          AppLocalizations.of(context)!.exportSubtitle,
                           style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
                         ),
                         const SizedBox(height: 16),
@@ -139,7 +149,7 @@ class _DataExportPageState extends State<DataExportPage> {
                                       child: OutlinedButton.icon(
                                         onPressed: _exporting ? null : () => _exportTickets(event),
                                         icon: const Icon(Icons.confirmation_number, size: 14),
-                                        label: const Text('Billets CSV', style: TextStyle(fontSize: 10)),
+                                        label: Text(AppLocalizations.of(context)!.exportTicketsCsv, style: TextStyle(fontSize: 10)),
                                       ),
                                     ),
                                   ),
@@ -150,7 +160,7 @@ class _DataExportPageState extends State<DataExportPage> {
                                       child: OutlinedButton.icon(
                                         onPressed: _exporting ? null : () => _exportReservations(event),
                                         icon: const Icon(Icons.receipt, size: 14),
-                                        label: const Text('Réserv. CSV', style: TextStyle(fontSize: 10)),
+                                        label: Text(AppLocalizations.of(context)!.exportReservationsCsv, style: TextStyle(fontSize: 10)),
                                       ),
                                     ),
                                   ),
@@ -163,7 +173,7 @@ class _DataExportPageState extends State<DataExportPage> {
                                         icon: _exporting
                                             ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
                                             : const Icon(Icons.download, size: 14),
-                                        label: const Text('Tout', style: TextStyle(fontSize: 10)),
+                                        label: Text(AppLocalizations.of(context)!.exportAllButton, style: TextStyle(fontSize: 10)),
                                       ),
                                     ),
                                   ),

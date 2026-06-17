@@ -6,6 +6,7 @@ import '../../models/evenement_model.dart';
 import '../../core/assets/app_colors.dart';
 import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
+import '../../generated/app_localizations.dart';
 
 class RefundPage extends StatefulWidget {
   const RefundPage({super.key});
@@ -59,14 +60,14 @@ class _RefundPageState extends State<RefundPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Confirmer le remboursement'),
-        content: Text('Voulez-vous annuler et rembourser la réservation #$id ?'),
+        title: Text(AppLocalizations.of(context)!.confirmRefundTitle),
+        content: Text(AppLocalizations.of(context)!.confirmRefundText('$id')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.cancelRefundButton)),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentColor),
-            child: const Text('Confirmer', style: TextStyle(color: Colors.white)),
+            child: Text(AppLocalizations.of(context)!.confirmRefundButton, style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -79,7 +80,7 @@ class _RefundPageState extends State<RefundPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Réservation #$id annulée. Remboursement: ${result['refundAmount'] ?? 0} ${AppConstants.currency}'),
+          content: Text(AppLocalizations.of(context)!.refundResultMessage('$id', '${result['refundAmount'] ?? 0}', AppConstants.currency)),
           backgroundColor: AppTheme.secondaryColor,
         ),
       );
@@ -103,7 +104,16 @@ class _RefundPageState extends State<RefundPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Remboursements et annulations')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: Text(AppLocalizations.of(context)!.refundsTitle),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -114,8 +124,8 @@ class _RefundPageState extends State<RefundPage> {
                     child: DropdownButtonFormField<int>(
                       value: _selectedEventId,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Événement', border: OutlineInputBorder(), isDense: true,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.eventDropdown, border: OutlineInputBorder(), isDense: true,
                         contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                       ),
                       items: _events.map((e) => DropdownMenuItem(
@@ -132,10 +142,10 @@ class _RefundPageState extends State<RefundPage> {
                             ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                                 Icon(Icons.money_off, size: 48, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
                                 const SizedBox(height: 12),
-                                const Text('Sélectionnez un événement', style: TextStyle(color: AppTheme.textSecondary)),
+                                Text(AppLocalizations.of(context)!.selectEvent, style: TextStyle(color: AppTheme.textSecondary)),
                               ]))
                             : _reservations.isEmpty
-                                ? const Center(child: Text('Aucune réservation', style: TextStyle(color: AppTheme.textSecondary)))
+                                ? Center(child: Text(AppLocalizations.of(context)!.noReservations, style: TextStyle(color: AppTheme.textSecondary)))
                                 : RefreshIndicator(
                                     onRefresh: () => _loadReservations(_selectedEventId!),
                                     child: ListView.builder(
@@ -173,7 +183,7 @@ class _RefundPageState extends State<RefundPage> {
                                                       color: AppTheme.errorColor.withValues(alpha: 0.1),
                                                       borderRadius: BorderRadius.circular(8),
                                                     ),
-                                                    child: const Text('ANNULÉ', style: TextStyle(fontSize: 9, color: AppTheme.errorColor, fontWeight: FontWeight.w700)),
+                                                    child: Text(AppLocalizations.of(context)!.cancelledBadgeLabel, style: TextStyle(fontSize: 9, color: AppTheme.errorColor, fontWeight: FontWeight.w700)),
                                                   )
                                                 : Row(
                                                     mainAxisSize: MainAxisSize.min,
@@ -188,7 +198,7 @@ class _RefundPageState extends State<RefundPage> {
                                                               ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
                                                               : const Icon(Icons.money_off, size: 12),
                                                           label: Text(
-                                                            _processingId == idInt ? '...' : 'Rembourser',
+                                                            _processingId == idInt ? '...' : AppLocalizations.of(context)!.refundActionButton,
                                                             style: const TextStyle(fontSize: 9),
                                                           ),
                                                           style: ElevatedButton.styleFrom(

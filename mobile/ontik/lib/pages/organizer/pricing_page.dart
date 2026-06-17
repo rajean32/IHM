@@ -5,6 +5,7 @@ import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
 import '../../core/services/evenement_service.dart';
 import '../../core/services/place_service.dart';
+import '../../generated/app_localizations.dart';
 
 class PricingPage extends StatefulWidget {
   final int eventId;
@@ -132,7 +133,7 @@ class _PricingPageState extends State<PricingPage> {
       await _placeService.applyRowPricing(widget.eventId, rang, typePlace, prix);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Tarification appliquée au rang $rang'), backgroundColor: AppTheme.secondaryColor),
+        SnackBar(content: Text(AppLocalizations.of(context)!.pricingAppliedRow('$rang')), backgroundColor: AppTheme.secondaryColor),
       );
       _loadPlaces();
     } catch (e) {
@@ -152,7 +153,7 @@ class _PricingPageState extends State<PricingPage> {
       await _placeService.applyOrganizerTypePricing(widget.eventId, typePlace, prix);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Prix appliqué au type $typePlace'), backgroundColor: AppTheme.secondaryColor),
+        SnackBar(content: Text(AppLocalizations.of(context)!.pricingAppliedType('$typePlace')), backgroundColor: AppTheme.secondaryColor),
       );
       _loadPlaces();
     } catch (e) {
@@ -168,7 +169,7 @@ class _PricingPageState extends State<PricingPage> {
   Future<void> _assignTypeToSelected() async {
     if (_selectedRows.isEmpty && _selectedPlaceIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sélectionnez au moins une rangée ou une place'), backgroundColor: AppTheme.accentColor),
+        SnackBar(content: Text(AppLocalizations.of(context)!.selectMinRowOrSeat), backgroundColor: AppTheme.accentColor),
       );
       return;
     }
@@ -183,7 +184,7 @@ class _PricingPageState extends State<PricingPage> {
       });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Type $typeToAssign assigné'), backgroundColor: AppTheme.secondaryColor),
+        SnackBar(content: Text(AppLocalizations.of(context)!.typeAssignedMsg('$typeToAssign')), backgroundColor: AppTheme.secondaryColor),
       );
       setState(() {
         _selectedRows.clear();
@@ -205,7 +206,7 @@ class _PricingPageState extends State<PricingPage> {
       await _placeService.updatePlaceConfig(widget.eventId, place.numeroPlace, typePlace: typePlace, prix: prix);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Place ${place.numeroPlace} mise à jour'), backgroundColor: AppTheme.secondaryColor),
+        SnackBar(content: Text(AppLocalizations.of(context)!.seatUpdatedMsg('${place.numeroPlace}')), backgroundColor: AppTheme.secondaryColor),
       );
       _loadPlaces();
     } catch (e) {
@@ -219,7 +220,16 @@ class _PricingPageState extends State<PricingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tarifs - $_eventTitle')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: Text(AppLocalizations.of(context)!.pricingHeader('$_eventTitle')),
+      ),
       body: _loadingSalles
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -252,7 +262,7 @@ class _PricingPageState extends State<PricingPage> {
 
   Widget _buildSalleSelector() {
     return Row(children: [
-      const Text('Salle: ', style: TextStyle(fontWeight: FontWeight.w600)),
+      Text(AppLocalizations.of(context)!.roomSelector, style: TextStyle(fontWeight: FontWeight.w600)),
       const SizedBox(width: 8),
       Expanded(
         child: DropdownButtonFormField<String>(
@@ -276,9 +286,9 @@ class _PricingPageState extends State<PricingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Prix par type de place', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(AppLocalizations.of(context)!.priceByTypeTitle, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text('Définissez le prix pour chaque type de place. Toutes les places de ce type seront mises à jour.',
+        Text(AppLocalizations.of(context)!.priceByTypeDesc,
             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
         const SizedBox(height: 8),
         ..._allUsedTypes.map((type) => _buildTypePricingCard(type)),
@@ -312,15 +322,15 @@ class _PricingPageState extends State<PricingPage> {
           const SizedBox(width: 12),
           Expanded(flex: 2, child: Text(type, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
           Expanded(
-            child: Text('${places.length} pl.',
-                style: TextStyle(fontSize: 12, color: configCount > 0 ? AppTheme.secondaryColor : AppTheme.textSecondary)),
+              child: Text(AppLocalizations.of(context)!.capacityPlaces('${places.length}'),
+                  style: TextStyle(fontSize: 12, color: configCount > 0 ? AppTheme.secondaryColor : AppTheme.textSecondary)),
           ),
           SizedBox(
             width: 80,
             child: TextField(
               controller: prixCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Prix', border: OutlineInputBorder(), isDense: true,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.priceField, border: OutlineInputBorder(), isDense: true,
                 contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               ),
               keyboardType: TextInputType.number,
@@ -335,7 +345,7 @@ class _PricingPageState extends State<PricingPage> {
               style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
               child: _saving
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Appliquer', style: TextStyle(fontSize: 11)),
+                  : Text(AppLocalizations.of(context)!.applyButton, style: TextStyle(fontSize: 11)),
             ),
           ),
         ]),
@@ -347,9 +357,9 @@ class _PricingPageState extends State<PricingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Affectation des types', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(AppLocalizations.of(context)!.typeAssignmentTitle, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text('Sélectionnez les rangées ou places et assignez-leur un type.',
+        Text(AppLocalizations.of(context)!.typeAssignmentDesc,
             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
         const SizedBox(height: 8),
         _buildRowSelector(),
@@ -361,13 +371,13 @@ class _PricingPageState extends State<PricingPage> {
             child: DropdownButtonFormField<String>(
               value: _availableTypes.contains(_assignType) ? _assignType : null,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Type à assigner', border: OutlineInputBorder(), isDense: true,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.typeToAssign, border: OutlineInputBorder(), isDense: true,
                 contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               ),
               items: [
                 ..._availableTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(fontSize: 12)))),
-                const DropdownMenuItem(value: '__new__', child: Text('+ Nouveau type...', style: TextStyle(fontSize: 12, color: AppTheme.primaryColor))),
+                DropdownMenuItem(value: '__new__', child: Text(AppLocalizations.of(context)!.newTypeOption, style: TextStyle(fontSize: 12, color: AppTheme.primaryColor))),
               ],
               onChanged: (v) => setState(() => _assignType = v!),
             ),
@@ -378,8 +388,8 @@ class _PricingPageState extends State<PricingPage> {
               width: 100,
               child: TextField(
                 controller: _newTypeCtrl,
-                decoration: const InputDecoration(
-                  hintText: 'Nom', border: OutlineInputBorder(), isDense: true,
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.namePlaceholder, border: OutlineInputBorder(), isDense: true,
                   contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 ),
                 style: const TextStyle(fontSize: 12),
@@ -394,11 +404,11 @@ class _PricingPageState extends State<PricingPage> {
               style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
               child: _saving
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Affecter', style: TextStyle(fontSize: 11)),
+                  : Text(AppLocalizations.of(context)!.assignButton, style: TextStyle(fontSize: 11)),
             ),
           ),
         ]),
-        Text('${_selectedRows.length} rangée(s) • ${_selectedPlaceIds.length} place(s) sélectionnée(s)',
+        Text(AppLocalizations.of(context)!.selectionCount('${_selectedRows.length}', '${_selectedPlaceIds.length}'),
             style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
       ],
     );
@@ -406,7 +416,7 @@ class _PricingPageState extends State<PricingPage> {
 
   Widget _buildRowSelector() {
     final rangs = _distinctRangs;
-    if (rangs.isEmpty) return const Text('Aucune rangée disponible', style: TextStyle(color: AppTheme.textSecondary));
+    if (rangs.isEmpty) return Text(AppLocalizations.of(context)!.noRowsAvailable, style: TextStyle(color: AppTheme.textSecondary));
     return Wrap(
       spacing: 6,
       runSpacing: 4,
@@ -432,7 +442,7 @@ class _PricingPageState extends State<PricingPage> {
     final selectedPlaces = _places.where((p) =>
         _selectedRows.contains(p.range) || _selectedPlaceIds.contains(p.numeroPlace)).toList();
     if (selectedPlaces.isEmpty) {
-      return Text('Cliquez sur une place dans la grille ci-dessous pour la sélectionner',
+      return Text(AppLocalizations.of(context)!.clickSeatToSelect,
           style: TextStyle(fontSize: 11, color: AppTheme.textSecondary));
     }
     return Wrap(
@@ -467,9 +477,9 @@ class _PricingPageState extends State<PricingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Tarification par rangée', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(AppLocalizations.of(context)!.rowPricingTitle, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text('Configurer le type et le prix pour chaque rangée.',
+        Text(AppLocalizations.of(context)!.rowPricingDesc,
             style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
         const SizedBox(height: 8),
         ...rangs.map((rang) => _RowPricingTile(
@@ -491,7 +501,7 @@ class _PricingPageState extends State<PricingPage> {
           child: Row(children: [
             Icon(_gridExpanded ? Icons.expand_less : Icons.expand_more, size: 20),
             const SizedBox(width: 4),
-            Text('Grille individuelle', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryDark)),
+            Text(AppLocalizations.of(context)!.seatGridTitle, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryDark)),
           ]),
         ),
         if (_gridExpanded) ...[
@@ -500,8 +510,8 @@ class _PricingPageState extends State<PricingPage> {
             Expanded(
               child: TextField(
                 controller: _searchCtrl,
-                decoration: const InputDecoration(
-                  hintText: 'Rechercher place...', prefixIcon: Icon(Icons.search, size: 20),
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.searchSeatHint, prefixIcon: Icon(Icons.search, size: 20),
                   border: OutlineInputBorder(), isDense: true,
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
@@ -515,9 +525,9 @@ class _PricingPageState extends State<PricingPage> {
                 value: _typeFilter,
                 isExpanded: true,
                 decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
-                hint: const Text('Type', style: TextStyle(fontSize: 12)),
+                hint: Text(AppLocalizations.of(context)!.typeDropdown, style: TextStyle(fontSize: 12)),
                 items: [
-                  const DropdownMenuItem<String>(value: null, child: Text('Tous', style: TextStyle(fontSize: 12))),
+                  DropdownMenuItem<String>(value: null, child: Text(AppLocalizations.of(context)!.allOption, style: TextStyle(fontSize: 12))),
                   ..._distinctTypes.map((t) => DropdownMenuItem<String>(value: t, child: Text(t, style: TextStyle(fontSize: 12)))),
                 ],
                 onChanged: (v) { setState(() => _typeFilter = v); _applyFilter(); },
@@ -536,7 +546,7 @@ class _PricingPageState extends State<PricingPage> {
   String _legendRow() {
     final total = _places.length;
     final configured = _places.where((p) => p.typePlaceOverride != null).length;
-    return '$total places • $configured configurées';
+    return AppLocalizations.of(context)!.seatCountConfigured('$total', '$configured');
   }
 
   Widget _buildSeatGrid() {
@@ -554,7 +564,7 @@ class _PricingPageState extends State<PricingPage> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text('Rangée $rang',
+              child:               Text('${AppLocalizations.of(context)!.rowPrefix} $rang',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             ),
             Wrap(spacing: 4, runSpacing: 4, children: rowPlaces.map((p) => _buildSeatChip(p)).toList()),
@@ -627,42 +637,42 @@ class _PricingPageState extends State<PricingPage> {
         text: (place.prixOverride ?? place.prix)?.toStringAsFixed(2) ?? '');
 
     showDialog(context: context, builder: (ctx) => AlertDialog(
-      title: Text('Place ${place.numeroPlace}'),
+      title: Text(AppLocalizations.of(context)!.seatDialogTitle('${place.numeroPlace}')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           DropdownButtonFormField<String>(
             value: _availableTypes.contains(selectedType) ? selectedType : null,
-            decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder(), isDense: true),
+            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.typeField, border: OutlineInputBorder(), isDense: true),
             items: [
               ..._availableTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))),
-              const DropdownMenuItem(value: '__new__', child: Text('+ Nouveau type...', style: TextStyle(color: AppTheme.primaryColor))),
+              DropdownMenuItem(value: '__new__', child: Text(AppLocalizations.of(context)!.newTypeOption, style: TextStyle(color: AppTheme.primaryColor))),
             ],
             onChanged: (v) => selectedType = v ?? 'Standard',
           ),
           if (selectedType == '__new__') ...[
             const SizedBox(height: 8),
             TextField(
-              decoration: const InputDecoration(labelText: 'Nouveau type', border: OutlineInputBorder(), isDense: true),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.newTypeLabel, border: OutlineInputBorder(), isDense: true),
               onChanged: (v) => selectedType = v,
             ),
           ],
           const SizedBox(height: 12),
           TextField(
             controller: prixCtrl,
-            decoration: InputDecoration(labelText: 'Prix (${AppConstants.currency})', border: const OutlineInputBorder(), isDense: true),
+            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.priceCurrency(AppConstants.currency), border: OutlineInputBorder(), isDense: true),
             keyboardType: TextInputType.number,
           ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.cancelButton)),
         ElevatedButton(
           onPressed: () {
             Navigator.pop(ctx);
             _updateSinglePlace(place, selectedType, double.tryParse(prixCtrl.text));
           },
-          child: const Text('Enregistrer'),
+          child: Text(AppLocalizations.of(context)!.saveButton),
         ),
       ],
     ));
@@ -732,14 +742,14 @@ class _RowPricingTileState extends State<_RowPricingTile> {
                 child: Text(widget.rang, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(width: 8),
-              Text('Rangée ${widget.rang}  ($count places)',
+              Text(AppLocalizations.of(context)!.rowTitle(widget.rang, '$count'),
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               if (anyConfigured)
                 Container(
                   margin: const EdgeInsets.only(left: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(color: AppTheme.secondaryColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-                  child: Text('configuré', style: TextStyle(fontSize: 9, color: AppTheme.secondaryColor)),
+                  child: Text(AppLocalizations.of(context)!.configuredBadge, style: TextStyle(fontSize: 9, color: AppTheme.secondaryColor)),
                 ),
             ]),
             const SizedBox(height: 8),
@@ -748,8 +758,8 @@ class _RowPricingTileState extends State<_RowPricingTile> {
                 child: DropdownButtonFormField<String>(
                   value: _selectedType,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Type', border: OutlineInputBorder(), isDense: true,
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.typeField, border: OutlineInputBorder(), isDense: true,
                     contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   ),
                   items: AppConstants.placeTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(fontSize: 12)))).toList(),
@@ -761,8 +771,8 @@ class _RowPricingTileState extends State<_RowPricingTile> {
                 width: 80,
                 child: TextField(
                   controller: _prixCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Prix', border: OutlineInputBorder(), isDense: true,
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.priceField, border: OutlineInputBorder(), isDense: true,
                     contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   ),
                   keyboardType: TextInputType.number,
@@ -779,7 +789,7 @@ class _RowPricingTileState extends State<_RowPricingTile> {
                   style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
                   child: widget.saving
                       ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Appliquer', style: TextStyle(fontSize: 11)),
+                  : Text(AppLocalizations.of(context)!.applyButton, style: TextStyle(fontSize: 11)),
                 ),
               ),
             ]),

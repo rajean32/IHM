@@ -6,6 +6,7 @@ import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
 import '../../models/lieu_model.dart';
 import '../../widgets/crud_list_view.dart';
+import '../../localization/app_localizations.dart';
 
 class LieuxPage extends StatefulWidget {
   final void Function(String? salleFilter)? onGestionPlaces;
@@ -72,7 +73,7 @@ class _LieuxPageState extends State<LieuxPage> {
             children: [
               Row(
                 children: [
-                  Expanded(child: Text('Salles — ${lieu.nomLieu}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+                  Expanded(child: Text('${tr('admin.venues.rooms')} — ${lieu.nomLieu}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
                   IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close)),
                 ],
               ),
@@ -85,12 +86,12 @@ class _LieuxPageState extends State<LieuxPage> {
                       children: [
                         const Icon(Icons.meeting_room, size: 48, color: AppColors.textSecondary),
                         const SizedBox(height: 12),
-                        const Text('Aucune salle pour ce lieu', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                        Text(tr('admin.venues.noRooms'), style: const TextStyle(color: AppColors.textSecondary, fontSize: 16)),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _showAddSalleDialog(lieu),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Ajouter une salle'),
+                            icon: const Icon(Icons.add),
+                            label: Text(tr('admin.venues.addRoom')),
                         ),
                       ],
                     ),
@@ -115,13 +116,13 @@ class _LieuxPageState extends State<LieuxPage> {
                                   child: Text('$nPlaces', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary)),
                                 ),
                                 title: Text('${s.nomSalle} — ${lieu.nomLieu}'),
-                                subtitle: Text('$nPlaces place(s)'),
+                                subtitle: Text('$nPlaces ${tr('admin.venues.places')}'),
                                 trailing: TextButton(
                                   onPressed: () {
                                     Navigator.pop(ctx);
                                     widget.onGestionPlaces?.call(s.numeroSalle);
                                   },
-                                  child: const Text('Gérer les places'),
+                                  child: Text(tr('admin.venues.managePlaces')),
                                 ),
                               ),
                             );
@@ -135,7 +136,7 @@ class _LieuxPageState extends State<LieuxPage> {
                           child: OutlinedButton.icon(
                             onPressed: () => _showAddSalleDialog(lieu),
                             icon: const Icon(Icons.add),
-                            label: const Text('Ajouter une salle'),
+                          label: Text(tr('admin.venues.addRoom')),
                           ),
                         ),
                       ),
@@ -159,18 +160,18 @@ class _LieuxPageState extends State<LieuxPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Ajouter une salle'),
+        title: Text(tr('admin.venues.addRoom')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nomCtrl,
-              decoration: const InputDecoration(labelText: 'Nom de la salle', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: tr('admin.venues.roomName'), border: const OutlineInputBorder()),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
           ElevatedButton(
             onPressed: () async {
               if (nomCtrl.text.trim().isEmpty) return;
@@ -187,7 +188,7 @@ class _LieuxPageState extends State<LieuxPage> {
                 ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error));
               }
             },
-            child: const Text('Ajouter'),
+            child: Text(tr('common.add')),
           ),
         ],
       ),
@@ -205,7 +206,7 @@ class _LieuxPageState extends State<LieuxPage> {
   @override
   Widget build(BuildContext context) {
     return CrudListView(
-      title: 'Lieux',
+      title: tr('admin.venues'),
       showAppBar: false,
       isLoading: _loading,
       error: _error,
@@ -217,15 +218,15 @@ class _LieuxPageState extends State<LieuxPage> {
         data: {'code': l.code, 'nomLieu': l.nomLieu, 'adresse': l.adresse ?? '', 'ville': l.ville ?? ''},
       )).toList(),
       formFields: [
-        CrudField(key: 'code', label: 'Code lieu', required: true),
-        CrudField(key: 'nomLieu', label: 'Nom', required: true),
-        CrudField(key: 'adresse', label: 'Adresse'),
-        CrudField(key: 'ville', label: 'Ville', required: true),
+        CrudField(key: 'code', label: tr('admin.venues.code'), required: true),
+        CrudField(key: 'nomLieu', label: tr('admin.venues.name'), required: true),
+        CrudField(key: 'adresse', label: tr('admin.venues.address')),
+        CrudField(key: 'ville', label: tr('admin.venues.city'), required: true),
       ],
       onAdd: _add,
       onDelete: _delete,
       onRefresh: _loadData,
-      emptyMessage: 'Aucun lieu trouvé',
+      emptyMessage: tr('admin.venues.empty'),
       itemBuilder: (item, onEdit, onDelete) {
         final lieu = _lieux.firstWhere((l) => l.code == item.id);
         final salles = _sallesForLieu(lieu.code);
@@ -234,14 +235,14 @@ class _LieuxPageState extends State<LieuxPage> {
           child: ListTile(
             leading: item.leading,
             title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: Text('${item.subtitle ?? ''}  •  ${salles.length} salle(s)', style: const TextStyle(fontSize: 12)),
+            subtitle: Text('${item.subtitle ?? ''}  •  ${salles.length} ${tr('admin.venues.rooms')}', style: const TextStyle(fontSize: 12)),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextButton.icon(
                   onPressed: () => _showSallesModal(lieu),
                   icon: const Icon(Icons.info_outline, size: 18),
-                  label: const Text('Info', style: TextStyle(fontSize: 12)),
+                  label: Text(tr('common.details'), style: const TextStyle(fontSize: 12)),
                 ),
                 IconButton(icon: const Icon(Icons.edit, size: 20), onPressed: onEdit),
                 IconButton(icon: const Icon(Icons.delete, size: 20, color: AppColors.error), onPressed: onDelete),

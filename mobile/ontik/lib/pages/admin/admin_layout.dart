@@ -3,6 +3,7 @@ import '../../core/api/dio_config.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/assets/app_colors.dart';
 import '../../widgets/notification_bell.dart';
+import '../../localization/app_localizations.dart';
 import 'dashboard_page.dart';
 import 'users_page.dart';
 import 'events_page.dart';
@@ -65,27 +66,38 @@ class _AdminLayoutState extends State<AdminLayout> {
     ];
 
     final navDestinations = [
-      const NavigationRailDestination(icon: Icon(Icons.dashboard), label: Text('Tableau de bord')),
-      const NavigationRailDestination(icon: Icon(Icons.people), label: Text('Utilisateurs')),
-      const NavigationRailDestination(icon: Icon(Icons.event), label: Text('Événements')),
-      const NavigationRailDestination(icon: Icon(Icons.category), label: Text('Catégories')),
-      const NavigationRailDestination(icon: Icon(Icons.location_city), label: Text('Lieux')),
-      const NavigationRailDestination(icon: Icon(Icons.meeting_room), label: Text('Places')),
-      const NavigationRailDestination(icon: Icon(Icons.confirmation_number), label: Text('Billets')),
-      const NavigationRailDestination(icon: Icon(Icons.book_online), label: Text('Réservations')),
-      const NavigationRailDestination(icon: Icon(Icons.payment), label: Text('Paiements')),
-      const NavigationRailDestination(icon: Icon(Icons.person), label: Text('Compte')),
+      NavigationRailDestination(icon: const Icon(Icons.dashboard), label: Text(tr('admin.dashboard'))),
+      NavigationRailDestination(icon: const Icon(Icons.people), label: Text(tr('admin.users'))),
+      NavigationRailDestination(icon: const Icon(Icons.event), label: Text(tr('admin.events'))),
+      NavigationRailDestination(icon: const Icon(Icons.category), label: Text(tr('admin.categories'))),
+      NavigationRailDestination(icon: const Icon(Icons.location_city), label: Text(tr('admin.venues'))),
+      NavigationRailDestination(icon: const Icon(Icons.meeting_room), label: Text(tr('admin.places'))),
+      NavigationRailDestination(icon: const Icon(Icons.confirmation_number), label: Text(tr('admin.tickets'))),
+      NavigationRailDestination(icon: const Icon(Icons.book_online), label: Text(tr('admin.reservations'))),
+      NavigationRailDestination(icon: const Icon(Icons.payment), label: Text(tr('admin.payments'))),
+      NavigationRailDestination(icon: const Icon(Icons.person), label: Text(tr('admin.account'))),
     ];
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
         title: Row(children: [
-          Image.asset('lib/utils/logo_icon.png', height: 28, fit: BoxFit.contain, color: Colors.white),
+          Image.asset('lib/utils/logo_icon.png', height: 35, fit: BoxFit.contain, color: Colors.white),
           const SizedBox(width: 8),
-          const Text('Panneau d\'administration'),
+          Text(tr('admin.layout.title')),
         ]),
-        actions: const [
-          NotificationBell(),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
+          const NotificationBell(),
         ],
       ),
       body: Row(

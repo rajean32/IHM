@@ -116,7 +116,6 @@ public class ActionLogService {
         if (user == null) return "CLIENT";
         if (user instanceof com.ihm.model.Client) return "CLIENT";
         if (user instanceof com.ihm.model.Organisateur) return "ORGANISATEUR";
-        if (user instanceof com.ihm.model.Administrateur) return "ADMINISTRATEUR";
         return "CLIENT";
     }
 }

@@ -4,6 +4,7 @@ import '../../core/services/auth_service.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/auth_routes.dart';
 import '../../core/utils/error_helper.dart';
+import '../../localization/app_localizations.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,8 +15,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _nomCtrl = TextEditingController();
-  final _prenomsCtrl = TextEditingController();
+  final _nomCompletCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _telCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
@@ -53,8 +53,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
 
   @override
   void dispose() {
-    _nomCtrl.dispose();
-    _prenomsCtrl.dispose();
+    _nomCompletCtrl.dispose();
     _emailCtrl.dispose();
     _telCtrl.dispose();
     _passwordCtrl.dispose();
@@ -68,7 +67,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
       context: context,
       initialDate: now.subtract(const Duration(days: 6570)),
       firstDate: DateTime(1900),
-      lastDate: now.subtract(const Duration(days: 365)),
+      lastDate: now.subtract(const Duration(days: 6570)),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -102,9 +101,13 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
     FocusScope.of(context).unfocus();
     setState(() { _loading = true; _error = null; });
     try {
+      final fullName = _nomCompletCtrl.text.trim();
+      final parts = fullName.split(' ');
+      final prenoms = parts.length >= 2 ? parts.first : '';
+      final nom = parts.length >= 2 ? parts.sublist(1).join(' ') : fullName;
       await AuthService().register({
-        'nom': _nomCtrl.text.trim(),
-        'prenoms': _prenomsCtrl.text.trim(),
+        'nom': nom,
+        'prenoms': prenoms,
         'sexe': _sexe,
         'dateDeNaissance': DateFormat('yyyy-MM-dd').format(_dateDeNaissance!),
         'email': _emailCtrl.text.trim(),
@@ -115,7 +118,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Inscription réussie. Connectez-vous.'),
+          content: Text(tr('auth.register.success')),
           backgroundColor: AppColors.secondary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -145,7 +148,11 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildHeader(),
-                  const SizedBox(height: 32),
+                  if (_error != null) ...[
+                    const SizedBox(height: 20),
+                    _buildErrorBanner(),
+                  ],
+                  SizedBox(height: _error != null ? 20 : 32),
                   _buildFormCard(),
                   const SizedBox(height: 20),
                   _buildFooter(),
@@ -212,29 +219,14 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Nom & Prénoms row
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _nomCtrl,
-                      label: 'Last Name',
-                      hint: 'Doe',
-                      icon: Icons.person_outline,
-                      validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _prenomsCtrl,
-                      label: 'First Name',
-                      hint: 'John',
-                      icon: Icons.person_outline,
-                      validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-                    ),
-                  ),
-                ],
+              // Nom complet
+              _buildTextField(
+                controller: _nomCompletCtrl,
+                label: 'Full Name',
+                hint: 'John Doe',
+                icon: Icons.person_outline,
+                textInputAction: TextInputAction.next,
+                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
 
@@ -244,7 +236,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                   Expanded(
                     child: _buildDropdown(
                       label: 'Gender',
-                      icon: Icons.wc_outlined,
+                      icon: Icons.person_outline,
                       value: _sexe,
                       items: const [
                         DropdownMenuItem(value: 'M', child: Text('Male')),
@@ -281,6 +273,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                 hint: 'john@example.com',
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Required';
                   if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v.trim())) {
@@ -298,6 +291,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                 hint: '+261 34 00 000 00',
                 icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
@@ -305,10 +299,6 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
               // Password
               _buildPasswordField(),
               const SizedBox(height: 24),
-
-              // Error
-              if (_error != null) _buildErrorBanner(),
-              if (_error != null) const SizedBox(height: 16),
 
               // Submit button
               _buildRegisterButton(),
@@ -325,11 +315,13 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
     required String hint,
     required IconData icon,
     TextInputType? keyboardType,
+    TextInputAction? textInputAction,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      textInputAction: textInputAction,
       style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
       decoration: InputDecoration(
         labelText: label,
@@ -455,6 +447,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
       obscureText: _obscurePassword,
       textInputAction: TextInputAction.done,
       onFieldSubmitted: (_) => _handleRegister(),
+      autofillHints: const [AutofillHints.newPassword],
       style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
       decoration: InputDecoration(
         labelText: 'Password',
@@ -528,6 +521,11 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                 height: 1.4,
               ),
             ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: () => setState(() => _error = null),
+            child: const Icon(Icons.close, color: AppColors.error, size: 16),
           ),
         ],
       ),

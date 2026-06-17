@@ -6,6 +6,7 @@ import '../../models/categorie_model.dart';
 import '../../models/caracteristique_model.dart';
 import '../../core/utils/error_helper.dart';
 import '../../core/assets/app_colors.dart';
+import '../../localization/app_localizations.dart';
 
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
@@ -50,18 +51,18 @@ class _CategoriesPageState extends State<CategoriesPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Ajouter une catégorie'),
+        title: Text(tr('admin.categories.add')),
         content: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(controller: codeCtrl, decoration: const InputDecoration(labelText: 'Code', border: OutlineInputBorder(), hintText: 'CAT01'), maxLength: 10),
+            TextField(controller: codeCtrl, decoration: InputDecoration(labelText: tr('admin.categories.code'), border: const OutlineInputBorder(), hintText: tr('admin.categories.codeHint')), maxLength: 10),
             const SizedBox(height: 8),
-            TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()), maxLength: 100),
+            TextField(controller: nomCtrl, decoration: InputDecoration(labelText: tr('admin.categories.name'), border: const OutlineInputBorder()), maxLength: 100),
             const SizedBox(height: 8),
-            TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()), maxLength: 500, maxLines: 3),
+            TextField(controller: descCtrl, decoration: InputDecoration(labelText: tr('admin.categories.description'), border: const OutlineInputBorder()), maxLength: 500, maxLines: 3),
           ]),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
           ElevatedButton(onPressed: () async {
             if (codeCtrl.text.isEmpty || nomCtrl.text.isEmpty) return;
             await _api.createCategory({
@@ -71,7 +72,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
             });
             if (ctx.mounted) Navigator.pop(ctx);
             _loadData();
-          }, child: const Text('Ajouter')),
+          }, child: Text(tr('common.add'))),
         ],
       ),
     );
@@ -85,18 +86,18 @@ class _CategoriesPageState extends State<CategoriesPage> {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Modifier la catégorie'),
+        title: Text(tr('admin.categories.edit')),
         content: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(controller: codeCtrl, decoration: const InputDecoration(labelText: 'Code', border: OutlineInputBorder()), maxLength: 10, enabled: false),
+            TextField(controller: codeCtrl, decoration: InputDecoration(labelText: tr('admin.categories.code'), border: const OutlineInputBorder()), maxLength: 10, enabled: false),
             const SizedBox(height: 8),
-            TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()), maxLength: 100),
+            TextField(controller: nomCtrl, decoration: InputDecoration(labelText: tr('admin.categories.name'), border: const OutlineInputBorder()), maxLength: 100),
             const SizedBox(height: 8),
-            TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()), maxLength: 500, maxLines: 3),
+            TextField(controller: descCtrl, decoration: InputDecoration(labelText: tr('admin.categories.description'), border: const OutlineInputBorder()), maxLength: 500, maxLines: 3),
           ]),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
           ElevatedButton(onPressed: () async {
             if (nomCtrl.text.isEmpty) return;
             await _api.updateCategory(cat.codeCategorie, {
@@ -106,7 +107,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
             });
             if (ctx.mounted) Navigator.pop(ctx);
             _loadData();
-          }, child: const Text('Modifier')),
+          }, child: Text(tr('common.edit'))),
         ],
       ),
     );
@@ -116,14 +117,14 @@ class _CategoriesPageState extends State<CategoriesPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer la catégorie'),
-        content: Text('Êtes-vous sûr de vouloir supprimer "${cat.nomCategorie}" ?'),
+        title: Text(tr('admin.categories.deleteTitle')),
+        content: Text('${tr('admin.categories.deleteTitle')} "${cat.nomCategorie}" ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('common.cancel'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
-            child: const Text('Supprimer', style: TextStyle(color: Colors.white)),
+            child: Text(tr('common.delete'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -133,7 +134,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
       await _api.deleteCategory(cat.codeCategorie);
       _loadData();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Catégorie supprimée')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('admin.categories.deleted'))));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -180,13 +181,22 @@ class _CategoriesPageState extends State<CategoriesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Catégories')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: Text(tr('admin.categories')),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? Center(child: Text(_error!))
               : _categories.isEmpty
-                  ? const Center(child: Text('Aucune catégorie trouvée'))
+                  ? Center(child: Text(tr('admin.categories.empty')))
                   : ListView.builder(
                       padding: const EdgeInsets.all(8),
                       itemCount: _categories.length,
@@ -222,18 +232,18 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                       if (v == 'delete') _openDeleteDialog(c);
                                     },
                                     itemBuilder: (ctx) => [
-                                      const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text('Modifier', style: TextStyle(fontSize: 13)))),
-                                      const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: AppTheme.errorColor), title: Text('Supprimer', style: TextStyle(fontSize: 13, color: AppTheme.errorColor)))),
+                                      PopupMenuItem(value: 'edit', child: ListTile(leading: const Icon(Icons.edit, size: 18), title: Text(tr('common.edit'), style: const TextStyle(fontSize: 13)))),
+                                      PopupMenuItem(value: 'delete', child: ListTile(leading: const Icon(Icons.delete, size: 18, color: AppTheme.errorColor), title: Text(tr('common.delete'), style: const TextStyle(fontSize: 13, color: AppTheme.errorColor)))),
                                     ],
                                   ),
                                 ]),
                                 const SizedBox(height: 8),
                                 Row(children: [
-                                  _actionChip(Icons.list_alt, 'Caractéristiques', () => _showManageCaracteristiques(c)),
+                                  _actionChip(Icons.list_alt, tr('admin.categories.features'), () => _showManageCaracteristiques(c)),
                                   const SizedBox(width: 4),
-                                  _actionChip(Icons.meeting_room, 'Salles', () => _showManageSalleTypes(c)),
+                                  _actionChip(Icons.meeting_room, tr('admin.categories.rooms'), () => _showManageSalleTypes(c)),
                                   const SizedBox(width: 4),
-                                  _actionChip(Icons.settings, 'Config', () => _showManageSpecificConfig(c)),
+                                  _actionChip(Icons.settings, tr('admin.categories.config'), () => _showManageSpecificConfig(c)),
                                 ]),
                               ],
                             ),
@@ -298,34 +308,34 @@ class _CaracteristiquesPageState extends State<_CaracteristiquesPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDState) => AlertDialog(
-          title: Text(existing != null ? 'Modifier la caractéristique' : 'Ajouter une caractéristique'),
+          title: Text(existing != null ? tr('admin.categories.editFeature') : tr('admin.categories.addFeature')),
           content: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder())),
+              TextField(controller: nomCtrl, decoration: InputDecoration(labelText: tr('admin.categories.featureName'), border: const OutlineInputBorder())),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: typeDonnee,
-                decoration: const InputDecoration(labelText: 'Type de donnée', border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'text', child: Text('Texte')),
-                  DropdownMenuItem(value: 'number', child: Text('Nombre')),
-                  DropdownMenuItem(value: 'date', child: Text('Date')),
-                  DropdownMenuItem(value: 'select', child: Text('Liste déroulante')),
-                  DropdownMenuItem(value: 'boolean', child: Text('Oui/Non')),
+                decoration: InputDecoration(labelText: tr('admin.categories.dataType'), border: const OutlineInputBorder()),
+                items: [
+                  DropdownMenuItem(value: 'text', child: Text(tr('admin.categories.dataTypeText'))),
+                  DropdownMenuItem(value: 'number', child: Text(tr('admin.categories.dataTypeNumber'))),
+                  DropdownMenuItem(value: 'date', child: Text(tr('admin.categories.dataTypeDate'))),
+                  DropdownMenuItem(value: 'select', child: Text(tr('admin.categories.dataTypeSelect'))),
+                  DropdownMenuItem(value: 'boolean', child: Text(tr('admin.categories.dataTypeBoolean'))),
                 ],
                 onChanged: (v) => setDState(() => typeDonnee = v ?? 'text'),
               ),
               const SizedBox(height: 8),
-              TextField(controller: ordreCtrl, decoration: const InputDecoration(labelText: 'Ordre d\'affichage', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+              TextField(controller: ordreCtrl, decoration: InputDecoration(labelText: tr('admin.categories.displayOrder'), border: const OutlineInputBorder()), keyboardType: TextInputType.number),
               const SizedBox(height: 8),
               if (typeDonnee == 'select')
-                TextField(controller: optionsCtrl, decoration: const InputDecoration(labelText: 'Options (séparées par virgule)', border: OutlineInputBorder())),
+                TextField(controller: optionsCtrl, decoration: InputDecoration(labelText: tr('admin.categories.optionsHint'), border: const OutlineInputBorder())),
               const SizedBox(height: 8),
-              SwitchListTile(title: const Text('Obligatoire'), value: obligatoire, onChanged: (v) => setDState(() => obligatoire = v)),
+              SwitchListTile(title: Text(tr('admin.categories.required')), value: obligatoire, onChanged: (v) => setDState(() => obligatoire = v)),
             ]),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
             ElevatedButton(onPressed: () async {
               if (nomCtrl.text.isEmpty) return;
               final data = {
@@ -343,7 +353,7 @@ class _CaracteristiquesPageState extends State<_CaracteristiquesPage> {
               }
               if (ctx.mounted) Navigator.pop(ctx);
               _load();
-            }, child: Text(existing != null ? 'Enregistrer' : 'Ajouter')),
+            }, child: Text(existing != null ? tr('common.save') : tr('common.add'))),
           ],
         ),
       ),
@@ -354,11 +364,11 @@ class _CaracteristiquesPageState extends State<_CaracteristiquesPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Confirmer'),
-        content: Text('Supprimer la caractéristique "${c.nom}" ?'),
+        title: Text(tr('common.confirm')),
+        content: Text('${tr('admin.categories.deleteFeature')} "${c.nom}" ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: AppTheme.errorColor))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('common.cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('common.delete'), style: const TextStyle(color: AppTheme.errorColor))),
         ],
       ),
     );
@@ -371,11 +381,20 @@ class _CaracteristiquesPageState extends State<_CaracteristiquesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Caractéristiques - ${widget.categorie.nomCategorie}')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        title: Text('${tr('admin.categories.featuresTitle')} ${widget.categorie.nomCategorie}'),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _items.isEmpty
-              ? const Center(child: Text('Aucune caractéristique'))
+              ? Center(child: Text(tr('admin.categories.noFeatures')))
               : ListView.builder(
                   itemCount: _items.length,
                   itemBuilder: (ctx, i) {
@@ -384,7 +403,7 @@ class _CaracteristiquesPageState extends State<_CaracteristiquesPage> {
                       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       child: ListTile(
                         title: Text('${c.nom}${c.obligatoire ? ' *' : ''}', style: const TextStyle(fontWeight: FontWeight.w500)),
-                        subtitle: Text('Type: ${c.typeDonnee}${c.options != null ? ' (${c.options})' : ''} • Ordre: ${c.ordreAffichage ?? 0}'),
+                        subtitle: Text('${tr('admin.categories.typeLabel')} ${c.typeDonnee}${c.options != null ? ' (${c.options})' : ''} • ${tr('admin.categories.orderLabel')} ${c.ordreAffichage ?? 0}'),
                         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                           IconButton(icon: const Icon(Icons.edit, size: 20), onPressed: () => _showAddEditDialog(existing: c)),
                           IconButton(icon: const Icon(Icons.delete, size: 20, color: AppTheme.errorColor), onPressed: () => _delete(c)),
@@ -426,12 +445,12 @@ class _SalleTypeSelectorState extends State<_SalleTypeSelector> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            const Text('Types de salle compatibles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('admin.categories.compatibleRoomTypes'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const Spacer(),
             IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
           ]),
           const Divider(),
-          Text('Sélectionnez les salles compatibles avec "${widget.categorie.nomCategorie}"',
+          Text('${tr('admin.categories.selectRooms')} "${widget.categorie.nomCategorie}"',
               style: TextStyle(color: AppTheme.textSecondary)),
           const SizedBox(height: 8),
           Expanded(
@@ -473,11 +492,10 @@ class _SalleTypeSelectorState extends State<_SalleTypeSelector> {
                 }
               }
             },
-            child: const Text('Enregistrer'),
+            child: Text(tr('common.save')),
           ),
-        ],
-      ),
-    );
+        ]),
+      );
   }
 }
 
@@ -517,7 +535,7 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
       await CategorieService().updateCategorieSpecificConfig(widget.categorie.codeCategorie, _config);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Configuration spécifique enregistrée')),
+        SnackBar(content: Text(tr('admin.categories.configSaved'))),
       );
       widget.onChanged();
       Navigator.pop(context);
@@ -537,18 +555,18 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
 
     return StatefulBuilder(
       builder: (ctx, setDState) => Column(children: [
-        const Text('Configuration salle de cinéma', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(tr('admin.categories.cinemaConfig'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        TextField(controller: rows, decoration: const InputDecoration(labelText: 'Nombre de rangées', border: OutlineInputBorder()), keyboardType: TextInputType.number,
+        TextField(controller: rows, decoration: InputDecoration(labelText: tr('admin.categories.numRows'), border: const OutlineInputBorder()), keyboardType: TextInputType.number,
           onChanged: (v) => _config['nbRangees'] = int.tryParse(v)),
         const SizedBox(height: 8),
-        TextField(controller: seatsPerRow, decoration: const InputDecoration(labelText: 'Sièges par rangée', border: OutlineInputBorder()), keyboardType: TextInputType.number,
+        TextField(controller: seatsPerRow, decoration: InputDecoration(labelText: tr('admin.categories.seatsPerRow'), border: const OutlineInputBorder()), keyboardType: TextInputType.number,
           onChanged: (v) => _config['placesParRangee'] = int.tryParse(v)),
         const SizedBox(height: 8),
-        TextField(controller: allees, decoration: const InputDecoration(labelText: 'Allées (ex: B,D)', border: OutlineInputBorder()),
+        TextField(controller: allees, decoration: InputDecoration(labelText: tr('admin.categories.aisles'), border: const OutlineInputBorder()),
           onChanged: (v) => _config['allees'] = v),
         const SizedBox(height: 8),
-        TextField(controller: largeur, decoration: const InputDecoration(labelText: 'Largeur allée', border: OutlineInputBorder()), keyboardType: TextInputType.number,
+        TextField(controller: largeur, decoration: InputDecoration(labelText: tr('admin.categories.aisleWidth'), border: const OutlineInputBorder()), keyboardType: TextInputType.number,
           onChanged: (v) => _config['largeurAllee'] = double.tryParse(v)),
       ]),
     );
@@ -559,13 +577,13 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
 
     return Column(children: [
       Row(children: [
-        const Text('Zones de placement libre', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(tr('admin.categories.freeZones'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const Spacer(),
         IconButton(icon: const Icon(Icons.add), onPressed: () => _showAddZoneDialog()),
       ]),
       const SizedBox(height: 8),
       if (zones.isEmpty)
-        const Text('Aucune zone configurée', style: TextStyle(color: AppTheme.textSecondary))
+        Text(tr('admin.categories.noZones'), style: const TextStyle(color: AppTheme.textSecondary))
       else
         Expanded(
           child: ListView.builder(
@@ -575,8 +593,8 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 4),
                 child: ListTile(
-                  title: Text('${zone['nom'] ?? 'Zone ${i + 1}'}'),
-                  subtitle: Text('Capacité: ${zone['capacite']} • Prix: ${zone['prix']}'),
+                  title: Text('${zone['nom'] ?? '${tr('admin.categories.zone')} ${i + 1}'}'),
+                  subtitle: Text('${tr('admin.categories.capacity')} ${zone['capacite']} • ${tr('admin.categories.price')} ${zone['prix']}'),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _showEditZoneDialog(i, zone)),
                     IconButton(icon: const Icon(Icons.delete, size: 18, color: AppTheme.errorColor), onPressed: () {
@@ -600,16 +618,16 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Ajouter une zone'),
+        title: Text(tr('admin.categories.addZone')),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder())),
+          TextField(controller: nomCtrl, decoration: InputDecoration(labelText: tr('admin.categories.name'), border: const OutlineInputBorder())),
           const SizedBox(height: 8),
-          TextField(controller: capaciteCtrl, decoration: const InputDecoration(labelText: 'Capacité max', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+          TextField(controller: capaciteCtrl, decoration: InputDecoration(labelText: tr('admin.categories.maxCapacity'), border: const OutlineInputBorder()), keyboardType: TextInputType.number),
           const SizedBox(height: 8),
-          TextField(controller: prixCtrl, decoration: const InputDecoration(labelText: 'Prix billet', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+          TextField(controller: prixCtrl, decoration: InputDecoration(labelText: tr('admin.categories.ticketPrice'), border: const OutlineInputBorder()), keyboardType: TextInputType.number),
         ])),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
           ElevatedButton(onPressed: () {
             if (nomCtrl.text.isEmpty) return;
             final z = (_config['zones'] as List<dynamic>?) ?? [];
@@ -617,7 +635,7 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
             _config['zones'] = z;
             Navigator.pop(ctx);
             setState(() {});
-          }, child: const Text('Ajouter')),
+          }, child: Text(tr('common.add'))),
         ],
       ),
     );
@@ -630,16 +648,16 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Modifier zone ${index + 1}'),
+        title: Text('${tr('admin.categories.editZone')} ${index + 1}'),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder())),
+          TextField(controller: nomCtrl, decoration: InputDecoration(labelText: tr('admin.categories.name'), border: const OutlineInputBorder())),
           const SizedBox(height: 8),
-          TextField(controller: capaciteCtrl, decoration: const InputDecoration(labelText: 'Capacité max', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+          TextField(controller: capaciteCtrl, decoration: InputDecoration(labelText: tr('admin.categories.maxCapacity'), border: const OutlineInputBorder()), keyboardType: TextInputType.number),
           const SizedBox(height: 8),
-          TextField(controller: prixCtrl, decoration: const InputDecoration(labelText: 'Prix billet', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+          TextField(controller: prixCtrl, decoration: InputDecoration(labelText: tr('admin.categories.ticketPrice'), border: const OutlineInputBorder()), keyboardType: TextInputType.number),
         ])),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
           ElevatedButton(onPressed: () {
             if (nomCtrl.text.isEmpty) return;
             final z = List<Map<String, dynamic>>.from((_config['zones'] as List<dynamic>?) ?? []);
@@ -647,7 +665,7 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
             _config['zones'] = z;
             Navigator.pop(ctx);
             setState(() {});
-          }, child: const Text('Enregistrer')),
+          }, child: Text(tr('common.save'))),
         ],
       ),
     );
@@ -658,13 +676,13 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
 
     return Column(children: [
       Row(children: [
-        const Text('Blocs de tribunes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(tr('admin.categories.stands'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const Spacer(),
         IconButton(icon: const Icon(Icons.add), onPressed: () => _showAddBlockDialog()),
       ]),
       const SizedBox(height: 8),
       if (blocs.isEmpty)
-        const Text('Aucun bloc configuré', style: TextStyle(color: AppTheme.textSecondary))
+        Text(tr('admin.categories.noBlocks'), style: const TextStyle(color: AppTheme.textSecondary))
       else
         Expanded(
           child: ListView.builder(
@@ -674,8 +692,8 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 4),
                 child: ListTile(
-                  title: Text('${block['type'] ?? 'Bloc ${i + 1}'}'),
-                  subtitle: Text('Places: ${block['places']} • Prix: ${block['prix']}'),
+                  title: Text('${block['type'] ?? '${tr('admin.categories.block')} ${i + 1}'}'),
+                  subtitle: Text('${tr('admin.categories.seats')} ${block['places']} • ${tr('admin.categories.price')} ${block['prix']}'),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => _showEditBlockDialog(i, block)),
                     IconButton(icon: const Icon(Icons.delete, size: 18, color: AppTheme.errorColor), onPressed: () {
@@ -699,16 +717,16 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Ajouter un bloc'),
+        title: Text(tr('admin.categories.addBlock')),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: typeCtrl, decoration: const InputDecoration(labelText: 'Type (ex: Tribune A)', border: OutlineInputBorder())),
+          TextField(controller: typeCtrl, decoration: InputDecoration(labelText: tr('admin.categories.blockType'), border: const OutlineInputBorder())),
           const SizedBox(height: 8),
-          TextField(controller: placesCtrl, decoration: const InputDecoration(labelText: 'Nombre de places', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+          TextField(controller: placesCtrl, decoration: InputDecoration(labelText: tr('admin.categories.numSeats'), border: const OutlineInputBorder()), keyboardType: TextInputType.number),
           const SizedBox(height: 8),
-          TextField(controller: prixCtrl, decoration: const InputDecoration(labelText: 'Prix', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+          TextField(controller: prixCtrl, decoration: InputDecoration(labelText: tr('admin.categories.price'), border: const OutlineInputBorder()), keyboardType: TextInputType.number),
         ])),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
           ElevatedButton(onPressed: () {
             if (typeCtrl.text.isEmpty) return;
             final b = (_config['blocs'] as List<dynamic>?) ?? [];
@@ -716,7 +734,7 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
             _config['blocs'] = b;
             Navigator.pop(ctx);
             setState(() {});
-          }, child: const Text('Ajouter')),
+          }, child: Text(tr('common.add'))),
         ],
       ),
     );
@@ -729,16 +747,16 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Modifier bloc ${index + 1}'),
+        title: Text('${tr('admin.categories.editBlock')} ${index + 1}'),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: typeCtrl, decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder())),
+          TextField(controller: typeCtrl, decoration: InputDecoration(labelText: tr('admin.categories.type'), border: const OutlineInputBorder())),
           const SizedBox(height: 8),
-          TextField(controller: placesCtrl, decoration: const InputDecoration(labelText: 'Nombre de places', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+          TextField(controller: placesCtrl, decoration: InputDecoration(labelText: tr('admin.categories.numSeats'), border: const OutlineInputBorder()), keyboardType: TextInputType.number),
           const SizedBox(height: 8),
-          TextField(controller: prixCtrl, decoration: const InputDecoration(labelText: 'Prix', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+          TextField(controller: prixCtrl, decoration: InputDecoration(labelText: tr('admin.categories.price'), border: const OutlineInputBorder()), keyboardType: TextInputType.number),
         ])),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
           ElevatedButton(onPressed: () {
             if (typeCtrl.text.isEmpty) return;
             final b = List<Map<String, dynamic>>.from((_config['blocs'] as List<dynamic>?) ?? []);
@@ -746,7 +764,7 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
             _config['blocs'] = b;
             Navigator.pop(ctx);
             setState(() {});
-          }, child: const Text('Enregistrer')),
+          }, child: Text(tr('common.save'))),
         ],
       ),
     );
@@ -768,13 +786,13 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
         content = _buildSportsConfig();
         break;
       default:
-        content = const Center(child: Text('Aucune configuration spécifique disponible pour cette catégorie'));
+        content = Center(child: Text(tr('admin.categories.noConfig')));
     }
 
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Configuration : ${widget.categorie.nomCategorie}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text('${tr('admin.categories.configFor')} ${widget.categorie.nomCategorie}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const Divider(height: 24),
         Expanded(child: content),
         const SizedBox(height: 16),
@@ -783,14 +801,14 @@ class _SpecificConfigPageState extends State<_SpecificConfigPage> {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.textSecondary),
-              child: const Text('Fermer'),
+              child: Text(tr('common.close')),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton(
               onPressed: _saveConfig,
-              child: const Text('Enregistrer'),
+            child: Text(tr('common.save')),
             ),
           ),
         ]),

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/assets/app_colors.dart';
+import '../../core/services/dashboard_service.dart';
 import '../../core/services/user_service.dart';
 import '../../core/routes/auth_routes.dart';
 import '../../core/utils/error_helper.dart';
+import '../../models/dashboard_model.dart';
 import '../../widgets/profile_body.dart';
-import '../../widgets/two_factor_widget.dart';
+import '../../generated/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -16,7 +18,6 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool _loading = true;
-  bool _is2faEnabled = false;
   String _nom = '';
   String _prenoms = '';
   String _email = '';
@@ -78,15 +79,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Informations personnelles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  Text(AppLocalizations.of(context)!.personalInfo, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 20),
-                  TextField(controller: nomCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder())),
+                  TextField(controller: nomCtrl, enabled: isEditing, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.lastName, border: OutlineInputBorder())),
                   const SizedBox(height: 12),
-                  TextField(controller: prenomsCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Prénoms', border: OutlineInputBorder())),
+                  TextField(controller: prenomsCtrl, enabled: isEditing, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.firstName, border: OutlineInputBorder())),
                   const SizedBox(height: 12),
-                  TextField(controller: emailCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
+                  TextField(controller: emailCtrl, enabled: isEditing, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.emailField, border: OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
                   const SizedBox(height: 12),
-                  TextField(controller: telCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Téléphone', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+                  TextField(controller: telCtrl, enabled: isEditing, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.phone, border: OutlineInputBorder()), keyboardType: TextInputType.phone),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -99,11 +100,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         final confirmed = await showDialog<bool>(
                           context: ctx,
                           builder: (dctx) => AlertDialog(
-                            title: const Text('Confirmer'),
-                            content: const Text('Voulez-vous enregistrer les modifications ?'),
+                            title: Text(AppLocalizations.of(ctx)!.commonConfirm),
+                            content: Text(AppLocalizations.of(context)!.saveChangesConfirm),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(dctx, false), child: const Text('Annuler')),
-                              TextButton(onPressed: () => Navigator.pop(dctx, true), child: const Text('Confirmer')),
+                              TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text(AppLocalizations.of(dctx)!.commonCancel)),
+                              TextButton(onPressed: () => Navigator.pop(dctx, true), child: Text(AppLocalizations.of(dctx)!.commonConfirm)),
                             ],
                           ),
                         );
@@ -128,7 +129,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           _loadProfile();
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Profil mis à jour'), backgroundColor: AppTheme.secondaryColor),
+                            SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdated), backgroundColor: AppTheme.secondaryColor),
                           );
                         } catch (e) {
                           setSheetState(() => saving = false);
@@ -140,7 +141,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       },
                       child: saving
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text(isEditing ? 'Enregistrer' : 'Modifier'),
+                          : Text(isEditing ? AppLocalizations.of(context)!.commonSave : AppLocalizations.of(context)!.commonEdit),
                     ),
                   ),
                 ],
@@ -152,13 +153,93 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showPasswordAnd2FA() {
-    showPasswordAnd2FABottomSheet(
-      context,
-      _is2faEnabled,
-      (val) {
-        if (mounted) setState(() => _is2faEnabled = val);
+  void _showRevenue() async {
+    final orgCode = userCode ?? '';
+    if (orgCode.isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return FutureBuilder<OrganizerDashboardStats>(
+          future: DashboardService().getDashboard(orgCode: orgCode).then((d) => OrganizerDashboardStats.fromJson(d)),
+          builder: (ctx, snap) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.55,
+              minChildSize: 0.4,
+              maxChildSize: 0.75,
+              expand: false,
+              builder: (ctx, scrollCtrl) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                  child: ListView(
+                    controller: scrollCtrl,
+                    children: [
+                      Center(
+                        child: Container(width: 40, height: 4,
+                          decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(AppLocalizations.of(context)!.revenue, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 20),
+                      if (snap.connectionState == ConnectionState.waiting)
+                        const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
+                      else if (snap.hasError)
+                        Center(child: Text(AppLocalizations.of(context)!.loadError, style: TextStyle(color: AppTheme.errorColor, fontSize: 13)))
+                      else ...[
+                        _revenueStat(snap.data!, AppLocalizations.of(context)!.totalRevenue, '${snap.data!.totalRevenue.toStringAsFixed(0)} Ar', Icons.payments, AppColors.secondary),
+                        const SizedBox(height: 12),
+                        _revenueStat(snap.data!, AppLocalizations.of(context)!.ticketsSold, '${snap.data!.totalTicketsSold}', Icons.confirmation_number, AppColors.primary),
+                        const SizedBox(height: 12),
+                        _revenueStat(snap.data!, AppLocalizations.of(context)!.fillRate, '${snap.data!.fillRate.toStringAsFixed(1)}%', Icons.pie_chart, AppColors.accent),
+                        const SizedBox(height: 12),
+                        _revenueStat(snap.data!, AppLocalizations.of(context)!.seatsAvailable, '${snap.data!.placesDisponibles}', Icons.event_seat, const Color(0xFF7B1FA2)),
+                        const SizedBox(height: 16),
+                        if (snap.data!.dailySales.isNotEmpty) ...[
+                          const Divider(),
+                          const SizedBox(height: 8),
+                          Text(AppLocalizations.of(context)!.latestSales, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          ...snap.data!.dailySales.reversed.take(7).map((s) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3),
+                            child: Row(children: [
+                              Text(s.date, style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                              const Spacer(),
+                              Text('${s.ticketsSold} billet(s)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                              const SizedBox(width: 12),
+                              Text('${s.revenue.toStringAsFixed(0)} Ar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.secondary)),
+                            ]),
+                          )),
+                        ],
+                      ],
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
       },
+    );
+  }
+
+  Widget _revenueStat(OrganizerDashboardStats stats, String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(children: [
+        Icon(icon, color: color, size: 24),
+        const SizedBox(width: 12),
+        Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: AppTheme.textSecondary))),
+        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+      ]),
     );
   }
 
@@ -166,17 +247,16 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Déconnexion'),
-        content: const Text('Voulez-vous vraiment vous déconnecter ?'),
+        title: Text(AppLocalizations.of(context)!.commonLogout),
+        content: Text(AppLocalizations.of(context)!.logoutConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(ctx)!.commonCancel)),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              clearSession();
-              Navigator.of(context).pushNamedAndRemoveUntil(AuthRoutes.login, (route) => false);
+              Navigator.pushNamedAndRemoveUntil(context, '/splash', (r) => false);
             },
-            child: const Text('Déconnexion', style: TextStyle(color: AppColors.error)),
+            child: Text(AppLocalizations.of(ctx)!.commonLogout, style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -191,20 +271,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final displayName = '$_prenoms $_nom'.trim();
     return ProfileBody(
-      name: displayName.isNotEmpty ? displayName : (userNom ?? 'Organisateur'),
+      name: displayName.isNotEmpty ? displayName : (userNom ?? AppLocalizations.of(context)!.profileTitle),
       email: _email.isNotEmpty ? _email : (userCode ?? '—'),
       badge: 'ORGANISATEUR',
       badgeColor: const Color(0xFF673AB7),
       onEditProfile: _showEditInfo,
       menuGroups: [
-        ProfileMenuGroup('Compte', [
-          ProfileMenuItem('Informations personnelles', Icons.person, onTap: _showEditInfo),
-          ProfileMenuItem('Mes événements', Icons.event, onTap: () {}),
-          ProfileMenuItem('Revenus', Icons.payments, onTap: () {}),
-        ]),
-        ProfileMenuGroup('Sécurité', [
-          ProfileMenuItem('Mot de passe & 2FA', Icons.lock, status: 'Sécurisé', onTap: _showPasswordAnd2FA),
-          ProfileMenuItem('Appareils connectés', Icons.devices, onTap: () {}),
+        ProfileMenuGroup(AppLocalizations.of(context)!.account, [
+          ProfileMenuItem(AppLocalizations.of(context)!.personalInfo, Icons.person, onTap: _showEditInfo),
+          ProfileMenuItem(AppLocalizations.of(context)!.revenue, Icons.payments, onTap: _showRevenue),
+          ProfileMenuItem(AppLocalizations.of(context)!.settingsTitle, Icons.settings, onTap: () => Navigator.pushNamed(context, '/settings')),
         ]),
       ],
       onLogout: _logout,

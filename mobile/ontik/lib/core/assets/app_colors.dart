@@ -104,6 +104,18 @@ class AppTheme {
   static const textSecondary = AppColors.textSecondary;
   static const dividerColor = AppColors.divider;
 
+  // Dark colors
+  static const _darkBackground = Color(0xFF121220);
+  static const _darkSurface = Color(0xFF1E1E30);
+  static const _darkCard = Color(0xFF252538);
+  static const _darkFieldFill = Color(0xFF2A2A3E);
+  static const _darkTextPrimary = Color(0xFFE8E8F0);
+  static const _darkTextSecondary = Color(0xFFA0A0B8);
+  static const _darkTextMuted = Color(0xFF707088);
+  static const _darkDivider = Color(0xFF333350);
+  static const _darkBorder = Color(0xFF3A3A55);
+  static const _darkPrimaryLight = Color(0xFF1A3A6A);
+
   static ThemeData get light => ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
@@ -127,6 +139,7 @@ class AppTheme {
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       elevation: 0,
+      scrolledUnderElevation: 1.0,
       centerTitle: true,
       titleTextStyle: TextStyle(
         fontSize: 18,
@@ -151,7 +164,20 @@ class AppTheme {
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: AppColors.card,
       indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+      indicatorShape: const StadiumBorder(),
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+      labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary);
+        }
+        return const TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textSecondary);
+      }),
+      iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const IconThemeData(size: 24, color: AppColors.primary);
+        }
+        return const IconThemeData(size: 22, color: AppColors.textSecondary);
+      }),
       elevation: 2,
       shadowColor: AppColors.primary.withValues(alpha: 0.06),
     ),
@@ -318,6 +344,246 @@ class AppTheme {
       ),
       bodySmall: TextStyle(
         color: AppColors.textMuted,
+        fontSize: 12,
+        height: 1.4,
+      ),
+    ),
+  );
+
+  static ThemeData get dark => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+
+    colorScheme: const ColorScheme.dark(
+      primary: AppColors.primaryLight,
+      onPrimary: Colors.white,
+      primaryContainer: Color(0xFF1A3A6A),
+      secondary: AppColors.secondary,
+      onSecondary: Colors.white,
+      surface: _darkSurface,
+      onSurface: _darkTextPrimary,
+      error: AppColors.error,
+      onError: Colors.white,
+      outline: _darkDivider,
+    ),
+
+    scaffoldBackgroundColor: _darkBackground,
+
+    appBarTheme: const AppBarTheme(
+      backgroundColor: AppColors.primaryDark,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      scrolledUnderElevation: 1.0,
+      centerTitle: true,
+      titleTextStyle: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    ),
+
+    cardTheme: CardThemeData(
+      color: _darkCard,
+      elevation: 1,
+      shadowColor: Colors.black.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: _darkDivider.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+    ),
+
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: _darkSurface,
+      indicatorColor: AppColors.primaryLight.withValues(alpha: 0.2),
+      indicatorShape: const StadiumBorder(),
+      labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+      labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryLight);
+        }
+        return const TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: _darkTextSecondary);
+      }),
+      iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const IconThemeData(size: 24, color: AppColors.primaryLight);
+        }
+        return const IconThemeData(size: 22, color: _darkTextSecondary);
+      }),
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.3),
+    ),
+
+    navigationRailTheme: NavigationRailThemeData(
+      backgroundColor: _darkSurface,
+      indicatorColor: AppColors.primaryLight.withValues(alpha: 0.2),
+      labelType: NavigationRailLabelType.all,
+    ),
+
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primaryLight,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: AppColors.primaryLight.withValues(alpha: 0.5),
+        disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.3,
+        ),
+      ),
+    ),
+
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.primaryLight,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        textStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: _darkFieldFill,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primaryLight, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error, width: 1),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      labelStyle: const TextStyle(
+        color: _darkTextSecondary,
+        fontSize: 14,
+      ),
+      floatingLabelStyle: const TextStyle(
+        color: AppColors.primaryLight,
+        fontWeight: FontWeight.w600,
+      ),
+      hintStyle: const TextStyle(
+        color: _darkTextMuted,
+        fontSize: 14,
+      ),
+      prefixIconColor: _darkTextSecondary,
+      suffixIconColor: _darkTextSecondary,
+    ),
+
+    dividerTheme: const DividerThemeData(
+      color: _darkDivider,
+      thickness: 1,
+      space: 1,
+    ),
+
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: _darkTextPrimary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      contentTextStyle: const TextStyle(
+        color: _darkBackground,
+        fontSize: 14,
+      ),
+    ),
+
+    dialogTheme: DialogThemeData(
+      backgroundColor: _darkCard,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+    ),
+
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: _darkCard,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+    ),
+
+    chipTheme: ChipThemeData(
+      backgroundColor: _darkFieldFill,
+      selectedColor: AppColors.primaryLight.withValues(alpha: 0.2),
+      labelStyle: const TextStyle(
+        color: _darkTextPrimary,
+        fontSize: 13,
+      ),
+      secondaryLabelStyle: const TextStyle(
+        color: AppColors.primaryLight,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: _darkDivider,
+          width: 1,
+        ),
+      ),
+    ),
+
+    textTheme: const TextTheme(
+      headlineLarge: TextStyle(
+        color: _darkTextPrimary,
+        fontWeight: FontWeight.bold,
+        fontSize: 32,
+        letterSpacing: -0.5,
+      ),
+      headlineMedium: TextStyle(
+        color: _darkTextPrimary,
+        fontWeight: FontWeight.bold,
+        fontSize: 24,
+        letterSpacing: -0.5,
+      ),
+      titleLarge: TextStyle(
+        color: _darkTextPrimary,
+        fontWeight: FontWeight.w700,
+        fontSize: 20,
+      ),
+      titleMedium: TextStyle(
+        color: _darkTextPrimary,
+        fontWeight: FontWeight.w600,
+        fontSize: 16,
+      ),
+      bodyLarge: TextStyle(
+        color: _darkTextPrimary,
+        fontSize: 16,
+        height: 1.5,
+      ),
+      bodyMedium: TextStyle(
+        color: _darkTextSecondary,
+        fontSize: 14,
+        height: 1.5,
+      ),
+      bodySmall: TextStyle(
+        color: _darkTextMuted,
         fontSize: 12,
         height: 1.4,
       ),

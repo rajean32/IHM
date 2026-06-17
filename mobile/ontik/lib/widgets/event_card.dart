@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/evenement_model.dart';
 import '../core/assets/app_colors.dart';
 import 'event_image_widget.dart';
+import '../core/services/app_config.dart';
 
 class EventCard extends StatelessWidget {
   final Evenement event;
@@ -74,7 +75,7 @@ class EventCard extends StatelessWidget {
                     const Icon(Icons.calendar_today, size: 16, color: AppTheme.textSecondary),
                     const SizedBox(width: 4),
                     Text(
-                        DateFormat('d MMM yyyy', 'fr').format(event.dateEvenement!),
+                        DateFormat('d MMM yyyy', appLanguage).format(event.dateEvenement!),
                       style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                     ),
                   ],

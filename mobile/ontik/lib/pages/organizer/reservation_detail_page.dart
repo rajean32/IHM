@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../core/services/reservation_service.dart';
+import '../../core/services/app_config.dart';
 import '../../core/assets/app_colors.dart';
 import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
+import '../../generated/app_localizations.dart';
 
 class ReservationDetailPage extends StatefulWidget {
   final int id;
-  const ReservationDetailPage({super.key, required this.id});
+  final String? eventName;
+  const ReservationDetailPage({super.key, required this.id, this.eventName});
 
   @override
   State<ReservationDetailPage> createState() => _ReservationDetailPageState();
@@ -37,7 +40,16 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('R\u00E9servation #${widget.id}')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: Text(AppLocalizations.of(context)!.reservationHeader('${widget.id}')),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -47,39 +59,55 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      _sectionHeader('Client', Icons.person),
+                      if (widget.eventName != null || activeEventName.isNotEmpty)
+                        Card(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            child: Row(children: [
+                              const Icon(Icons.event, size: 18, color: AppTheme.primaryColor),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(
+                                widget.eventName ?? activeEventName,
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                              )),
+                            ]),
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                      _sectionHeader(AppLocalizations.of(context)!.clientSection, Icons.person),
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _row('Nom', _fmt(_data!['clientNom'])),
-                              _row('Code', _fmt(_data!['codeClient'])),
-                              _row('Email', _fmt(_data!['clientEmail'])),
-                              _row('T\u00E9l\u00E9phone', _fmt(_data!['clientTel'])),
+                              _row(AppLocalizations.of(context)!.nameField, _fmt(_data!['clientNom'])),
+                              _row(AppLocalizations.of(context)!.codeField, _fmt(_data!['codeClient'])),
+                              _row(AppLocalizations.of(context)!.emailField, _fmt(_data!['clientEmail'])),
+                              _row(AppLocalizations.of(context)!.phoneField, _fmt(_data!['clientTel'])),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _sectionHeader('Paiement', Icons.payment),
+                      _sectionHeader(AppLocalizations.of(context)!.paymentSection, Icons.payment),
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _row('Montant', '${_fmt(_data!['montant'])} Ar'),
-                              _row('Mode', _fmt(_data!['modePaiement'])),
-                              _row('Date', _fmt(_data!['datePaiement'])),
-                              _row('Statut', _fmt(_data!['statutPaiement'])),
+                              _row(AppLocalizations.of(context)!.amountField, '${_fmt(_data!['montant'])} Ar'),
+                              _row(AppLocalizations.of(context)!.modeField, _fmt(_data!['modePaiement'])),
+                              _row(AppLocalizations.of(context)!.paymentDateField, _fmt(_data!['datePaiement'])),
+                              _row(AppLocalizations.of(context)!.statusField, _fmt(_data!['statutPaiement'])),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _sectionHeader('Billets', Icons.confirmation_number),
+                      _sectionHeader(AppLocalizations.of(context)!.ticketsSection, Icons.confirmation_number),
                       ..._buildTickets(),
                     ],
                   ),
@@ -114,7 +142,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   List<Widget> _buildTickets() {
     final tickets = _data!['tickets'] as List? ?? [];
     if (tickets.isEmpty) {
-      return [const Padding(padding: EdgeInsets.all(16), child: Text('Aucun billet', style: TextStyle(color: AppTheme.textSecondary)))];
+      return [Padding(padding: EdgeInsets.all(16), child: Text(AppLocalizations.of(context)!.noTicketsText, style: TextStyle(color: AppTheme.textSecondary)))];
     }
     return tickets.map((t) {
       final m = t as Map<String, dynamic>;
@@ -131,11 +159,11 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                 if (m['numeroPlace'] != null) ...[
                   Icon(Icons.event_seat, size: 14, color: AppTheme.textSecondary),
                   const SizedBox(width: 4),
-                  Text('Place ${m['numeroPlace']}', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  Text(AppLocalizations.of(context)!.seatPlaceDetail('${m['numeroPlace']}'), style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                 ],
                 if (m['rang'] != null) ...[
                   const SizedBox(width: 8),
-                  Text('Rang ${m['rang']}', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  Text(AppLocalizations.of(context)!.rowDetail('${m['rang']}'), style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                 ],
               ]),
               if (m['typePlace'] != null || m['prix'] != null)

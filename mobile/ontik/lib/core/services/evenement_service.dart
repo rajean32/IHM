@@ -11,6 +11,9 @@ class EvenementService {
   Future<Map<String, dynamic>> updateEvent(int id, Map<String, dynamic> data) => _api.updateEvent(id, data);
   Future<void> deleteEvent(int id) => _api.deleteEvent(id);
   Future<Map<String, dynamic>> validateEvent(int id) => _api.validateEvent(id);
+  Future<void> suspendEvent(int id) => _api.suspendEvent(id);
+  Future<void> resumeEvent(int id) => _api.resumeEvent(id);
+  Future<void> cancelEvent(int id, String motif) => _api.cancelEvent(id, motif);
   Future<void> uploadImage(int eventId, File file) => _api.uploadImage(eventId, file);
   Future<List<dynamic>> getStandingZones(int eventId) => _api.getStandingZones(eventId);
   Future<Map<String, dynamic>> createStandingZone(int eventId, Map<String, dynamic> data) => _api.createStandingZone(eventId, data);

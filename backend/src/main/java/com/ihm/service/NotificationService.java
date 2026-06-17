@@ -55,15 +55,19 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public List<NotificationDTO> getFilteredNotifications(String userId, String type, Boolean isRead,
                                                            LocalDateTime dateFrom, LocalDateTime dateTo) {
-        return repository.findFiltered(userId, type, isRead, dateFrom, dateTo)
+        return repository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
+                .filter(n -> type == null || type.equals(n.getType()))
+                .filter(n -> isRead == null || isRead == n.isRead())
+                .filter(n -> dateFrom == null || !n.getCreatedAt().isBefore(dateFrom))
+                .filter(n -> dateTo == null || !n.getCreatedAt().isAfter(dateTo))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public long getUnreadCount(String userId) {
-        return repository.countByUserIdAndIsReadFalse(userId);
+        return repository.countByUserIdAndReadFalse(userId);
     }
 
     @Transactional
@@ -77,7 +81,7 @@ public class NotificationService {
 
     @Transactional
     public void markAllAsRead(String userId) {
-        List<InAppNotification> unread = repository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
+        List<InAppNotification> unread = repository.findByUserIdAndReadFalseOrderByCreatedAtDesc(userId);
         for (InAppNotification n : unread) {
             n.setRead(true);
         }

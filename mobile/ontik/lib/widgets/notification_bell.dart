@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/services/notification_service.dart';
 import '../core/routes/shared_routes.dart';
+import '../localization/app_localizations.dart';
 
 class NotificationBell extends StatefulWidget {
   const NotificationBell({super.key});
@@ -10,9 +11,13 @@ class NotificationBell extends StatefulWidget {
 }
 
 class _NotificationBellState extends State<NotificationBell> {
+  Key _animKey = UniqueKey();
+  int _prevCount = 0;
+
   @override
   void initState() {
     super.initState();
+    _prevCount = NotificationManager.unreadCount.value;
     NotificationManager.unreadCount.addListener(_onCountChanged);
   }
 
@@ -23,13 +28,18 @@ class _NotificationBellState extends State<NotificationBell> {
   }
 
   void _onCountChanged() {
+    final current = NotificationManager.unreadCount.value;
+    if (current > _prevCount) {
+      setState(() => _animKey = UniqueKey());
+    }
+    _prevCount = current;
     if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final count = NotificationManager.unreadCount.value;
-    return IconButton(
+    final icon = IconButton(
       icon: count > 0
           ? Badge(
               label: Text(
@@ -39,10 +49,17 @@ class _NotificationBellState extends State<NotificationBell> {
               child: const Icon(Icons.notifications_outlined),
             )
           : const Icon(Icons.notifications_outlined),
-      tooltip: 'Notifications',
-      onPressed: () {
-        Navigator.pushNamed(context, SharedRoutes.notifications);
-      },
+      tooltip: tr('widgets.notification_bell.tooltip'),
+      onPressed: () => Navigator.pushNamed(context, SharedRoutes.notifications),
+    );
+
+    return TweenAnimationBuilder<double>(
+      key: _animKey,
+      tween: Tween(begin: 0.9, end: 1.0),
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutBack,
+      builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+      child: icon,
     );
   }
 }

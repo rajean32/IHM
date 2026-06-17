@@ -4,8 +4,10 @@ import 'package:image_picker/image_picker.dart';
 import '../../../models/categorie_model.dart';
 import '../../../models/caracteristique_model.dart';
 import '../../../core/assets/app_colors.dart';
+import '../../../generated/app_localizations.dart';
 
 Widget buildStep1({
+  required BuildContext context,
   required TextEditingController titreCtrl,
   required TextEditingController descriptionCtrl,
   required String? selectedCategorie,
@@ -22,20 +24,21 @@ Widget buildStep1({
   required ValueChanged<String?> onCategorieChanged,
   required ValueChanged<String> onPlacementChanged,
   required ValueChanged<String> onImagePicked,
+  required VoidCallback onImageRemove,
   required VoidCallback onRefresh,
 }) {
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    const Text('Informations générales', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+    Text(AppLocalizations.of(context)!.generalInfo, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     const SizedBox(height: 16),
     TextFormField(
       controller: titreCtrl,
-      decoration: const InputDecoration(labelText: 'Titre *', border: OutlineInputBorder()),
-      validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
+      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.titleRequired, border: OutlineInputBorder()),
+      validator: (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.requiredMarker : null,
     ),
     const SizedBox(height: 12),
     TextFormField(
       controller: descriptionCtrl,
-      decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.descriptionLabel, border: OutlineInputBorder()),
       maxLines: 3,
     ),
     const SizedBox(height: 12),
@@ -52,13 +55,31 @@ Widget buildStep1({
           border: Border.all(color: AppTheme.textSecondary.withValues(alpha: 0.3)),
         ),
         child: hasNewImage
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(File(selectedImagePath!), height: 120, width: double.infinity, fit: BoxFit.cover),
+            ? Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(File(selectedImagePath!), height: 120, width: double.infinity, fit: BoxFit.cover),
+                  ),
+                  Positioned(
+                    top: 4, right: 4,
+                    child: GestureDetector(
+                      onTap: onImageRemove,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ),
+                ],
               )
             : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                 Icon(Icons.add_photo_alternate, size: 40, color: AppTheme.textSecondary),
-                Text('Ajouter une affiche', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                Text(AppLocalizations.of(context)!.addPoster, style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
               ]),
       ),
     ),
@@ -66,25 +87,25 @@ Widget buildStep1({
     DropdownButtonFormField<String>(
       value: selectedCategorie,
       isExpanded: true,
-      decoration: const InputDecoration(labelText: 'Genre *', border: OutlineInputBorder()),
+      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.genreRequired, border: OutlineInputBorder()),
       items: categories.map((c) => DropdownMenuItem(value: c.codeCategorie, child: Text(c.nomCategorie))).toList(),
       onChanged: onCategorieChanged,
-      validator: (v) => v == null ? 'Requis' : null,
+      validator: (v) => v == null ? AppLocalizations.of(context)!.requiredMarker : null,
     ),
     const SizedBox(height: 12),
-    const Text('Type de placement', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+    Text(AppLocalizations.of(context)!.placementType, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
     const SizedBox(height: 8),
     Row(children: [
-      _buildPlacementChip('LIBRE', 'Placement\nLibre', Icons.people, typePlacement, onPlacementChanged),
+      _buildPlacementChip('LIBRE', AppLocalizations.of(context)!.placementFree, Icons.people, typePlacement, onPlacementChanged),
       const SizedBox(width: 8),
-      _buildPlacementChip('NUMEROTE', 'Placement\nNuméroté', Icons.event_seat, typePlacement, onPlacementChanged),
+      _buildPlacementChip('NUMEROTE', AppLocalizations.of(context)!.placementNumbered, Icons.event_seat, typePlacement, onPlacementChanged),
       const SizedBox(width: 8),
-      _buildPlacementChip('MIXTE', 'Placement\nMixte', Icons.swap_horiz, typePlacement, onPlacementChanged),
+      _buildPlacementChip('MIXTE', AppLocalizations.of(context)!.placementMixed, Icons.swap_horiz, typePlacement, onPlacementChanged),
     ]),
     if (loadingCaracteristiques)
       const Padding(padding: EdgeInsets.only(top: 12), child: LinearProgressIndicator())
     else
-      _buildCaracteristiquesInputs(caracteristiques, categories, selectedCategorie,
+      _buildCaracteristiquesInputs(context, caracteristiques, categories, selectedCategorie,
           caracControllers, caracDropdownValues, caracBooleanValues, onRefresh),
   ]);
 }
@@ -117,6 +138,7 @@ Widget _buildPlacementChip(String value, String label, IconData icon, String typ
 }
 
 Widget _buildCaracteristiquesInputs(
+    BuildContext context,
     List<Caracteristique> caracteristiques,
     List<Categorie> categories,
     String? selectedCategorie,
@@ -128,7 +150,7 @@ Widget _buildCaracteristiquesInputs(
   final cat = categories.where((c) => c.codeCategorie == selectedCategorie).firstOrNull;
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     const Divider(),
-    Text('Caractéristiques ${cat != null ? '- ${cat.nomCategorie}' : ''}',
+    Text(AppLocalizations.of(context)!.featuresCategory(cat != null ? '- ${cat.nomCategorie}' : ''),
         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
     const SizedBox(height: 8),
     ...caracteristiques.map((c) {
@@ -178,7 +200,7 @@ Widget _buildCaracteristiquesInputs(
               },
               child: InputDecorator(
                 decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-                child: Text(caracControllers[id]!.text.isEmpty ? 'Sélectionner une date' : caracControllers[id]!.text),
+                child: Text(caracControllers[id]!.text.isEmpty ? AppLocalizations.of(context)!.selectDatePlaceholder : caracControllers[id]!.text),
               ),
             );
           });

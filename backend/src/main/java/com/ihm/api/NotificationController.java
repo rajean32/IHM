@@ -5,12 +5,13 @@ import com.ihm.schema.NotificationDTO;
 import com.ihm.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -32,13 +33,15 @@ public class NotificationController {
             @RequestParam(required = false) LocalDateTime dateFrom,
             @RequestParam(required = false) LocalDateTime dateTo) {
         log.debug("Fetching notifications for user: {} (type={}, isRead={})", userId, type, isRead);
-        List<NotificationDTO> notifications;
-        if (type != null || isRead != null || dateFrom != null || dateTo != null) {
-            notifications = notificationService.getFilteredNotifications(userId, type, isRead, dateFrom, dateTo);
-        } else {
-            notifications = notificationService.getUserNotifications(userId);
-        }
-        return ResponseEntity.ok(ApiResponse.success(200, "Notifications retrieved", notifications));
+        List<NotificationDTO> all = notificationService.getUserNotifications(userId);
+
+        Stream<NotificationDTO> stream = all.stream();
+        if (type != null) stream = stream.filter(n -> type.equals(n.getType()));
+        if (isRead != null) stream = stream.filter(n -> isRead == n.isRead());
+        if (dateFrom != null) stream = stream.filter(n -> !n.getCreatedAt().isBefore(dateFrom));
+        if (dateTo != null) stream = stream.filter(n -> !n.getCreatedAt().isAfter(dateTo));
+
+        return ResponseEntity.ok(ApiResponse.success(200, "Notifications retrieved", stream.collect(Collectors.toList())));
     }
 
     @GetMapping("/unread-count")

@@ -9,6 +9,7 @@ import '../../models/paiement_request_model.dart';
 import '../../widgets/payment_method_selector.dart';
 import '../../widgets/carte_bancaire_form.dart';
 import '../../widgets/code_promo_field.dart';
+import '../../localization/app_localizations.dart';
 
 class PaymentPage extends StatefulWidget {
   final int eventId;
@@ -54,18 +55,18 @@ class _PaymentPageState extends State<PaymentPage> {
 
     if (_selectedMethod != PaymentMethod.carte) {
       if (_referenceTransaction == null || _referenceTransaction!.isEmpty) {
-        setState(() => _errorMessage = 'La référence de transaction est requise');
+        setState(() => _errorMessage = tr('client.payment.errorTransactionRef'));
         return;
       }
       if (_numeroTelephone == null || _numeroTelephone!.isEmpty) {
-        setState(() => _errorMessage = 'Le numéro de téléphone est requis');
+        setState(() => _errorMessage = tr('client.payment.errorPhoneNumber'));
         return;
       }
     } else {
       if (_carteInfo == null ||
           _carteInfo!['numeroCarte'] == null ||
           _carteInfo!['numeroCarte']!.isEmpty) {
-        setState(() => _errorMessage = 'Les informations de carte sont requises');
+        setState(() => _errorMessage = tr('client.payment.errorCardInfo'));
         return;
       }
     }
@@ -78,7 +79,7 @@ class _PaymentPageState extends State<PaymentPage> {
     try {
       final clientCode = userCode ?? '';
       if (clientCode.isEmpty) {
-        setState(() => _errorMessage = 'Utilisateur non connecté');
+        setState(() => _errorMessage = tr('client.payment.errorNotLoggedIn'));
         return;
       }
 
@@ -115,9 +116,9 @@ class _PaymentPageState extends State<PaymentPage> {
 
       final reduction = result['reductionAppliquee'] ?? 0.0;
 
-      String message = 'Réservation réussie !';
+      String message = tr('client.payment.success');
       if (reduction > 0) {
-        message = 'Réservation réussie ! Réduction de ${reduction.toStringAsFixed(0)} Ar appliquée.';
+        message = '${tr('client.payment.successReduction')} ${reduction.toStringAsFixed(0)} Ar.';
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -126,16 +127,16 @@ class _PaymentPageState extends State<PaymentPage> {
 
       Navigator.pushReplacementNamed(context, ClientRoutes.profile);
     } on TimeoutException {
-      setState(() => _errorMessage = 'Le serveur ne répond pas. Vérifiez votre connexion.');
+      setState(() => _errorMessage = tr('client.payment.errorTimeout'));
     } catch (e) {
       final msg = apiErrorString(e);
       String displayMsg;
       if (msg.contains('déjà réservée') || msg.contains('indisponible')) {
-        displayMsg = 'Place déjà réservée ou indisponible. Veuillez réessayer.';
+        displayMsg = tr('client.payment.errorSeatTaken');
       } else if (msg.contains('Fonds insuffisants')) {
-        displayMsg = 'Fonds insuffisants pour effectuer cette transaction.';
+        displayMsg = tr('client.payment.errorInsufficientFunds');
       } else if (msg.contains('code promo') || msg.contains('Code promo')) {
-        displayMsg = 'Code promo invalide ou expiré.';
+        displayMsg = tr('client.payment.errorPromoCode');
       } else {
         displayMsg = msg;
       }
@@ -201,10 +202,13 @@ class _PaymentPageState extends State<PaymentPage> {
       canPop: !_processing,
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
+          automaticallyImplyLeading: false,
+          leading: ModalRoute.of(context)?.canPop == true
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                  onPressed: () => Navigator.of(context).pop(),
+                )
+              : null,
           title: const Text('Event Details'),
           actions: [
             IconButton(
@@ -214,13 +218,13 @@ class _PaymentPageState extends State<PaymentPage> {
           ],
         ),
         body: _processing
-            ? const Center(
+            ? Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Traitement du paiement...'),
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(tr('client.payment.processing')),
                   ],
                 ),
               )
@@ -233,7 +237,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     const SizedBox(height: 20),
                     _buildSummaryCard(),
                     const SizedBox(height: 24),
-                    _buildSectionTitle('Mode de paiement'),
+                    _buildSectionTitle(tr('client.payment.paymentMethod')),
                     const SizedBox(height: 12),
                     _buildPaymentMethods(),
                     const SizedBox(height: 16),
@@ -259,12 +263,12 @@ class _PaymentPageState extends State<PaymentPage> {
   Widget _buildRecapHeader() {
     return Row(
       children: [
-        const Expanded(
-          child: Text(
-            'Récapitulatif',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          Expanded(
+            child: Text(
+              tr('client.payment.summary'),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            ),
           ),
-        ),
         _buildBadge(_firstTypePlace),
       ],
     );
@@ -302,16 +306,16 @@ class _PaymentPageState extends State<PaymentPage> {
       ),
       child: Column(
         children: [
-          _summaryRow('SALLE', 'Événement #${widget.eventId}', AppColors.textSecondary),
+          _summaryRow(tr('client.payment.venue'), '${tr('client.payment.event')} #${widget.eventId}', AppColors.textSecondary),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          _summaryRow('PRIX', _formatAmount(_montantFinal), AppColors.primary, highlight: true),
+          _summaryRow(tr('client.payment.price'), _formatAmount(_montantFinal), AppColors.primary, highlight: true),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          _summaryRow('RANG', '—', AppColors.textSecondary),
+          _summaryRow(tr('client.payment.row'), '—', AppColors.textSecondary),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          _summaryRow('PLACE', _firstNumeroPlace, AppColors.textSecondary),
+          _summaryRow(tr('client.payment.seat'), _firstNumeroPlace, AppColors.textSecondary),
           if (seatCount > 1) ...[
             const Divider(height: 1, indent: 16, endIndent: 16),
-            _summaryRow('BILLETS', '$seatCount places', AppColors.textSecondary),
+            _summaryRow(tr('client.payment.tickets'), '$seatCount places', AppColors.textSecondary),
           ],
           const SizedBox(height: 12),
           Padding(
@@ -321,7 +325,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 Icon(Icons.check_circle, size: 16, color: AppColors.secondary),
                 const SizedBox(width: 6),
                 Text(
-                  'Commande vérifiée',
+                  tr('client.payment.orderVerified'),
                   style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
@@ -364,10 +368,10 @@ class _PaymentPageState extends State<PaymentPage> {
 
   Widget _buildPaymentMethods() {
     final methods = [
-      ('card', 'Carte Bancaire', 'Visa, Mastercard, AMEX', Icons.credit_card, PaymentMethod.carte),
-      ('mvola', 'MVola', 'Paiement mobile MVola', Icons.phone_android, PaymentMethod.mvola),
-      ('orange', 'Orange Money', 'Paiement mobile Orange', Icons.phone_iphone, PaymentMethod.orange),
-      ('airtel', 'Airtel Money', 'Paiement mobile Airtel', Icons.phone, PaymentMethod.airtel),
+      ('card', tr('client.payment.card'), tr('client.payment.cardSubtitle'), Icons.credit_card, PaymentMethod.carte),
+      ('mvola', 'MVola', tr('client.payment.mvolaSubtitle'), Icons.phone_android, PaymentMethod.mvola),
+      ('orange', 'Orange Money', tr('client.payment.orangeSubtitle'), Icons.phone_iphone, PaymentMethod.orange),
+      ('airtel', 'Airtel Money', tr('client.payment.airtelSubtitle'), Icons.phone, PaymentMethod.airtel),
     ];
 
     return Container(
@@ -449,20 +453,20 @@ class _PaymentPageState extends State<PaymentPage> {
           child: Column(
             children: [
               TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Référence de transaction',
+                decoration: InputDecoration(
+                  labelText: tr('client.payment.transactionRef'),
                   hintText: 'Ex: MV123456789',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   isDense: true,
                 ),
                 onChanged: (v) => _referenceTransaction = v,
               ),
               const SizedBox(height: 12),
               TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Numéro de téléphone',
+                decoration: InputDecoration(
+                  labelText: tr('client.payment.phoneNumber'),
                   hintText: '0341234567',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   isDense: true,
                 ),
                 keyboardType: TextInputType.phone,
@@ -470,10 +474,10 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
               const SizedBox(height: 12),
               TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Nom complet',
+                decoration: InputDecoration(
+                  labelText: tr('client.payment.fullName'),
                   hintText: 'Jean Rakoto',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   isDense: true,
                 ),
                 onChanged: (v) => _nomComplet = v,
@@ -537,10 +541,10 @@ class _PaymentPageState extends State<PaymentPage> {
         const SizedBox(width: 4),
         Icon(Icons.payment, size: 14, color: AppColors.textMuted),
         const SizedBox(width: 8),
-        const Expanded(
+        Expanded(
           child: Text(
-            'Vos données de paiement sont cryptées de bout en bout. Nous sommes certifiés PCI-DSS Level 1.',
-            style: TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4),
+            tr('client.payment.securityDisclaimer'),
+            style: const TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4),
           ),
         ),
       ],
@@ -591,7 +595,7 @@ class _PaymentPageState extends State<PaymentPage> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
-            child: Text('Payer ${_formatAmount(_montantFinal)}'),
+            child: Text('${tr('client.payment.pay')} ${_formatAmount(_montantFinal)}'),
           ),
         ),
       ),

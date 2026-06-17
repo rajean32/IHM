@@ -11,6 +11,8 @@ import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
 import '../../core/utils/error_helper.dart';
+import '../../core/services/app_config.dart';
+import '../../localization/app_localizations.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -129,7 +131,7 @@ class _HomePageState extends State<HomePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Filtres', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(tr('client.home.filters'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     TextButton(
                       onPressed: () {
                         setSheetState(() {
@@ -140,12 +142,12 @@ class _HomePageState extends State<HomePage> {
                           _prixMax = null;
                         });
                       },
-                      child: const Text('Réinitialiser'),
+                      child: Text(tr('client.home.reset')),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Statut', style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(tr('client.home.status'), style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _selectedStatut,
@@ -157,13 +159,13 @@ class _HomePageState extends State<HomePage> {
                   onChanged: (v) => setSheetState(() => _selectedStatut = v),
                 ),
                 const SizedBox(height: 16),
-                const Text('Lieu', style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(tr('client.home.venue'), style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _selectedLieu,
                   decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
                   items: [
-                    const DropdownMenuItem<String>(value: null, child: Text('Tous les lieux')),
+                    DropdownMenuItem<String>(value: null, child: Text(tr('client.home.allVenues'))),
                     ..._lieux.map((l) => DropdownMenuItem(
                       value: l.code,
                       child: Text(l.nomLieu),
@@ -189,7 +191,7 @@ class _HomePageState extends State<HomePage> {
                     child: Text(
                       _selectedDateRange != null
                           ? '${_selectedDateRange!.start.toIso8601String().split('T').first} \u2014 ${_selectedDateRange!.end.toIso8601String().split('T').first}'
-                          : 'Sélectionner une plage',
+                          : tr('client.home.selectDateRange'),
                     ),
                   ),
                 ),
@@ -224,7 +226,7 @@ class _HomePageState extends State<HomePage> {
                     Navigator.pop(ctx);
                     _applyFilters();
                   },
-                  child: const Text('Appliquer'),
+                  child: Text(tr('client.home.apply')),
                 ),
               ],
             ),
@@ -236,7 +238,7 @@ class _HomePageState extends State<HomePage> {
 
   String _formatDate(DateTime? date, String? time) {
     if (date == null) return '';
-    final formatted = DateFormat('d MMMM yyyy', 'fr').format(date);
+    final formatted = DateFormat('d MMMM yyyy', appLanguage).format(date);
     if (time != null && time.length >= 5) {
       return '$formatted \u2022 ${time.substring(0, 5)}';
     }
@@ -277,7 +279,7 @@ class _HomePageState extends State<HomePage> {
             child: TextField(
               controller: _searchCtrl,
               decoration: InputDecoration(
-                hintText: 'Rechercher un événement...',
+                hintText: tr('client.home.searchHint'),
                 prefixIcon: Icon(Icons.search, color: const Color(0xFF673AB7).withValues(alpha: 0.6)),
                 filled: true,
                 fillColor: Colors.white,
@@ -315,7 +317,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildCategories() {
     final chipData = <Map<String, String?>>[
-      {'label': 'Tous', 'code': null},
+      {'label': tr('common.all'), 'code': null},
       ..._categories.map((c) => {'label': c.nomCategorie, 'code': c.codeCategorie}),
     ];
     return Container(
@@ -367,7 +369,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
             Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadEvents, child: const Text('Réessayer')),
+            ElevatedButton(onPressed: _loadEvents, child: Text(tr('client.home.retry'))),
           ],
         ),
       );
@@ -379,15 +381,15 @@ class _HomePageState extends State<HomePage> {
         controller: _scrollCtrl,
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 80),
         children: [
-          const Text(
-            '\u00C9v\u00E9nements \u00E0 la une',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          Text(
+            tr('client.home.featured'),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 14),
           if (_events.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 40),
-              child: Center(child: Text('Aucun événement trouvé', style: TextStyle(color: AppColors.textSecondary))),
+            Padding(
+              padding: const EdgeInsets.only(top: 40),
+              child: Center(child: Text(tr('client.home.noEvents'), style: const TextStyle(color: AppColors.textSecondary))),
             )
           else
             ..._events.map((event) => Padding(
@@ -489,7 +491,7 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
-                          event.lieuNom ?? 'Lieu non spécifié',
+                          event.lieuNom ?? tr('client.home.venueNotSpecified'),
                           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -500,8 +502,8 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 10),
                   Text(
                     event.prix != null
-                        ? 'À partir de ${event.prix!.toStringAsFixed(0)} ${AppConstants.currency}'
-                        : 'Prix non disponible',
+                        ? '${tr('client.homeDetail.from')} ${event.prix!.toStringAsFixed(0)} ${AppConstants.currency}'
+                        : tr('client.home.priceUnavailable'),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -518,7 +520,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildEventBadge(Evenement event) {
-    final label = event.categorieNom ?? event.statut ?? 'Standard';
+    final label = event.categorieNom ?? event.statut ?? tr('client.home.standard');
     final color = _badgeColor(label);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -552,18 +554,18 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '-20% sur votre premier billet',
-                    style: TextStyle(
+                  Text(
+                    tr('client.home.promoTitle'),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Utilisez le code SECURE20 lors du paiement.',
-                    style: TextStyle(fontSize: 13, color: Colors.white70),
+                  Text(
+                    tr('client.home.promoSubtitle'),
+                    style: const TextStyle(fontSize: 13, color: Colors.white70),
                   ),
                 ],
               ),

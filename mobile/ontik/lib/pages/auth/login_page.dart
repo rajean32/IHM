@@ -104,7 +104,11 @@ class _LoginPageState extends State<LoginPage>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildHeader(),
-                    const SizedBox(height: 48),
+                    if (_error != null) ...[
+                      const SizedBox(height: 20),
+                      _buildErrorBanner(),
+                    ],
+                    SizedBox(height: _error != null ? 20 : 48),
                     _buildFormCard(),
                     const SizedBox(height: 24),
                     _buildFooter(),
@@ -121,30 +125,12 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Icon(
-            Icons.confirmation_number_rounded,
-            size: 40,
-            color: AppColors.primary,
-          ),
+        Image.asset(
+          'lib/utils/logo_full.png',
+          height: 125,
+          fit: BoxFit.contain,
         ),
-        const SizedBox(height: 20),
-        Text(
-          'Ontik',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         Text(
           'Event & Ticket Management',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -159,7 +145,8 @@ class _LoginPageState extends State<LoginPage>
 
   Widget _buildFormCard() {
     return Card(
-      elevation: 0,
+      elevation: 1,
+      shadowColor: AppColors.primary.withValues(alpha: 0.08),
       color: AppColors.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -217,9 +204,7 @@ class _LoginPageState extends State<LoginPage>
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              if (_error != null) _buildErrorBanner(),
-              if (_error != null) const SizedBox(height: 16),
+              const SizedBox(height: 24),
               _buildLoginButton(),
             ],
           ),
@@ -233,6 +218,7 @@ class _LoginPageState extends State<LoginPage>
       controller: _emailCtrl,
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.next,
+      autofillHints: const [AutofillHints.email],
       style: const TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: 'Email',
@@ -286,6 +272,7 @@ class _LoginPageState extends State<LoginPage>
       obscureText: _obscurePassword,
       textInputAction: TextInputAction.done,
       onFieldSubmitted: (_) => _handleLogin(),
+      autofillHints: const [AutofillHints.password],
       style: const TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: 'Password',
@@ -366,6 +353,11 @@ class _LoginPageState extends State<LoginPage>
                 height: 1.4,
               ),
             ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: () => setState(() => _error = null),
+            child: const Icon(Icons.close, color: AppColors.error, size: 16),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/assets/app_colors.dart';
+import '../localization/app_localizations.dart';
 
 class ProfileStat {
   final String label;
@@ -257,7 +258,7 @@ class ProfileBody extends StatelessWidget {
       child: TextButton.icon(
         onPressed: onLogout,
         icon: const Icon(Icons.logout, size: 18),
-        label: const Text('Déconnexion'),
+        label: Text(tr('widgets.profile.logout')),
         style: TextButton.styleFrom(
           foregroundColor: const Color(0xFFB00020),
           padding: const EdgeInsets.symmetric(vertical: 12),

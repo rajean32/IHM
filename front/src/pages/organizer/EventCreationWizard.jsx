@@ -1,24 +1,32 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getAll, getById, create, update, getUserInfo } from '../../api/entityApi'
-
-const STEPS = ['Informations', 'Média', 'Lieu & Salle', 'Tarification', 'Récapitulatif']
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const TYPE_AGENCEMENT_LABELS = {
-  UNIQUEMENT_ASSIS: 'Uniquement assis',
-  TABLE_ASSIS: 'Tables + chaises',
-  ASSIS_DEBOUT: 'Assis/Debout mixte',
-  DEBOUT_AVEC_LIMITE: 'Debout avec jauge',
-  DEBOUT_SANS_LIMITE: 'Debout sans limite',
+  UNIQUEMENT_ASSIS: 'layout.UNIQUEMENT_ASSIS',
+  TABLE_ASSIS: 'layout.TABLE_ASSIS',
+  ASSIS_DEBOUT: 'layout.ASSIS_DEBOUT',
+  DEBOUT_AVEC_LIMITE: 'layout.DEBOUT_AVEC_LIMITE',
+  DEBOUT_SANS_LIMITE: 'layout.DEBOUT_SANS_LIMITE',
 }
 
-const TYPE_AGENCEMENT_OPTIONS = Object.entries(TYPE_AGENCEMENT_LABELS).map(([k, v]) => ({ value: k, label: v }))
+const TYPE_AGENCEMENT_OPTIONS = Object.entries(TYPE_AGENCEMENT_LABELS).map(([k]) => ({ value: k, labelKey: TYPE_AGENCEMENT_LABELS[k] }))
 
 export default function EventCreationWizard() {
   const navigate = useNavigate()
   const { id } = useParams()
   const isEdit = Boolean(id)
   const user = getUserInfo()
+  const { t } = useLanguage()
+
+  const STEPS = [
+    t('organizer.wizard.stepInfo'),
+    t('organizer.wizard.stepMedia'),
+    t('organizer.wizard.stepVenue'),
+    t('organizer.wizard.stepPricing'),
+    t('organizer.wizard.stepReview'),
+  ]
 
   const [step, setStep] = useState(0)
   const [categories, setCategories] = useState([])
@@ -125,7 +133,7 @@ export default function EventCreationWizard() {
       .catch(err => setError(err.message))
   }, [id, isEdit])
 
-  function set(field) {
+  function setField(field) {
     return e => setForm({ ...form, [field]: e.target.value })
   }
 
@@ -158,59 +166,59 @@ export default function EventCreationWizard() {
     }
     return (
       <div style={{ marginTop: '1rem' }}>
-        <h4>Caractéristiques</h4>
+        <h4 style={{ color: 'var(--text)' }}>{t('organizer.wizard.caracteristiques')}</h4>
         {caracteristiques.map(c => {
           const id = c.idCaracteristique || c.id
           const empty = isRequiredEmpty(c)
           const label = `${c.nom}${c.obligatoire ? ' *' : ''}`
           const val = caracteristiqueValues[id] || ''
-          const inputStyle = { width: '100%', marginTop: '4px', ...(empty ? { borderColor: '#e94560', borderWidth: '2px' } : {}) }
+          const inputStyle = { width: '100%', marginTop: '4px', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '0.9rem', ...(empty ? { borderColor: 'var(--error)', borderWidth: '2px' } : {}) }
           switch (c.typeDonnee) {
             case 'boolean':
               return (
                 <div key={id} style={{ margin: '8px 0' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
                     <input type="checkbox" checked={val === 'true'} onChange={e => setCaracValue(id, e.target.checked ? 'true' : 'false')} />
                     {label}
                   </label>
-                  {empty && <span style={{ fontSize: '0.75rem', color: '#e94560' }}>Requis</span>}
+                  {empty && <span style={{ fontSize: '0.75rem', color: 'var(--error)' }}>{t('organizer.wizard.required')}</span>}
                 </div>
               )
             case 'select': {
               const options = (c.options || '').split(',').map(s => s.trim()).filter(Boolean)
               return (
-                <label key={id} style={{ display: 'block', margin: '8px 0' }}>
+                <label key={id} style={{ display: 'block', margin: '8px 0', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>
                   {label}
                   <select value={val} onChange={e => setCaracValue(id, e.target.value)} style={inputStyle}>
-                    <option value="">Sélectionner...</option>
+                    <option value="">{t('organizer.wizard.select')}</option>
                     {options.map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
-                  {empty && <span style={{ fontSize: '0.75rem', color: '#e94560' }}>Ce champ est requis</span>}
+                  {empty && <span style={{ fontSize: '0.75rem', color: 'var(--error)' }}>{t('organizer.wizard.requiredField')}</span>}
                 </label>
               )
             }
             case 'number':
               return (
-                <label key={id} style={{ display: 'block', margin: '8px 0' }}>
+                <label key={id} style={{ display: 'block', margin: '8px 0', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>
                   {label}
                   <input type="number" value={val} onChange={e => setCaracValue(id, e.target.value)} style={inputStyle} />
-                  {empty && <span style={{ fontSize: '0.75rem', color: '#e94560' }}>Ce champ est requis</span>}
+                  {empty && <span style={{ fontSize: '0.75rem', color: 'var(--error)' }}>{t('organizer.wizard.requiredField')}</span>}
                 </label>
               )
             case 'date':
               return (
-                <label key={id} style={{ display: 'block', margin: '8px 0' }}>
+                <label key={id} style={{ display: 'block', margin: '8px 0', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>
                   {label}
                   <input type="date" value={val} onChange={e => setCaracValue(id, e.target.value)} style={inputStyle} />
-                  {empty && <span style={{ fontSize: '0.75rem', color: '#e94560' }}>Ce champ est requis</span>}
+                  {empty && <span style={{ fontSize: '0.75rem', color: 'var(--error)' }}>{t('organizer.wizard.requiredField')}</span>}
                 </label>
               )
             default:
               return (
-                <label key={id} style={{ display: 'block', margin: '8px 0' }}>
+                <label key={id} style={{ display: 'block', margin: '8px 0', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>
                   {label}
                   <input type="text" value={val} onChange={e => setCaracValue(id, e.target.value)} style={inputStyle} />
-                  {empty && <span style={{ fontSize: '0.75rem', color: '#e94560' }}>Ce champ est requis</span>}
+                  {empty && <span style={{ fontSize: '0.75rem', color: 'var(--error)' }}>{t('organizer.wizard.requiredField')}</span>}
                 </label>
               )
           }
@@ -220,8 +228,8 @@ export default function EventCreationWizard() {
   }
 
   function canUseStandingZones() {
-    const t = form.typeAgencement
-    return t === 'ASSIS_DEBOUT' || t === 'DEBOUT_AVEC_LIMITE' || t === 'DEBOUT_SANS_LIMITE'
+    const t2 = form.typeAgencement
+    return t2 === 'ASSIS_DEBOUT' || t2 === 'DEBOUT_AVEC_LIMITE' || t2 === 'DEBOUT_SANS_LIMITE'
   }
 
   async function handleSave() {
@@ -308,11 +316,11 @@ export default function EventCreationWizard() {
       case 0:
         return (
           <div className="wizard-step">
-            <label>Titre <input value={form.titre} onChange={set('titre')} required /></label>
-            <label>Description <textarea value={form.description} onChange={set('description')} /></label>
-            <label>Catégorie
-              <select value={form.codeCategorie} onChange={set('codeCategorie')} required>
-                <option value="">Sélectionner...</option>
+            <label style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{t('organizer.wizard.title')} <input value={form.titre} onChange={setField('titre')} required style={{ display: 'block', width: '100%', marginTop: '4px' }} /></label>
+            <label style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{t('organizer.wizard.description')} <textarea value={form.description} onChange={setField('description')} style={{ display: 'block', width: '100%', marginTop: '4px' }} /></label>
+            <label style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{t('organizer.wizard.category')}
+              <select value={form.codeCategorie} onChange={setField('codeCategorie')} required style={{ display: 'block', width: '100%', marginTop: '4px' }}>
+                <option value="">{t('organizer.wizard.selectCategory')}</option>
                 {categories.map(c => (
                   <option key={c.codeCategorie || c.id} value={c.codeCategorie || c.id}>
                     {c.nomCategorie || c.nom || c.libelle}
@@ -320,14 +328,14 @@ export default function EventCreationWizard() {
                 ))}
               </select>
             </label>
-            <label>Date <input type="date" value={form.dateEvenement} onChange={set('dateEvenement')} required /></label>
-            <label>Heure <input type="time" value={form.heureEvenement} onChange={set('heureEvenement')} /></label>
-            <label>Statut
-              <select value={form.statut} onChange={set('statut')}>
-                <option value="planifie">Planifié</option>
-                <option value="en_cours">En cours</option>
-                <option value="termine">Terminé</option>
-                <option value="annule">Annulé</option>
+            <label style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{t('organizer.wizard.date')} <input type="date" value={form.dateEvenement} onChange={setField('dateEvenement')} required style={{ display: 'block', width: '100%', marginTop: '4px' }} /></label>
+            <label style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{t('organizer.wizard.time')} <input type="time" value={form.heureEvenement} onChange={setField('heureEvenement')} style={{ display: 'block', width: '100%', marginTop: '4px' }} /></label>
+            <label style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{t('organizer.wizard.status')}
+              <select value={form.statut} onChange={setField('statut')} style={{ display: 'block', width: '100%', marginTop: '4px' }}>
+                <option value="planifie">{t('organizer.wizard.statusPlanned')}</option>
+                <option value="en_cours">{t('organizer.wizard.statusOngoing')}</option>
+                <option value="termine">{t('organizer.wizard.statusFinished')}</option>
+                <option value="annule">{t('organizer.wizard.statusCancelled')}</option>
               </select>
             </label>
             {renderCaracteristiques()}
@@ -336,15 +344,15 @@ export default function EventCreationWizard() {
       case 1:
         return (
           <div className="wizard-step">
-            <label>Image (URL) <input value={form.image} onChange={set('image')} placeholder="https://..." /></label>
+            <label style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{t('organizer.wizard.image')} <input value={form.image} onChange={setField('image')} placeholder={t('organizer.wizard.imagePlaceholder')} style={{ display: 'block', width: '100%', marginTop: '4px' }} /></label>
           </div>
         )
       case 2:
         return (
           <div className="wizard-step">
-            <label>Lieu
-              <select value={form.idLieu} onChange={set('idLieu')} required>
-                <option value="">Sélectionner un lieu...</option>
+            <label style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{t('organizer.wizard.venue')}
+              <select value={form.idLieu} onChange={setField('idLieu')} required style={{ display: 'block', width: '100%', marginTop: '4px' }}>
+                <option value="">{t('organizer.wizard.selectVenue')}</option>
                 {lieux.map(l => (
                   <option key={l.idLieu || l.id} value={l.idLieu || l.id}>
                     {l.nomLieu || l.nom || l.libelle} {l.ville ? `(${l.ville})` : ''}
@@ -354,17 +362,18 @@ export default function EventCreationWizard() {
             </label>
             {form.idLieu && (
               <>
-                <h4 style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>Salles disponibles</h4>
+                <h4 style={{ marginTop: '1rem', marginBottom: '0.5rem', color: 'var(--text)' }}>{t('organizer.wizard.availableRooms')}</h4>
                 {salles.length === 0 ? (
-                  <p style={{ color: '#666' }}>Aucune salle trouvée pour ce lieu.</p>
+                  <p style={{ color: 'var(--text-secondary)' }}>{t('organizer.wizard.noRooms')}</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {salles.map(s => (
                       <label key={s.numeroSalle || s.id} style={{
                         display: 'flex', alignItems: 'center', gap: '12px',
-                        padding: '12px', border: `2px solid ${form.numeroSalle === (s.numeroSalle || s.id) ? '#0f3460' : '#ddd'}`,
+                        padding: '12px', border: `2px solid ${form.numeroSalle === (s.numeroSalle || s.id) ? 'var(--primary)' : 'var(--border)'}`,
                         borderRadius: '8px', cursor: 'pointer',
-                        background: form.numeroSalle === (s.numeroSalle || s.id) ? '#f0f4ff' : '#fff',
+                        background: form.numeroSalle === (s.numeroSalle || s.id) ? 'var(--primary-light)' : 'var(--surface)',
+                        color: 'var(--text)',
                       }}>
                         <input type="radio" name="salle" value={s.numeroSalle || s.id}
                           checked={form.numeroSalle === (s.numeroSalle || s.id)}
@@ -373,12 +382,12 @@ export default function EventCreationWizard() {
                           }} />
                         <div>
                           <strong>{s.nomSalle || s.nom}</strong>
-                          <span style={{ marginLeft: '8px', color: '#666', fontSize: '0.85rem' }}>
-                            {s.capacite || '?'} places
+                          <span style={{ marginLeft: '8px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                            {s.capacite || '?'} {t('organizer.wizard.seats')}
                           </span>
                           {s.typeAgencement && (
-                            <span style={{ marginLeft: '8px', fontSize: '0.8rem', color: '#0f3460', background: '#e8edf5', padding: '1px 8px', borderRadius: '8px' }}>
-                              {TYPE_AGENCEMENT_LABELS[s.typeAgencement] || s.typeAgencement}
+                            <span style={{ marginLeft: '8px', fontSize: '0.8rem', color: 'var(--primary)', background: 'var(--primary-light)', padding: '1px 8px', borderRadius: '8px' }}>
+                              {t(TYPE_AGENCEMENT_LABELS[s.typeAgencement] || '') || s.typeAgencement}
                             </span>
                           )}
                         </div>
@@ -387,17 +396,17 @@ export default function EventCreationWizard() {
                   </div>
                 )}
                 {form.numeroSalle && (
-                  <div style={{ marginTop: '1rem', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 0 }}>
-                      <span style={{ fontWeight: 500 }}>Type d'agencement (surcharge):</span>
-                      <select value={form.typeAgencement} onChange={set('typeAgencement')} style={{ flex: 1 }}>
+                  <div style={{ marginTop: '1rem', padding: '12px', background: 'var(--surface-alt)', borderRadius: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 0, color: 'var(--text)' }}>
+                      <span style={{ fontWeight: 500 }}>{t('organizer.wizard.layoutOverride')}</span>
+                      <select value={form.typeAgencement} onChange={setField('typeAgencement')} style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--surface)', color: 'var(--text)' }}>
                         {TYPE_AGENCEMENT_OPTIONS.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
                         ))}
                       </select>
                     </label>
-                    <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '4px' }}>
-                      Par défaut : celui de la salle. Vous pouvez le surcharger pour cet événement.
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                      {t('organizer.wizard.layoutDefault')}
                     </p>
                   </div>
                 )}
@@ -410,143 +419,143 @@ export default function EventCreationWizard() {
           <div className="wizard-step">
             {isStandingOnly ? (
               <>
-                <h4>Configuration des zones debout</h4>
-                <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                <h4 style={{ color: 'var(--text)' }}>{t('organizer.wizard.standingConfig')}</h4>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
                   {form.typeAgencement === 'DEBOUT_AVEC_LIMITE'
-                    ? 'Cet événement est debout avec jauge. Définissez la capacité maximale.'
-                    : 'Cet événement est debout sans limite de places.'}
+                    ? t('organizer.wizard.standingJauge')
+                    : t('organizer.wizard.standingNoLimit')}
                 </p>
                 {standingZones.map((zone, i) => (
                   <div key={i} style={{
-                    padding: '16px', border: '1px solid #e0e0e0', borderRadius: '8px',
-                    background: '#fafafa', marginBottom: '12px',
+                    padding: '16px', border: '1px solid var(--border)', borderRadius: '8px',
+                    background: 'var(--surface-alt)', marginBottom: '12px',
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <strong>Zone {i + 1}</strong>
+                      <strong style={{ color: 'var(--text)' }}>Zone {i + 1}</strong>
                       <button className="btn-danger" style={{ padding: '4px 10px', fontSize: '0.8rem' }}
-                        onClick={() => removeStandingZone(i)}>Supprimer</button>
+                        onClick={() => removeStandingZone(i)}>{t('organizer.wizard.delete')}</button>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                      <label style={{ flex: 1, minWidth: '120px' }}>
-                        Nom
+                      <label style={{ flex: 1, minWidth: '120px', color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem' }}>
+                        {t('organizer.wizard.zoneName')}
                         <input value={zone.nom} onChange={e => updateStandingZone(i, 'nom', e.target.value)}
-                          placeholder="Ex: Fosse, Pelouse..." />
+                          placeholder={t('organizer.wizard.zoneNamePlaceholder')} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--surface)', color: 'var(--text)' }} />
                       </label>
                       {form.typeAgencement === 'DEBOUT_AVEC_LIMITE' && (
-                        <label style={{ flex: 1, minWidth: '100px' }}>
-                          Capacité max
+                        <label style={{ flex: 1, minWidth: '100px', color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem' }}>
+                          {t('organizer.wizard.zoneCapacity')}
                           <input type="number" min="1" value={zone.capacite}
                             onChange={e => updateStandingZone(i, 'capacite', e.target.value)}
-                            placeholder="Ex: 500" />
+                            placeholder={t('organizer.wizard.zoneCapacityPlaceholder')} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--surface)', color: 'var(--text)' }} />
                         </label>
                       )}
-                      <label style={{ flex: 1, minWidth: '100px' }}>
-                        Prix unitaire (€)
+                      <label style={{ flex: 1, minWidth: '100px', color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem' }}>
+                        {t('organizer.wizard.zonePrice')}
                         <input type="number" step="0.01" min="0" value={zone.prix}
-                          onChange={e => updateStandingZone(i, 'prix', e.target.value)} />
+                          onChange={e => updateStandingZone(i, 'prix', e.target.value)} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--surface)', color: 'var(--text)' }} />
                       </label>
                     </div>
                   </div>
                 ))}
                 <button className="btn-secondary" onClick={addStandingZone}>
-                  + Ajouter une zone debout
+                  {t('organizer.wizard.addZone')}
                 </button>
               </>
             ) : form.typeAgencement === 'ASSIS_DEBOUT' ? (
               <>
-                <h4>Places assises</h4>
-                <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                  Salle : {currentSalle?.nomSalle || form.numeroSalle}
+                <h4 style={{ color: 'var(--text)' }}>{t('organizer.wizard.seatedAreas')}</h4>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  {t('organizer.wizard.venue')}: {currentSalle?.nomSalle || form.numeroSalle}
                 </p>
                 {selectedSallePlaces.length === 0 ? (
-                  <p>Aucune place trouvée dans cette salle.</p>
+                  <p style={{ color: 'var(--text-secondary)' }}>{t('organizer.wizard.noSeats')}</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {placeTypes.map(type => (
                       <div key={type} style={{
-                        padding: '16px', border: '1px solid #e0e0e0', borderRadius: '8px', background: '#fafafa',
+                        padding: '16px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--surface-alt)',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                           <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: typePlaceColors[type] || '#3498db' }}></span>
-                          <strong>{type}</strong>
-                          <span style={{ color: '#666', fontSize: '0.85rem' }}>
+                          <strong style={{ color: 'var(--text)' }}>{type}</strong>
+                          <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                             ({selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length} places)
                           </span>
                         </div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          Prix unitaire :
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+                          {t('organizer.wizard.unitPrice')}
                           <input type="number" step="0.01" min="0"
                             value={placePricing[type] || ''}
                             onChange={e => setPlacePricing({ ...placePricing, [type]: parseFloat(e.target.value) || 0 })}
-                            style={{ width: '120px' }} /> €
+                            style={{ width: '120px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--surface)', color: 'var(--text)' }} /> €
                         </label>
                       </div>
                     ))}
                   </div>
                 )}
-                <hr style={{ margin: '1.5rem 0' }} />
-                <h4>Zones debout</h4>
+                <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--border)' }} />
+                <h4 style={{ color: 'var(--text)' }}>{t('organizer.wizard.standingTitle')}</h4>
                 {standingZones.map((zone, i) => (
                   <div key={i} style={{
-                    padding: '16px', border: '1px solid #e0e0e0', borderRadius: '8px',
-                    background: '#fafafa', marginBottom: '12px',
+                    padding: '16px', border: '1px solid var(--border)', borderRadius: '8px',
+                    background: 'var(--surface-alt)', marginBottom: '12px',
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <strong>Zone debout {i + 1}</strong>
+                      <strong style={{ color: 'var(--text)' }}>{t('organizer.wizard.standingTitle')} {i + 1}</strong>
                       <button className="btn-danger" style={{ padding: '4px 10px', fontSize: '0.8rem' }}
-                        onClick={() => removeStandingZone(i)}>Supprimer</button>
+                        onClick={() => removeStandingZone(i)}>{t('organizer.wizard.delete')}</button>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                      <label style={{ flex: 1, minWidth: '120px' }}>
-                        Nom <input value={zone.nom} onChange={e => updateStandingZone(i, 'nom', e.target.value)} placeholder="Ex: Fosse" />
+                      <label style={{ flex: 1, minWidth: '120px', color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem' }}>
+                        {t('organizer.wizard.zoneName')} <input value={zone.nom} onChange={e => updateStandingZone(i, 'nom', e.target.value)} placeholder={t('organizer.wizard.zoneNamePlaceholder')} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--surface)', color: 'var(--text)' }} />
                       </label>
-                      <label style={{ flex: 1, minWidth: '100px' }}>
-                        Capacité max <input type="number" min="1" value={zone.capacite}
-                          onChange={e => updateStandingZone(i, 'capacite', e.target.value)} placeholder="Ex: 200" />
+                      <label style={{ flex: 1, minWidth: '100px', color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem' }}>
+                        {t('organizer.wizard.zoneCapacity')} <input type="number" min="1" value={zone.capacite}
+                          onChange={e => updateStandingZone(i, 'capacite', e.target.value)} placeholder={t('organizer.wizard.zoneCapacityPlaceholder')} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--surface)', color: 'var(--text)' }} />
                       </label>
-                      <label style={{ flex: 1, minWidth: '100px' }}>
-                        Prix (€) <input type="number" step="0.01" min="0" value={zone.prix}
-                          onChange={e => updateStandingZone(i, 'prix', e.target.value)} />
+                      <label style={{ flex: 1, minWidth: '100px', color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.9rem' }}>
+                        {t('organizer.wizard.zonePrice')} <input type="number" step="0.01" min="0" value={zone.prix}
+                          onChange={e => updateStandingZone(i, 'prix', e.target.value)} style={{ display: 'block', width: '100%', marginTop: '4px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--surface)', color: 'var(--text)' }} />
                       </label>
                     </div>
                   </div>
                 ))}
                 <button className="btn-secondary" onClick={addStandingZone}>
-                  + Ajouter une zone debout
+                  {t('organizer.wizard.addZone')}
                 </button>
               </>
             ) : (
               <>
-                <h4>Tarification par type de place</h4>
-                <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                  Salle : {currentSalle?.nomSalle || form.numeroSalle}
+                <h4 style={{ color: 'var(--text)' }}>{t('organizer.wizard.pricingByType')}</h4>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  {t('organizer.wizard.venue')}: {currentSalle?.nomSalle || form.numeroSalle}
                 </p>
                 {selectedSallePlaces.length === 0 ? (
-                  <p>Aucune place trouvée dans cette salle.</p>
+                  <p style={{ color: 'var(--text-secondary)' }}>{t('organizer.wizard.noSeats')}</p>
                 ) : (
                   <>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                       {placeTypes.map(type => (
                         <div key={type} style={{
-                          padding: '16px', border: '1px solid #e0e0e0', borderRadius: '8px',
-                          background: '#fafafa',
+                          padding: '16px', border: '1px solid var(--border)', borderRadius: '8px',
+                          background: 'var(--surface-alt)',
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                             <span style={{
                               display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%',
                               background: typePlaceColors[type] || '#3498db',
                             }}></span>
-                            <strong>{type}</strong>
-                            <span style={{ color: '#666', fontSize: '0.85rem' }}>
+                            <strong style={{ color: 'var(--text)' }}>{type}</strong>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                               ({selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length} places)
                             </span>
                           </div>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            Prix unitaire :
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+                            {t('organizer.wizard.unitPrice')}
                             <input type="number" step="0.01" min="0"
                               value={placePricing[type] || ''}
                               onChange={e => setPlacePricing({ ...placePricing, [type]: parseFloat(e.target.value) || 0 })}
-                              style={{ width: '120px' }} /> €
+                              style={{ width: '120px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--surface)', color: 'var(--text)' }} /> €
                           </label>
                           <div style={{ display: 'flex', gap: '4px', marginTop: '8px', flexWrap: 'wrap' }}>
                             {selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).slice(0, 20).map(p => (
@@ -554,17 +563,17 @@ export default function EventCreationWizard() {
                                 padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem',
                                 background: `${typePlaceColors[type] || '#3498db'}22`,
                                 border: `1px solid ${typePlaceColors[type] || '#3498db'}`,
+                                color: 'var(--text)',
                               }}>{p.numeroPlace}</span>
                             ))}
                             {selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length > 20 &&
-                              <span style={{ fontSize: '0.75rem', color: '#666' }}>+{selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length - 20}...</span>}
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>+{selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length - 20}...</span>}
                           </div>
                         </div>
                       ))}
                     </div>
-                    <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#666' }}>
-                      Les prix seront appliqués individuellement à chaque place. Vous pouvez aussi modifier les prix
-                      via la section <strong>Gestion des places</strong> après la création.
+                    <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                      {t('organizer.wizard.pricingNote')}
                     </p>
                   </>
                 )}
@@ -575,46 +584,46 @@ export default function EventCreationWizard() {
       case 4:
         return (
           <div className="wizard-step">
-            <h4>Récapitulatif</h4>
+            <h4 style={{ color: 'var(--text)' }}>{t('organizer.wizard.review')}</h4>
             <div style={{ display: 'grid', gap: '8px', marginTop: '1rem' }}>
-              <p><strong>Titre:</strong> {form.titre}</p>
-              <p><strong>Description:</strong> {form.description || '—'}</p>
-              <p><strong>Catégorie:</strong> {categories.find(c => (c.codeCategorie || c.id) === form.codeCategorie)?.nomCategorie || form.codeCategorie}</p>
-              <p><strong>Date:</strong> {form.dateEvenement} {form.heureEvenement}</p>
-              <p><strong>Statut:</strong> {form.statut}</p>
-              <p><strong>Image:</strong> {form.image || '—'}</p>
-              <p><strong>Lieu:</strong> {lieux.find(l => (l.idLieu || l.id) === form.idLieu)?.nomLieu || form.idLieu}</p>
-              <p><strong>Salle:</strong> {currentSalle?.nomSalle || form.numeroSalle}</p>
-              <p><strong>Type d'agencement:</strong> {TYPE_AGENCEMENT_LABELS[form.typeAgencement] || form.typeAgencement}</p>
+              <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.title')}:</strong> {form.titre}</p>
+              <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.description')}:</strong> {form.description || '—'}</p>
+              <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.category')}:</strong> {categories.find(c => (c.codeCategorie || c.id) === form.codeCategorie)?.nomCategorie || form.codeCategorie}</p>
+              <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.date')}:</strong> {form.dateEvenement} {form.heureEvenement}</p>
+              <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.status')}:</strong> {form.statut}</p>
+              <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.image')}:</strong> {form.image || '—'}</p>
+              <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.venue')}:</strong> {lieux.find(l => (l.idLieu || l.id) === form.idLieu)?.nomLieu || form.idLieu}</p>
+              <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.availableRooms')}:</strong> {currentSalle?.nomSalle || form.numeroSalle}</p>
+              <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.layoutOverride')}:</strong> {t(TYPE_AGENCEMENT_LABELS[form.typeAgencement] || '') || form.typeAgencement}</p>
               {Object.keys(caracteristiqueValues).filter(k => caracteristiqueValues[k]).length > 0 && (
                 <>
-                  <p><strong>Caractéristiques:</strong></p>
-                  <ul>
+                  <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.caracteristiques')}:</strong></p>
+                  <ul style={{ paddingLeft: '20px' }}>
                     {Object.entries(caracteristiqueValues)
                       .filter(([, v]) => v)
                       .map(([k, v]) => {
                         const c = caracteristiques.find(c => (c.idCaracteristique || c.id) === Number(k))
-                        return <li key={k}>{c?.nom || k}: {v}</li>
+                        return <li key={k} style={{ color: 'var(--text)' }}>{c?.nom || k}: {v}</li>
                       })}
                   </ul>
                 </>
               )}
               {!isStandingOnly && placeTypes.length > 0 && (
                 <>
-                  <p><strong>Types de places assises:</strong></p>
-                  <ul>
+                  <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.pricingByType')}:</strong></p>
+                  <ul style={{ paddingLeft: '20px' }}>
                     {placeTypes.map(type => (
-                      <li key={type}>{type}: {placePricing[type]?.toFixed(2) || '0.00'} € ({selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length} places)</li>
+                      <li key={type} style={{ color: 'var(--text)' }}>{type}: {placePricing[type]?.toFixed(2) || '0.00'} € ({selectedSallePlaces.filter(p => (p.typePlace || 'Standard') === type).length} places)</li>
                     ))}
                   </ul>
                 </>
               )}
               {standingZones.length > 0 && (
                 <>
-                  <p><strong>Zones debout:</strong></p>
-                  <ul>
+                  <p style={{ color: 'var(--text)' }}><strong>{t('organizer.wizard.standingTitle')}:</strong></p>
+                  <ul style={{ paddingLeft: '20px' }}>
                     {standingZones.map((z, i) => (
-                      <li key={i}>Zone {i + 1} - {z.nom || '(nom à définir)'}: {z.capacite ? z.capacite + ' places max' : 'Sans limite'} - {Number(z.prix).toFixed(2)} €</li>
+                      <li key={i} style={{ color: 'var(--text)' }}>Zone {i + 1} - {z.nom || '(nom à définir)'}: {z.capacite ? z.capacite + ' places max' : 'Sans limite'} - {Number(z.prix).toFixed(2)} €</li>
                     ))}
                   </ul>
                 </>
@@ -629,7 +638,7 @@ export default function EventCreationWizard() {
 
   return (
     <div className="wizard">
-      <h1>{isEdit ? 'Modifier Événement' : 'Créer un Événement'}</h1>
+      <h1 style={{ color: 'var(--text)' }}>{isEdit ? t('organizer.wizard.titleEdit') : t('organizer.wizard.titleCreate')}</h1>
       <div className="wizard-steps">
         {STEPS.map((s, i) => (
           <span key={i} className={`wizard-step ${i === step ? 'active' : ''} ${i < step ? 'completed' : ''}`}>
@@ -642,20 +651,20 @@ export default function EventCreationWizard() {
       <div className="wizard-content">
         {renderStep()}
       </div>
-      <div className="wizard-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="wizard-nav">
         <div style={{ display: 'flex', gap: '8px' }}>
           <button className="btn-secondary" onClick={() => navigate('/organizer')}>
-            Annuler
+            {t('organizer.wizard.cancel')}
           </button>
-          {step > 0 && <button className="btn-secondary" onClick={() => setStep(step - 1)}>Précédent</button>}
+          {step > 0 && <button className="btn-secondary" onClick={() => setStep(step - 1)}>{t('organizer.wizard.previous')}</button>}
         </div>
         {step < STEPS.length - 1 ? (
           <button className="btn-primary" onClick={() => setStep(step + 1)} disabled={!canNext()}>
-            Suivant
+            {t('organizer.wizard.next')}
           </button>
         ) : (
           <button className="btn-success" onClick={handleSave} disabled={loading}>
-            {loading ? 'Enregistrement...' : isEdit ? 'Mettre à jour' : "Créer l'événement"}
+            {loading ? t('organizer.wizard.saving') : isEdit ? t('organizer.wizard.update') : t('organizer.wizard.create')}
           </button>
         )}
       </div>

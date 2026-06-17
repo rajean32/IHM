@@ -6,6 +6,7 @@ import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
 import '../../models/evenement_model.dart';
 import '../../widgets/error_state.dart';
+import '../../localization/app_localizations.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key});
@@ -17,7 +18,6 @@ class _EventsPageState extends State<EventsPage> {
   bool _loading = true;
   String? _error;
   List<Evenement> _events = [];
-  String _filter = '';
   final _api = EvenementService();
 
   @override
@@ -106,26 +106,26 @@ class _EventsPageState extends State<EventsPage> {
                     children: [
                       const Icon(Icons.warning_amber, color: AppColors.error, size: 20),
                       const SizedBox(width: 8),
-                      Expanded(child: Text('Motif: ${detail.motifAnnulation}', style: const TextStyle(color: AppColors.error))),
+                      Expanded(child: Text('${tr('admin.events.reason')} ${detail.motifAnnulation}', style: const TextStyle(color: AppColors.error))),
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
               ],
 
-              _sectionTitle('Informations'),
-              _infoRow(Icons.description, 'Description', detail.description ?? 'Aucune'),
-              _infoRow(Icons.category, 'Catégorie', detail.categorieNom ?? detail.codeCategorie ?? '-'),
-              _infoRow(Icons.person, 'Organisateur', detail.organisateurNom ?? detail.codeOrganisateur),
+              _sectionTitle(tr('admin.events.info')),
+              _infoRow(Icons.description, tr('admin.categories.description'), detail.description ?? tr('common.none')),
+              _infoRow(Icons.category, tr('admin.categories.name'), detail.categorieNom ?? detail.codeCategorie ?? '-'),
+              _infoRow(Icons.person, tr('admin.users.roleOrganizer'), detail.organisateurNom ?? detail.codeOrganisateur),
               const SizedBox(height: 12),
 
-              _sectionTitle('Logistique'),
-              _infoRow(Icons.location_on, 'Lieu', detail.lieuNom ?? '-'),
-              _infoRow(Icons.calendar_today, 'Date', detail.dateEvenement?.toIso8601String().split('T').first ?? '-'),
-              _infoRow(Icons.access_time, 'Heure', detail.heureEvenement ?? '-'),
+              _sectionTitle(tr('admin.events.logistics')),
+              _infoRow(Icons.location_on, tr('admin.events.venue'), detail.lieuNom ?? '-'),
+              _infoRow(Icons.calendar_today, tr('admin.events.date'), detail.dateEvenement?.toIso8601String().split('T').first ?? '-'),
+              _infoRow(Icons.access_time, tr('admin.events.time'), detail.heureEvenement ?? '-'),
               const SizedBox(height: 12),
 
-              _sectionTitle('Jauge'),
+              _sectionTitle(tr('admin.events.capacity')),
               const SizedBox(height: 4),
               if (detail.placesTotal != null && detail.placesTotal! > 0) ...[
                 ClipRRect(
@@ -141,15 +141,15 @@ class _EventsPageState extends State<EventsPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '$seatsReserved / ${detail.placesTotal} réservées',
+                  '$seatsReserved / ${detail.placesTotal} ${tr('admin.events.reserved')}',
                   style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
               ] else
-                const Text('Aucune place configurée', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                Text(tr('admin.events.noSeatsConfigured'), style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               const SizedBox(height: 20),
 
               if (detail.caracteristiqueValeurs != null && detail.caracteristiqueValeurs!.isNotEmpty) ...[
-                _sectionTitle('Caractéristiques'),
+                _sectionTitle(tr('admin.events.features')),
                 const SizedBox(height: 4),
                 ...detail.caracteristiqueValeurs!.map((c) => Padding(
                   padding: const EdgeInsets.only(bottom: 4),
@@ -166,49 +166,49 @@ class _EventsPageState extends State<EventsPage> {
                 const SizedBox(height: 12),
               ],
 
-              _sectionTitle('Actions'),
+              _sectionTitle(tr('admin.events.actions')),
               const SizedBox(height: 8),
               _adminActionButton(
                 icon: Icons.verified,
-                label: 'Valider / Approuver',
+                label: tr('admin.events.validate'),
                 color: AppColors.secondary,
                 enabled: detail.statut == 'planifie',
                 onTap: () async {
                   Navigator.pop(ctx);
-                  await _performAction(() => _api.validateEvent(detail.idEvenement!), 'Événement validé');
+                  await _performAction(() => _api.validateEvent(detail.idEvenement!), tr('admin.events.validated'));
                 },
               ),
               if (detail.statut == 'suspendu')
                 _adminActionButton(
                   icon: Icons.play_arrow,
-                  label: 'Réactiver',
+                  label: tr('admin.events.reactivate'),
                   color: AppColors.primary,
                   enabled: true,
                   onTap: () async {
                     Navigator.pop(ctx);
                     await _performAction(
                       () => dio.put('${Endpoints.events}/${detail.idEvenement}/resume'),
-                      'Événement réactivé',
+                      tr('admin.events.reactivated'),
                     );
                   },
                 )
               else
                 _adminActionButton(
                   icon: Icons.pause_circle,
-                  label: 'Suspendre',
+                  label: tr('admin.events.suspend'),
                   color: AppColors.accent,
                   enabled: detail.statut == 'valide' || detail.statut == 'planifie' || detail.statut == 'en_cours',
                   onTap: () async {
                     Navigator.pop(ctx);
                     await _performAction(
                       () => dio.put('${Endpoints.events}/${detail.idEvenement}/suspend'),
-                      'Événement suspendu',
+                      tr('admin.events.suspended'),
                     );
                   },
                 ),
               _adminActionButton(
                 icon: Icons.cancel,
-                label: 'Annuler l\'événement',
+                label: tr('admin.events.cancelEvent'),
                 color: AppColors.error,
                 enabled: detail.statut != 'annule' && detail.statut != 'termine',
                 onTap: () async {
@@ -217,14 +217,14 @@ class _EventsPageState extends State<EventsPage> {
                   if (motif != null) {
                     await _performAction(
                       () => dio.put('${Endpoints.events}/${detail.idEvenement}/cancel', data: {'motifAnnulation': motif}),
-                      'Événement annulé',
+                      tr('admin.events.cancelled'),
                     );
                   }
                 },
               ),
               _adminActionButton(
                 icon: Icons.email,
-                label: 'Contacter l\'Organisateur',
+                label: tr('admin.events.contactOrganizer'),
                 color: AppColors.primary,
                 enabled: true,
                 onTap: () {
@@ -290,21 +290,21 @@ class _EventsPageState extends State<EventsPage> {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Annuler l\'événement'),
+        title: Text(tr('admin.events.cancelEvent')),
         content: TextField(
           controller: ctrl,
           maxLines: 3,
-          decoration: const InputDecoration(
-            labelText: 'Motif d\'annulation *',
-            hintText: 'Raison obligatoire',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: tr('admin.events.cancelReason'),
+            hintText: tr('admin.events.cancelReasonHint'),
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
           TextButton(
             onPressed: () => ctrl.text.isNotEmpty ? Navigator.pop(ctx, ctrl.text) : null,
-            child: const Text('Confirmer', style: TextStyle(color: AppColors.error)),
+            child: Text(tr('common.confirm'), style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -316,41 +316,41 @@ class _EventsPageState extends State<EventsPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Contacter l\'Organisateur'),
+        title: Text(tr('admin.events.contactOrganizer')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _infoRow(Icons.person, 'Nom', event.organisateurNom ?? event.codeOrganisateur),
-            _infoRow(Icons.badge, 'Code', event.codeOrganisateur),
+            _infoRow(Icons.person, tr('admin.profile.lastName'), event.organisateurNom ?? event.codeOrganisateur),
+            _infoRow(Icons.badge, tr('admin.categories.code'), event.codeOrganisateur),
             const SizedBox(height: 12),
-            const Text('Options de contact :', style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(tr('admin.events.contactOptions'), style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             ListTile(
               leading: const Icon(Icons.email, color: AppColors.primary),
-              title: const Text('Envoyer un email'),
-              subtitle: Text('À ${event.codeOrganisateur}'),
+              title: Text(tr('admin.events.sendEmail')),
+              subtitle: Text('${tr('admin.events.to')} ${event.codeOrganisateur}'),
               onTap: () {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Fonctionnalité email à implémenter')),
+                  SnackBar(content: Text(tr('admin.events.emailNotImplemented'))),
                 );
               },
             ),
             ListTile(
               leading: const Icon(Icons.chat, color: AppColors.primary),
-              title: const Text('Discussion interne'),
-              subtitle: const Text('Ouvrir un chat'),
+              title: Text(tr('admin.events.internalChat')),
+              subtitle: Text(tr('admin.events.openChat')),
               onTap: () {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Fonctionnalité chat à implémenter')),
+                  SnackBar(content: Text(tr('admin.events.chatNotImplemented'))),
                 );
               },
             ),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fermer'))],
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.close')))],
       ),
     );
   }
@@ -369,10 +369,6 @@ class _EventsPageState extends State<EventsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filter.isEmpty ? _events : _events.where((e) =>
-      e.titre.toLowerCase().contains(_filter.toLowerCase())
-    ).toList();
-
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) return ErrorState(message: _error!, onRetry: _loadData);
 
@@ -380,42 +376,30 @@ class _EventsPageState extends State<EventsPage> {
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         child: Row(children: [
-          const Text('Événements', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(tr('admin.events'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const Spacer(),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ]),
       ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: TextField(
-          decoration: const InputDecoration(
-            hintText: 'Rechercher...',
-            prefixIcon: Icon(Icons.search),
-            border: OutlineInputBorder(),
-            isDense: true,
-          ),
-          onChanged: (v) => setState(() => _filter = v),
-        ),
-      ),
       Expanded(
         child: RefreshIndicator(
           onRefresh: _loadData,
-          child: filtered.isEmpty
+          child: _events.isEmpty
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.event_busy, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
                       const SizedBox(height: 12),
-                      const Text('Aucun événement trouvé', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                      Text(tr('admin.events.empty'), style: const TextStyle(color: AppColors.textSecondary, fontSize: 16)),
                     ],
                   ),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(8),
-                  itemCount: filtered.length,
+                  itemCount: _events.length,
                   itemBuilder: (ctx, i) {
-                    final event = filtered[i];
+                    final event = _events[i];
                     final statusColor = AppConstants.statutColors[event.statut] ?? AppColors.textSecondary;
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -443,7 +427,7 @@ class _EventsPageState extends State<EventsPage> {
                             const SizedBox(width: 4),
                             IconButton(
                               icon: const Icon(Icons.info_outline, size: 20),
-                              tooltip: 'Détails',
+                              tooltip: tr('common.details'),
                               onPressed: () => _showInfoModal(event),
                             ),
                           ],

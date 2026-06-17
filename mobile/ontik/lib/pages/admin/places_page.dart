@@ -7,6 +7,7 @@ import '../../core/utils/error_helper.dart';
 import '../../core/assets/app_colors.dart';
 import '../../models/lieu_model.dart';
 import '../../widgets/error_state.dart';
+import '../../localization/app_localizations.dart';
 
 class PlacesPage extends StatefulWidget {
   final String? initialSalleFilter;
@@ -112,7 +113,7 @@ class _PlacesPageState extends State<PlacesPage> {
       await dio.delete('${Endpoints.salles}/$id');
       if (_selectedSalle?.numeroSalle == id) _selectedSalle = null;
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Salle supprimée'), backgroundColor: AppColors.secondary),
+        SnackBar(content: Text(tr('admin.places.roomDeleted')), backgroundColor: AppColors.secondary),
       );
       _loadData();
       return true;
@@ -123,7 +124,7 @@ class _PlacesPageState extends State<PlacesPage> {
     try {
       await _placeService.deletePlace(id);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Place supprimée'), backgroundColor: AppColors.secondary),
+        SnackBar(content: Text(tr('admin.places.placeDeleted')), backgroundColor: AppColors.secondary),
       );
       _loadData();
     } catch (_) {}
@@ -136,7 +137,7 @@ class _PlacesPageState extends State<PlacesPage> {
     }
     setState(() { _selectedPlaceIds.clear(); _bulkMode = false; });
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$count place(s) supprimée(s)'), backgroundColor: AppColors.secondary),
+      SnackBar(content: Text('$count ${tr('admin.places.placesDeleted')}'), backgroundColor: AppColors.secondary),
     );
     _loadData();
   }
@@ -157,7 +158,7 @@ class _PlacesPageState extends State<PlacesPage> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${end - start + 1} places générées'), backgroundColor: AppColors.secondary),
+          SnackBar(content: Text('${end - start + 1} ${tr('admin.places.generated')}'), backgroundColor: AppColors.secondary),
         );
       }
       _loadData();
@@ -182,17 +183,17 @@ class _PlacesPageState extends State<PlacesPage> {
         child: Form(
           key: formKey,
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            const Text('Modifier la place', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(tr('admin.places.editPlace'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             TextFormField(
               controller: numCtrl,
-              decoration: const InputDecoration(labelText: 'Numéro de place', border: OutlineInputBorder()),
-              validator: (v) => v == null || v.trim().isEmpty ? 'Requis' : null,
+              decoration: InputDecoration(labelText: tr('admin.places.placeNumber'), border: const OutlineInputBorder()),
+              validator: (v) => v == null || v.trim().isEmpty ? tr('admin.places.required') : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: rangCtrl,
-              decoration: const InputDecoration(labelText: 'Rang', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: tr('admin.places.row'), border: const OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -215,7 +216,7 @@ class _PlacesPageState extends State<PlacesPage> {
                 }
               },
               style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              child: const Text('Enregistrer'),
+              child: Text(tr('common.save')),
             ),
             const SizedBox(height: 16),
           ]),
@@ -238,20 +239,20 @@ class _PlacesPageState extends State<PlacesPage> {
         child: Form(
           key: formKey,
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text(salle != null ? 'Modifier la salle' : 'Ajouter une salle', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(salle != null ? tr('admin.places.editRoom') : tr('admin.places.addRoom'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             TextFormField(
               controller: nomCtrl,
-              decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()),
-              validator: (v) => v == null || v.trim().isEmpty ? 'Requis' : null,
+              decoration: InputDecoration(labelText: tr('admin.places.name'), border: const OutlineInputBorder()),
+              validator: (v) => v == null || v.trim().isEmpty ? tr('admin.places.required') : null,
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: lieuCode,
-              decoration: const InputDecoration(labelText: 'Lieu parent', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: tr('admin.places.parentVenue'), border: const OutlineInputBorder()),
               items: _lieux.map((l) => DropdownMenuItem(value: l.code, child: Text(l.nomLieu))).toList(),
               onChanged: (v) => lieuCode = v,
-              validator: (v) => v == null ? 'Requis' : null,
+              validator: (v) => v == null ? tr('admin.places.required') : null,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -266,7 +267,7 @@ class _PlacesPageState extends State<PlacesPage> {
                 _loadData();
               },
               style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              child: Text(salle != null ? 'Enregistrer' : 'Ajouter'),
+              child: Text(salle != null ? tr('common.save') : tr('common.add')),
             ),
             const SizedBox(height: 16),
           ]),
@@ -286,14 +287,14 @@ class _PlacesPageState extends State<PlacesPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            const Text('Salles & Places', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('admin.places.title'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const Spacer(),
             IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
           ]),
           const SizedBox(height: 8),
           _buildLieuFilter(),
           const SizedBox(height: 8),
-          _buildSearchBar(_salleSearchCtrl, 'Rechercher une salle...', () => setState(() {})),
+          _buildSearchBar(_salleSearchCtrl, tr('admin.places.searchRoom'), () => setState(() {})),
           const SizedBox(height: 8),
           _buildSallesSection(),
           if (_selectedSalle != null) ...[
@@ -325,15 +326,15 @@ class _PlacesPageState extends State<PlacesPage> {
   Widget _buildLieuFilter() {
     return DropdownButtonFormField<String>(
       value: _selectedLieuCode,
-      decoration: const InputDecoration(
-        labelText: 'Filtrer par lieu',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.filter_alt),
+      decoration: InputDecoration(
+        labelText: tr('admin.places.filterByVenue'),
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.filter_alt),
         isDense: true,
       ),
       isExpanded: true,
       items: [
-        const DropdownMenuItem<String>(value: null, child: Text('Tous les lieux')),
+        DropdownMenuItem<String>(value: null, child: Text(tr('admin.places.allVenues'))),
         ..._lieux.map((l) => DropdownMenuItem(value: l.code, child: Text(l.nomLieu))),
       ],
       onChanged: (v) => setState(() {
@@ -354,18 +355,18 @@ class _PlacesPageState extends State<PlacesPage> {
       children: [
         Row(
           children: [
-            Text('Salles (${filtered.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('${tr('admin.places.rooms')} (${filtered.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const Spacer(),
             TextButton.icon(
               onPressed: () => _showSalleForm(),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Ajouter'),
+              label: Text(tr('common.add')),
             ),
           ],
         ),
         const SizedBox(height: 8),
         if (filtered.isEmpty)
-          _emptyState('Aucune salle trouvée', Icons.meeting_room)
+          _emptyState(tr('admin.places.noRooms'), Icons.meeting_room)
         else
           ...filtered.map((s) => Card(
             margin: const EdgeInsets.only(bottom: 6),
@@ -385,7 +386,7 @@ class _PlacesPageState extends State<PlacesPage> {
                 ),
               ),
               title: Text(s.nomSalle, style: const TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text('${lieuMap[s.codeLieu]?.nomLieu ?? '-'}  •  ${_placeCount(s.numeroSalle)} place(s)'),
+              subtitle: Text('${lieuMap[s.codeLieu]?.nomLieu ?? '-'}  •  ${_placeCount(s.numeroSalle)} ${tr('admin.places.places')}'),
               selected: _selectedSalle?.numeroSalle == s.numeroSalle,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -401,7 +402,7 @@ class _PlacesPageState extends State<PlacesPage> {
                       _finCtrl.text = '10';
                     }),
                     child: Text(
-                      _selectedSalle?.numeroSalle == s.numeroSalle ? 'Fermer' : 'Gérer les places',
+                      _selectedSalle?.numeroSalle == s.numeroSalle ? tr('admin.places.close') : tr('admin.places.managePlaces'),
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
@@ -410,11 +411,11 @@ class _PlacesPageState extends State<PlacesPage> {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: const Text('Confirmer'),
-                        content: Text('Supprimer la salle ${s.nomSalle} ?'),
+                        title: Text(tr('common.confirm')),
+                        content: Text('${tr('admin.places.deleteRoom')} ${s.nomSalle} ?'),
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-                          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: AppColors.error))),
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('common.cancel'))),
+                          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('common.delete'), style: const TextStyle(color: AppColors.error))),
                         ],
                       ),
                     );
@@ -443,7 +444,7 @@ class _PlacesPageState extends State<PlacesPage> {
           children: [
             Expanded(
               child: Text(
-                'Gestion des places pour la salle : ${_selectedSalle!.nomSalle}',
+                '${tr('admin.places.manageForRoom')} ${_selectedSalle!.nomSalle}',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -454,7 +455,7 @@ class _PlacesPageState extends State<PlacesPage> {
                   if (!_bulkMode) _selectedPlaceIds.clear();
                 }),
                 icon: Icon(_bulkMode ? Icons.close : Icons.checklist, size: 18),
-                label: Text(_bulkMode ? 'Annuler' : 'Sélection multiple', style: const TextStyle(fontSize: 12)),
+                label: Text(_bulkMode ? tr('common.cancel') : tr('admin.places.multiSelect'), style: const TextStyle(fontSize: 12)),
               ),
           ],
         ),
@@ -469,30 +470,30 @@ class _PlacesPageState extends State<PlacesPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Génération en masse', style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text(tr('admin.places.batchGenerate'), style: const TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _rangCtrl,
-                    decoration: const InputDecoration(labelText: 'Rang', hintText: 'B', border: OutlineInputBorder(), isDense: true),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Requis' : null,
+                    decoration: InputDecoration(labelText: tr('admin.places.row'), hintText: tr('admin.places.rowHint'), border: const OutlineInputBorder(), isDense: true),
+                    validator: (v) => v == null || v.trim().isEmpty ? tr('admin.places.required') : null,
                   ),
                   const SizedBox(height: 8),
                   Row(children: [
                     Expanded(child: TextFormField(
                       controller: _debutCtrl,
-                      decoration: const InputDecoration(labelText: 'N° début', border: OutlineInputBorder(), isDense: true),
+                      decoration: InputDecoration(labelText: tr('admin.places.startNum'), border: const OutlineInputBorder(), isDense: true),
                       keyboardType: TextInputType.number,
                     )),
                     const Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('→')),
                     Expanded(child: TextFormField(
                       controller: _finCtrl,
-                      decoration: const InputDecoration(labelText: 'N° fin', border: OutlineInputBorder(), isDense: true),
+                      decoration: InputDecoration(labelText: tr('admin.places.endNum'), border: const OutlineInputBorder(), isDense: true),
                       keyboardType: TextInputType.number,
                       validator: (v) {
                         final d = int.tryParse(_debutCtrl.text);
                         final f = int.tryParse(v ?? '');
-                        if (f == null) return 'Invalide';
-                        if (d != null && f < d) return '> début';
+                        if (f == null) return tr('admin.places.invalid');
+                        if (d != null && f < d) return '> ${tr('admin.places.startNum')}';
                         return null;
                       },
                     )),
@@ -503,7 +504,7 @@ class _PlacesPageState extends State<PlacesPage> {
                     child: ElevatedButton.icon(
                       onPressed: _generateBatch,
                       icon: const Icon(Icons.auto_awesome, size: 18),
-                      label: const Text('Générer'),
+                      label: Text(tr('admin.places.generate')),
                     ),
                   ),
                 ],
@@ -512,13 +513,13 @@ class _PlacesPageState extends State<PlacesPage> {
           ),
         ),
 
-        _buildSearchBar(_placeSearchCtrl, 'Rechercher une place...', () => setState(() {})),
+        _buildSearchBar(_placeSearchCtrl, tr('admin.places.searchPlace'), () => setState(() {})),
         const SizedBox(height: 8),
 
         if (places.isEmpty && _placeSearchCtrl.text.isEmpty)
-          _emptyState('Aucune place pour cette salle', Icons.event_seat)
+          _emptyState(tr('admin.places.noPlaces'), Icons.event_seat)
         else if (places.isEmpty)
-          _emptyState('Aucune place ne correspond à votre recherche', Icons.search_off)
+          _emptyState(tr('admin.places.noSearchResults'), Icons.search_off)
         else
           ...sortedRangs.map((rang) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -527,7 +528,7 @@ class _PlacesPageState extends State<PlacesPage> {
               children: [
                 Row(
                   children: [
-                    Text('Rang $rang', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    Text('${tr('admin.places.row')} $rang', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                     const Spacer(),
                     if (_bulkMode)
                       TextButton(
@@ -541,7 +542,7 @@ class _PlacesPageState extends State<PlacesPage> {
                         },
                         child: Text(
                           grouped[rang]!.every((p) => _selectedPlaceIds.contains(p.numeroPlace))
-                              ? 'Désélectionner' : 'Sélectionner',
+                              ? tr('admin.places.deselect') : tr('admin.places.select'),
                           style: const TextStyle(fontSize: 11),
                         ),
                       ),
@@ -567,18 +568,18 @@ class _PlacesPageState extends State<PlacesPage> {
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text('Suppression groupée'),
-                      content: Text('Supprimer ${_selectedPlaceIds.length} place(s) ?'),
+                      title: Text(tr('admin.places.bulkDelete')),
+                      content: Text('${tr('admin.places.bulkDeleteConfirm')} ${_selectedPlaceIds.length} ${tr('admin.places.places')} ?'),
                       actions: [
-                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: AppColors.error))),
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('common.cancel'))),
+                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('common.delete'), style: const TextStyle(color: AppColors.error))),
                       ],
                     ),
                   );
                   if (confirm == true) _bulkDeletePlaces();
                 },
                 icon: const Icon(Icons.delete_sweep, size: 18),
-                label: Text('Supprimer ${_selectedPlaceIds.length} place(s)'),
+                label: Text('${tr('common.delete')} ${_selectedPlaceIds.length} ${tr('admin.places.places')}'),
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
               ),
             ),
@@ -614,8 +615,8 @@ class _PlacesPageState extends State<PlacesPage> {
               context: context,
               position: RelativeRect.fromLTRB(100, 300, 100, 300),
               items: [
-                const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit, size: 18), title: Text('Modifier'), dense: true)),
-                const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, size: 18, color: AppColors.error), title: Text('Supprimer'), dense: true)),
+                PopupMenuItem(value: 'edit', child: ListTile(leading: const Icon(Icons.edit, size: 18), title: Text(tr('common.edit')), dense: true)),
+                PopupMenuItem(value: 'delete', child: ListTile(leading: const Icon(Icons.delete, size: 18, color: AppColors.error), title: Text(tr('common.delete')), dense: true)),
               ],
             ).then((v) {
               if (v == 'edit') _editPlace(place);
@@ -623,11 +624,11 @@ class _PlacesPageState extends State<PlacesPage> {
                 showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Supprimer'),
-                    content: Text('Supprimer la place ${place.numeroPlace} ?'),
+                    title: Text(tr('common.delete')),
+                    content: Text('${tr('admin.places.deletePlaceConfirm')} ${place.numeroPlace} ?'),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-                      TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: AppColors.error))),
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('common.cancel'))),
+                      TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('common.delete'), style: const TextStyle(color: AppColors.error))),
                     ],
                   ),
                 ).then((v) { if (v == true) _deletePlace(place.numeroPlace); });
@@ -680,11 +681,11 @@ class _PlacesPageState extends State<PlacesPage> {
                   showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text('Supprimer'),
-                      content: Text('Supprimer la place ${place.numeroPlace} ?'),
+                      title: Text(tr('common.delete')),
+                      content: Text('${tr('admin.places.deletePlaceConfirm')} ${place.numeroPlace} ?'),
                       actions: [
-                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: AppColors.error))),
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('common.cancel'))),
+                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('common.delete'), style: const TextStyle(color: AppColors.error))),
                       ],
                     ),
                   ).then((v) { if (v == true) _deletePlace(place.numeroPlace); });

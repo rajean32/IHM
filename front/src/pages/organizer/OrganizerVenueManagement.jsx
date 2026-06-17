@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAll, getById, create, update, remove } from '../../api/entityApi'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const TABS = ['Lieux', 'Salles', 'Places']
+
+const TYPE_AGENCEMENT_OPTIONS = [
+  { value: 'UNIQUEMENT_ASSIS', labelKey: 'layout.UNIQUEMENT_ASSIS' },
+  { value: 'TABLE_ASSIS', labelKey: 'layout.TABLE_ASSIS' },
+  { value: 'ASSIS_DEBOUT', labelKey: 'layout.ASSIS_DEBOUT' },
+  { value: 'DEBOUT_AVEC_LIMITE', labelKey: 'layout.DEBOUT_AVEC_LIMITE' },
+  { value: 'DEBOUT_SANS_LIMITE', labelKey: 'layout.DEBOUT_SANS_LIMITE' },
+]
 
 function Modal({ show, title, onClose, children }) {
   if (!show) return null
@@ -16,7 +25,7 @@ function Modal({ show, title, onClose, children }) {
   )
 }
 
-function LieuxTab() {
+function LieuxTab({ t }) {
   const [lieux, setLieux] = useState([])
   const [modal, setModal] = useState(false)
   const [edit, setEdit] = useState(null)
@@ -44,7 +53,7 @@ function LieuxTab() {
   }
 
   async function handleDelete(l) {
-    if (!window.confirm('Supprimer ce lieu ?')) return
+    if (!window.confirm(t('organizer.venues.deleteConfirm'))) return
     try {
       await remove('/api/organisateur/venues/lieux', l.idLieu || l.id)
       load()
@@ -53,46 +62,40 @@ function LieuxTab() {
 
   return (
     <div className="tab-content">
-      <button onClick={openCreate}>Ajouter un Lieu</button>
-      <table>
-        <thead><tr><th>Nom</th><th>Adresse</th><th>Ville</th><th>Capacité</th><th>Actions</th></tr></thead>
-        <tbody>
-          {lieux.map(l => (
-            <tr key={l.idLieu || l.id}>
-              <td>{l.nom}</td>
-              <td>{l.adresse}</td>
-              <td>{l.ville}</td>
-              <td>{l.capacite}</td>
-              <td>
-                <button onClick={() => openEdit(l)}>Modifier</button>
-                <button onClick={() => handleDelete(l)}>Supprimer</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <Modal show={modal} title={edit ? 'Modifier Lieu' : 'Ajouter Lieu'} onClose={() => setModal(false)}>
+      <button className="btn-primary" onClick={openCreate}>{t('organizer.venues.addVenue')}</button>
+      <div className="table-wrap" style={{ marginTop: '1rem' }}>
+        <table>
+          <thead><tr><th>{t('organizer.venues.name')}</th><th>{t('organizer.venues.address')}</th><th>{t('organizer.venues.city')}</th><th>{t('organizer.venues.capacity')}</th><th>{t('organizer.venues.actions')}</th></tr></thead>
+          <tbody>
+            {lieux.map(l => (
+              <tr key={l.idLieu || l.id}>
+                <td>{l.nom}</td>
+                <td>{l.adresse}</td>
+                <td>{l.ville}</td>
+                <td>{l.capacite}</td>
+                <td>
+                  <button className="btn-icon" onClick={() => openEdit(l)}>{t('organizer.venues.edit')}</button>
+                  <button className="btn-icon danger" onClick={() => handleDelete(l)}>{t('organizer.venues.delete')}</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Modal show={modal} title={edit ? t('organizer.venues.editVenue') : t('organizer.venues.createVenue')} onClose={() => setModal(false)}>
         <form onSubmit={handleSave}>
-          <label>Nom <input name="nom" value={form.nom} onChange={onChange} required /></label>
-          <label>Adresse <input name="adresse" value={form.adresse} onChange={onChange} /></label>
-          <label>Ville <input name="ville" value={form.ville} onChange={onChange} /></label>
-          <label>Capacité <input name="capacite" type="number" value={form.capacite} onChange={onChange} /></label>
-          <button type="submit">{edit ? 'Modifier' : 'Ajouter'}</button>
+          <label>{t('organizer.venues.name')} <input name="nom" value={form.nom} onChange={onChange} required /></label>
+          <label>{t('organizer.venues.address')} <input name="adresse" value={form.adresse} onChange={onChange} /></label>
+          <label>{t('organizer.venues.city')} <input name="ville" value={form.ville} onChange={onChange} /></label>
+          <label>{t('organizer.venues.capacity')} <input name="capacite" type="number" value={form.capacite} onChange={onChange} /></label>
+          <button type="submit" className="btn-primary">{edit ? t('organizer.venues.edit') : t('organizer.venues.addVenue')}</button>
         </form>
       </Modal>
     </div>
   )
 }
 
-const TYPE_AGENCEMENT_OPTIONS = [
-  { value: 'UNIQUEMENT_ASSIS', label: 'Uniquement assis' },
-  { value: 'TABLE_ASSIS', label: 'Tables + chaises' },
-  { value: 'ASSIS_DEBOUT', label: 'Assis/Debout mixte' },
-  { value: 'DEBOUT_AVEC_LIMITE', label: 'Debout avec jauge' },
-  { value: 'DEBOUT_SANS_LIMITE', label: 'Debout sans limite' },
-]
-
-function SallesTab() {
+function SallesTab({ t }) {
   const [salles, setSalles] = useState([])
   const [lieux, setLieux] = useState([])
   const [modal, setModal] = useState(false)
@@ -130,7 +133,7 @@ function SallesTab() {
   }
 
   async function handleDelete(s) {
-    if (!window.confirm('Supprimer cette salle ?')) return
+    if (!window.confirm(t('organizer.venues.deleteRoomConfirm'))) return
     try {
       await remove('/api/organisateur/venues/salles', s.idSalle || s.id || s.numeroSalle)
       load()
@@ -139,51 +142,53 @@ function SallesTab() {
 
   return (
     <div className="tab-content">
-      <button onClick={openCreate}>Ajouter une Salle</button>
-      <table>
-        <thead><tr><th>Nom</th><th>Capacité</th><th>Lieu</th><th>Type</th><th>Actions</th></tr></thead>
-        <tbody>
-          {salles.map(s => (
-            <tr key={s.idSalle || s.id || s.numeroSalle}>
-              <td>{s.nom || s.nomSalle}</td>
-              <td>{s.capacite}</td>
-              <td>{s.lieuNom || s.idLieu}</td>
-              <td><span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '8px', background: '#e8edf5', color: '#0f3460' }}>{TYPE_AGENCEMENT_OPTIONS.find(o => o.value === s.typeAgencement)?.label || s.typeAgencement || '—'}</span></td>
-              <td>
-                <button onClick={() => openEdit(s)}>Modifier</button>
-                <button onClick={() => handleDelete(s)}>Supprimer</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <Modal show={modal} title={edit ? 'Modifier Salle' : 'Ajouter Salle'} onClose={() => setModal(false)}>
+      <button className="btn-primary" onClick={openCreate}>{t('organizer.venues.addRoom')}</button>
+      <div className="table-wrap" style={{ marginTop: '1rem' }}>
+        <table>
+          <thead><tr><th>{t('organizer.venues.roomName')}</th><th>{t('organizer.venues.roomCapacity')}</th><th>{t('organizer.venues.venue')}</th><th>{t('organizer.venues.layoutType')}</th><th>{t('organizer.venues.actions')}</th></tr></thead>
+          <tbody>
+            {salles.map(s => (
+              <tr key={s.idSalle || s.id || s.numeroSalle}>
+                <td>{s.nom || s.nomSalle}</td>
+                <td>{s.capacite}</td>
+                <td>{s.lieuNom || s.idLieu}</td>
+                <td><span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '8px', background: 'var(--primary-light)', color: 'var(--primary)' }}>{t(TYPE_AGENCEMENT_OPTIONS.find(o => o.value === s.typeAgencement)?.labelKey || 'common.unknown') || s.typeAgencement || '—'}</span></td>
+                <td>
+                  <button className="btn-icon" onClick={() => openEdit(s)}>{t('organizer.venues.edit')}</button>
+                  <button className="btn-icon danger" onClick={() => handleDelete(s)}>{t('organizer.venues.delete')}</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Modal show={modal} title={edit ? t('organizer.venues.editRoom') : t('organizer.venues.createRoom')} onClose={() => setModal(false)}>
         <form onSubmit={handleSave}>
-          <label>Nom <input name="nom" value={form.nom} onChange={onChange} required /></label>
-          <label>Capacité <input name="capacite" type="number" value={form.capacite} onChange={onChange} /></label>
-          <label>Type d'agencement
+          <label>{t('organizer.venues.roomName')} <input name="nom" value={form.nom} onChange={onChange} required /></label>
+          <label>{t('organizer.venues.roomCapacity')} <input name="capacite" type="number" value={form.capacite} onChange={onChange} /></label>
+          <label>{t('organizer.venues.layoutType')}
             <select name="typeAgencement" value={form.typeAgencement} onChange={onChange}>
               {TYPE_AGENCEMENT_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>{t(o.labelKey)}</option>
               ))}
             </select>
           </label>
-          <label>Lieu
+          <label>{t('organizer.venues.venue')}
             <select name="idLieu" value={form.idLieu} onChange={onChange} required>
-              <option value="">Sélectionner...</option>
+              <option value="">{t('organizer.venues.select')}</option>
               {lieux.map(l => (
                 <option key={l.idLieu || l.id} value={l.idLieu || l.id}>{l.nom}</option>
               ))}
             </select>
           </label>
-          <button type="submit">{edit ? 'Modifier' : 'Ajouter'}</button>
+          <button type="submit" className="btn-primary">{edit ? t('organizer.venues.edit') : t('organizer.venues.addRoom')}</button>
         </form>
       </Modal>
     </div>
   )
 }
 
-function PlacesTab() {
+function PlacesTab({ t }) {
   const [places, setPlaces] = useState([])
   const [modal, setModal] = useState(false)
   const [edit, setEdit] = useState(null)
@@ -232,7 +237,7 @@ function PlacesTab() {
   }
 
   async function handleDelete(p) {
-    if (!window.confirm('Supprimer cette place ?')) return
+    if (!window.confirm(t('organizer.venues.deletePlaceConfirm'))) return
     try {
       await remove('/api/organisateur/venues/places', p.numeroPlace)
       load()
@@ -241,53 +246,57 @@ function PlacesTab() {
 
   return (
     <div className="tab-content">
-      <button onClick={openCreate}>Ajouter une Place</button>
-      <button onClick={openBatch}>Génération par Lot</button>
-      <table>
-        <thead><tr><th>Numéro</th><th>Rang</th><th>Type</th><th>Prix</th><th>Statut</th><th>Actions</th></tr></thead>
-        <tbody>
-          {places.map(p => (
-            <tr key={p.numeroPlace}>
-              <td>{p.numeroPlace}</td>
-              <td>{p.rang}</td>
-              <td>{p.typePlace}</td>
-              <td>{p.prix}</td>
-              <td>{p.statut}</td>
-              <td>
-                <button onClick={() => openEdit(p)}>Modifier</button>
-                <button onClick={() => handleDelete(p)}>Supprimer</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <Modal show={modal} title={batch ? 'Génération par Lot' : edit ? 'Modifier Place' : 'Ajouter Place'} onClose={() => setModal(false)}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
+        <button className="btn-primary" onClick={openCreate}>{t('organizer.venues.addPlace')}</button>
+        <button className="btn-secondary" onClick={openBatch}>{t('organizer.venues.batchGenerate')}</button>
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>{t('organizer.venues.placeNumber')}</th><th>{t('organizer.venues.placeRow')}</th><th>{t('organizer.venues.placeType')}</th><th>{t('organizer.venues.placePrice')}</th><th>{t('organizer.venues.placeStatus')}</th><th>{t('organizer.venues.actions')}</th></tr></thead>
+          <tbody>
+            {places.map(p => (
+              <tr key={p.numeroPlace}>
+                <td>{p.numeroPlace}</td>
+                <td>{p.rang}</td>
+                <td>{p.typePlace}</td>
+                <td>{p.prix}</td>
+                <td>{p.statut}</td>
+                <td>
+                  <button className="btn-icon" onClick={() => openEdit(p)}>{t('organizer.venues.edit')}</button>
+                  <button className="btn-icon danger" onClick={() => handleDelete(p)}>{t('organizer.venues.delete')}</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Modal show={modal} title={batch ? t('organizer.venues.batchTitle') : edit ? t('organizer.venues.editPlace') : t('organizer.venues.createPlace')} onClose={() => setModal(false)}>
         {batch ? (
           <form onSubmit={handleBatchSave}>
-            <label>Numéro Salle <input name="numeroSalle" value={batchForm.numeroSalle} onChange={onBatchChange} required /></label>
-            <label>Nombre de Rangées <input name="nombreRangees" type="number" value={batchForm.nombreRangees} onChange={onBatchChange} required /></label>
-            <label>Places par Rangée <input name="placesParRangee" type="number" value={batchForm.placesParRangee} onChange={onBatchChange} required /></label>
-            <label>Préfixe Rangée <input name="prefixeRangee" value={batchForm.prefixeRangee} onChange={onBatchChange} /></label>
-            <label>Type de Place <input name="typePlace" value={batchForm.typePlace} onChange={onBatchChange} /></label>
-            <label>Prix <input name="prix" type="number" step="0.01" value={batchForm.prix} onChange={onBatchChange} required /></label>
-            <label>Numéro de Début <input name="debutNumero" type="number" value={batchForm.debutNumero} onChange={onBatchChange} /></label>
-            <button type="submit">Générer</button>
+            <label>{t('organizer.venues.batchRoom')} <input name="numeroSalle" value={batchForm.numeroSalle} onChange={onBatchChange} required /></label>
+            <label>{t('organizer.venues.batchRows')} <input name="nombreRangees" type="number" value={batchForm.nombreRangees} onChange={onBatchChange} required /></label>
+            <label>{t('organizer.venues.batchPerRow')} <input name="placesParRangee" type="number" value={batchForm.placesParRangee} onChange={onBatchChange} required /></label>
+            <label>{t('organizer.venues.batchPrefix')} <input name="prefixeRangee" value={batchForm.prefixeRangee} onChange={onBatchChange} /></label>
+            <label>{t('organizer.venues.batchType')} <input name="typePlace" value={batchForm.typePlace} onChange={onBatchChange} /></label>
+            <label>{t('organizer.venues.batchPrice')} <input name="prix" type="number" step="0.01" value={batchForm.prix} onChange={onBatchChange} required /></label>
+            <label>{t('organizer.venues.batchStart')} <input name="debutNumero" type="number" value={batchForm.debutNumero} onChange={onBatchChange} /></label>
+            <button type="submit" className="btn-primary">{t('organizer.venues.batchSubmit')}</button>
           </form>
         ) : (
           <form onSubmit={handleSave}>
-            <label>Numéro Place <input name="numeroPlace" value={form.numeroPlace} onChange={onChange} required disabled={!!edit} /></label>
-            <label>Rang <input name="rang" value={form.rang} onChange={onChange} /></label>
-            <label>Type de Place <input name="typePlace" value={form.typePlace} onChange={onChange} /></label>
-            <label>Prix <input name="prix" type="number" step="0.01" value={form.prix} onChange={onChange} /></label>
-            <label>Statut
+            <label>{t('organizer.venues.placeNumber')} <input name="numeroPlace" value={form.numeroPlace} onChange={onChange} required disabled={!!edit} /></label>
+            <label>{t('organizer.venues.placeRow')} <input name="rang" value={form.rang} onChange={onChange} /></label>
+            <label>{t('organizer.venues.placeType')} <input name="typePlace" value={form.typePlace} onChange={onChange} /></label>
+            <label>{t('organizer.venues.placePrice')} <input name="prix" type="number" step="0.01" value={form.prix} onChange={onChange} /></label>
+            <label>{t('organizer.venues.placeStatus')}
               <select name="statut" value={form.statut} onChange={onChange}>
-                <option value="DISPONIBLE">Disponible</option>
-                <option value="RESERVEE">Réservée</option>
-                <option value="INDISPONIBLE">Indisponible</option>
-                <option value="EN_ATTENTE">En attente</option>
+                <option value="DISPONIBLE">{t('organizer.venues.available')}</option>
+                <option value="RESERVEE">{t('organizer.venues.reserved')}</option>
+                <option value="INDISPONIBLE">{t('organizer.venues.unavailable')}</option>
+                <option value="EN_ATTENTE">{t('organizer.venues.pending')}</option>
               </select>
             </label>
-            <button type="submit">{edit ? 'Modifier' : 'Ajouter'}</button>
+            <button type="submit" className="btn-primary">{edit ? t('organizer.venues.edit') : t('organizer.venues.addPlace')}</button>
           </form>
         )}
       </Modal>
@@ -297,24 +306,25 @@ function PlacesTab() {
 
 export default function OrganizerVenueManagement() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [tab, setTab] = useState(0)
 
   return (
     <div className="venue-mgmt">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+      <div className="section-header">
         <button className="btn-secondary" onClick={() => navigate('/organizer')}>
-          &larr; Retour au tableau de bord
+          {t('organizer.venues.back')}
         </button>
-        <h1 style={{ margin: 0 }}>Gestion des Lieux</h1>
+        <h1>{t('organizer.venues.title')}</h1>
       </div>
       <div className="tabs">
-        {TABS.map((t, i) => (
-          <button key={i} className={i === tab ? 'active' : ''} onClick={() => setTab(i)}>{t}</button>
+        {TABS.map((tabLabel, i) => (
+          <button key={i} className={i === tab ? 'active' : ''} onClick={() => setTab(i)}>{tabLabel}</button>
         ))}
       </div>
-      {tab === 0 && <LieuxTab />}
-      {tab === 1 && <SallesTab />}
-      {tab === 2 && <PlacesTab />}
+      {tab === 0 && <LieuxTab t={t} />}
+      {tab === 1 && <SallesTab t={t} />}
+      {tab === 2 && <PlacesTab t={t} />}
     </div>
   )
 }

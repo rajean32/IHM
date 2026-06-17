@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/assets/app_colors.dart';
+import '../../../generated/app_localizations.dart';
 
 Widget buildStep2({
+  required BuildContext context,
   required DateTime? selectedDate,
   required int nombreJours,
   required TimeOfDay? selectedHeureDebut,
@@ -17,7 +19,7 @@ Widget buildStep2({
   final duree = Duration(hours: dureeHeures, minutes: dureeMinutes);
   final dateFin = selectedDate != null ? selectedDate.add(Duration(days: nombreJours - 1)) : null;
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    const Text('Date & Heure', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+    Text(AppLocalizations.of(context)!.dateTimeTitle, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     const SizedBox(height: 16),
     Builder(builder: (context) {
       return InkWell(
@@ -30,25 +32,20 @@ Widget buildStep2({
           if (picked != null) onDateChanged(picked);
         },
         child: InputDecorator(
-          decoration: const InputDecoration(labelText: 'Date *', border: OutlineInputBorder()),
+          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.dateRequired, border: OutlineInputBorder()),
           child: Text(selectedDate != null
               ? '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'
-              : 'Sélectionner la date'),
+              : AppLocalizations.of(context)!.selectDateHint),
         ),
       );
     }),
     const SizedBox(height: 12),
-    TextFormField(
-      initialValue: nombreJours.toString(),
-      decoration: const InputDecoration(labelText: 'Nombre de jours *', border: OutlineInputBorder(),
-          helperText: '1 = un seul jour'),
-      keyboardType: TextInputType.number,
-      onChanged: (v) => onNombreJoursChanged(int.tryParse(v) ?? 1),
-      validator: (v) {
-        final n = int.tryParse(v ?? '');
-        if (n == null || n < 1) return 'Minimum 1 jour';
-        return null;
-      },
+    DropdownButtonFormField<int>(
+      value: nombreJours,
+      isExpanded: true,
+      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.numDaysRequired, border: OutlineInputBorder()),
+      items: List.generate(7, (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1} ${i + 1 > 1 ? AppLocalizations.of(context)!.daysUnit : AppLocalizations.of(context)!.dayUnit}'))),
+      onChanged: (v) => onNombreJoursChanged(v ?? 1),
     ),
     const SizedBox(height: 12),
     Builder(builder: (context) {
@@ -58,10 +55,10 @@ Widget buildStep2({
           if (picked != null) onHeureChanged(picked);
         },
         child: InputDecorator(
-          decoration: const InputDecoration(labelText: 'Heure début *', border: OutlineInputBorder()),
+          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.startTimeRequired, border: OutlineInputBorder()),
           child: Text(selectedHeureDebut != null
               ? '${selectedHeureDebut!.hour.toString().padLeft(2, '0')}:${selectedHeureDebut!.minute.toString().padLeft(2, '0')}'
-              : 'Sélectionner l\'heure'),
+              : AppLocalizations.of(context)!.selectTimeHint),
         ),
       );
     }),
@@ -70,7 +67,7 @@ Widget buildStep2({
       Expanded(
         child: TextFormField(
           initialValue: dureeHeures.toString(),
-          decoration: const InputDecoration(labelText: 'Durée (heures)', border: OutlineInputBorder(), isDense: true,
+          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.durationHours, border: OutlineInputBorder(), isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
           keyboardType: TextInputType.number,
           onChanged: (v) => onDureeHeuresChanged(int.tryParse(v) ?? 0),
@@ -80,7 +77,7 @@ Widget buildStep2({
       Expanded(
         child: TextFormField(
           initialValue: dureeMinutes.toString(),
-          decoration: const InputDecoration(labelText: 'Durée (minutes)', border: OutlineInputBorder(), isDense: true,
+          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.durationMinutes, border: OutlineInputBorder(), isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
           keyboardType: TextInputType.number,
           onChanged: (v) => onDureeMinutesChanged(int.tryParse(v) ?? 0),
@@ -94,19 +91,20 @@ Widget buildStep2({
         padding: const EdgeInsets.all(12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            const Icon(Icons.timer, size: 20, color: AppTheme.primaryColor),
+            Icon(Icons.timer, size: 20, color: AppTheme.primaryColor),
             const SizedBox(width: 8),
-            Text('Durée : ${duree.inHours}h ${duree.inMinutes.remainder(60)}min',
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(AppLocalizations.of(context)!.totalDurationLabel('${duree.inHours > 0 ? '${duree.inHours}h ' : ''}${duree.inMinutes.remainder(60)}m'),
+                style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.primaryColor)),
           ]),
           if (dateFin != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Row(children: [
-              const Icon(Icons.date_range, size: 20, color: AppTheme.primaryColor),
+              Icon(Icons.date_range, size: 20, color: AppTheme.primaryColor),
               const SizedBox(width: 8),
-              Text('Du ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year} '
-                  'au ${dateFin.day}/${dateFin.month}/${dateFin.year} ($nombreJours jour${nombreJours > 1 ? 's' : ''})',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              Expanded(
+                child: Text(AppLocalizations.of(context)!.dateRangeLabel('${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}', '${dateFin.day}/${dateFin.month}/${dateFin.year}', '$nombreJours'),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.primaryColor)),
+              ),
             ]),
           ],
         ]),

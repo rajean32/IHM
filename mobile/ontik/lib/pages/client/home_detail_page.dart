@@ -6,6 +6,8 @@ import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
 import '../../core/utils/error_helper.dart';
 import '../../widgets/event_image_widget.dart';
+import '../../core/services/app_config.dart';
+import '../../localization/app_localizations.dart';
 
 class HomeDetailPage extends StatefulWidget {
   final int eventId;
@@ -48,18 +50,25 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
 
   String _formatDate(DateTime? date) {
     if (date == null) return '';
-    return DateFormat('d MMMM yyyy', 'fr').format(date);
+    return DateFormat('d MMMM yyyy', appLanguage).format(date);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
         title: const Text('Event Details'),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
-            tooltip: 'Partager',
+            tooltip: tr('client.homeDetail.share'),
             onPressed: () {},
           ),
         ],
@@ -75,12 +84,12 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                       const SizedBox(height: 12),
                       Text(_error!, textAlign: TextAlign.center),
                       const SizedBox(height: 16),
-                      ElevatedButton(onPressed: _loadDetail, child: const Text('Réessayer')),
+                      ElevatedButton(onPressed: _loadDetail, child: Text(tr('client.homeDetail.retry'))),
                     ],
                   ),
                 )
               : _event == null
-                  ? const Center(child: Text('Événement non trouvé'))
+                  ? Center(child: Text(tr('client.homeDetail.eventNotFound')))
                   : _buildContent(),
       bottomNavigationBar: _event != null ? _buildFooter() : null,
     );
@@ -164,8 +173,8 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   color: AppColors.accent,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text(
-                  (event.typeAgencement != null ? event.typeAgencement!.replaceAll('_', ' ') : 'ÉVÉNEMENT').toUpperCase(),
+                  child: Text(
+                    (event.typeAgencement != null ? event.typeAgencement!.replaceAll('_', ' ') : tr('client.homeDetail.event')).toUpperCase(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -209,7 +218,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   const Icon(Icons.calendar_today, size: 20, color: AppColors.primary),
                   const SizedBox(height: 6),
                   Text(
-                    'Date',
+                    tr('client.homeDetail.date'),
                     style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                   const SizedBox(height: 2),
@@ -235,7 +244,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   const Icon(Icons.schedule, size: 20, color: AppColors.primary),
                   const SizedBox(height: 6),
                   Text(
-                    'Heure',
+                    tr('client.homeDetail.time'),
                     style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                   const SizedBox(height: 2),
@@ -253,7 +262,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
   }
 
   Widget _buildLocationCard(EventDetail event) {
-    final lieu = event.lieuNom ?? 'Lieu non spécifié';
+    final lieu = event.lieuNom ?? tr('client.homeDetail.venueNotSpecified');
     final adresse = event.lieuAdresse ?? '';
     final ville = event.lieuVille ?? '';
     final fullAddress = [adresse, ville].where((s) => s.isNotEmpty).join(', ');
@@ -316,13 +325,13 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'À propos de l\'événement',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          Text(
+            tr('client.homeDetail.about'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
-            event.description ?? 'Aucune description disponible.',
+            event.description ?? tr('client.homeDetail.noDescription'),
             style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
           ),
           if (event.caracteristiqueValeurs != null && event.caracteristiqueValeurs!.isNotEmpty) ...[
@@ -340,7 +349,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                         style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                         children: [
                           TextSpan(
-                            text: '${c.nomCaracteristique ?? "Caractéristique"} : ',
+                            text: '${c.nomCaracteristique ?? tr("client.homeDetail.characteristic")} : ',
                             style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                           ),
                           TextSpan(text: c.valeur),
@@ -363,9 +372,9 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Zones disponibles',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          Text(
+            tr('client.homeDetail.availableZones'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12),
           ...event.standingZones!.map((zone) => Container(
@@ -396,8 +405,8 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                       const SizedBox(height: 2),
                       Text(
                         zone.capacite != null
-                            ? '${zone.placesDisponibles ?? 0}/${zone.capacite} places disponibles'
-                            : 'Places illimitées',
+                            ? '${zone.placesDisponibles ?? 0}/${zone.capacite} ${tr('client.homeDetail.placesAvailable')}'
+                            : tr('client.homeDetail.unlimitedSeats'),
                         style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                     ],
@@ -426,7 +435,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
         ? (event.prixMin == event.prixMax
             ? '${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)}'
             : '${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)} - ${AppConstants.currency}${event.prixMax!.toStringAsFixed(0)}')
-        : 'Prix non disponible';
+        : tr('client.homeDetail.priceUnavailable');
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
@@ -447,7 +456,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('À partir de', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                Text(tr('client.homeDetail.from'), style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                 Text(
                   priceText,
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
@@ -467,7 +476,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                         )
                       : null,
                   icon: const Icon(Icons.confirmation_number, size: 20),
-                  label: const Text('RÉSERVER MA PLACE', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                  label: Text(tr('client.homeDetail.book'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

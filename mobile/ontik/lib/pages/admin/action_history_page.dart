@@ -3,6 +3,7 @@ import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
+import '../../localization/app_localizations.dart';
 import '../../models/user_model.dart';
 
 class ActionHistoryPage extends StatefulWidget {
@@ -44,13 +45,13 @@ class _ActionHistoryPageState extends State<ActionHistoryPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Annuler l\'action'),
-        content: Text('Voulez-vous annuler l\'action "${_actionLabel(entry.action)}" sur ${entry.entityId ?? ''} ?'),
+        title: Text(tr('admin.actionHistory.undoTitle')),
+        content: Text('${tr('admin.actionHistory.undoConfirm')} "${_actionLabel(entry.action)}" ${tr('admin.actionHistory.on')} ${entry.entityId ?? ''} ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Non')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('admin.actionHistory.no'))),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Oui, annuler', style: TextStyle(color: Colors.red)),
+            child: Text(tr('admin.actionHistory.yesUndo'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -62,7 +63,7 @@ class _ActionHistoryPageState extends State<ActionHistoryPage> {
       await dio.post(Endpoints.auditLogUndo(entry.idAction!));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Action annulée'), backgroundColor: AppColors.secondary),
+        SnackBar(content: Text(tr('admin.actionHistory.undone')), backgroundColor: AppColors.secondary),
       );
       _loadLogs();
     } catch (e) {
@@ -76,15 +77,15 @@ class _ActionHistoryPageState extends State<ActionHistoryPage> {
 
   String _actionLabel(String action) {
     switch (action) {
-      case 'CREATE_USER': return 'Création d\'utilisateur';
-      case 'UPDATE_USER': return 'Modification d\'utilisateur';
-      case 'CHANGE_ROLE': return 'Changement de rôle';
-      case 'DEACTIVATE_USER': return 'Désactivation d\'utilisateur';
-      case 'ACTIVATE_USER': return 'Activation d\'utilisateur';
-      case 'RESET_PASSWORD': return 'Réinitialisation mot de passe';
-      case 'DELETE_USER': return 'Suppression d\'utilisateur';
-      case 'PAIEMENT_EFFECTUE': return 'Paiement effectué';
-      case 'REMBOURSEMENT': return 'Remboursement';
+      case 'CREATE_USER': return tr('admin.actionHistory.createUser');
+      case 'UPDATE_USER': return tr('admin.actionHistory.updateUser');
+      case 'CHANGE_ROLE': return tr('admin.actionHistory.changeRole');
+      case 'DEACTIVATE_USER': return tr('admin.actionHistory.deactivateUser');
+      case 'ACTIVATE_USER': return tr('admin.actionHistory.activateUser');
+      case 'RESET_PASSWORD': return tr('admin.actionHistory.resetPassword');
+      case 'DELETE_USER': return tr('admin.actionHistory.deleteUser');
+      case 'PAIEMENT_EFFECTUE': return tr('admin.actionHistory.paymentMade');
+      case 'REMBOURSEMENT': return tr('admin.actionHistory.refund');
       default: return action;
     }
   }
@@ -131,7 +132,7 @@ class _ActionHistoryPageState extends State<ActionHistoryPage> {
           children: [
             Text(_error!, style: const TextStyle(color: AppColors.error)),
             const SizedBox(height: 12),
-            ElevatedButton(onPressed: _loadLogs, child: const Text('Réessayer')),
+            ElevatedButton(onPressed: _loadLogs, child: Text(tr('admin.actionHistory.retry'))),
           ],
         ),
       );
@@ -144,10 +145,10 @@ class _ActionHistoryPageState extends State<ActionHistoryPage> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Row(
             children: [
-              const Text('Historique des actions',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              Text(tr('admin.actionHistory.title'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               const Spacer(),
-              Text('${_logs.length} action(s)',
+              Text('${_logs.length} ${tr('admin.actionHistory.actions')}',
                   style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
             ],
           ),
@@ -155,7 +156,7 @@ class _ActionHistoryPageState extends State<ActionHistoryPage> {
         const Divider(height: 1),
         Expanded(
           child: _logs.isEmpty
-              ? const Center(child: Text('Aucune action enregistrée'))
+              ? Center(child: Text(tr('admin.actionHistory.empty')))
               : RefreshIndicator(
                   onRefresh: _loadLogs,
                   child: ListView.builder(
@@ -183,8 +184,8 @@ class _ActionHistoryPageState extends State<ActionHistoryPage> {
                                     color: Colors.orange.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: const Text('Annulée',
-                                      style: TextStyle(fontSize: 10, color: Colors.orange)),
+                                  child:                                   Text(tr('admin.actionHistory.reverted'),
+                                      style: const TextStyle(fontSize: 10, color: Colors.orange)),
                                 ),
                             ],
                           ),
@@ -207,7 +208,7 @@ class _ActionHistoryPageState extends State<ActionHistoryPage> {
                                   : TextButton.icon(
                                       onPressed: () => _undoAction(entry),
                                       icon: const Icon(Icons.undo, size: 16),
-                                      label: const Text('Annuler', style: TextStyle(fontSize: 12)),
+                                      label: Text(tr('admin.actionHistory.undo'), style: const TextStyle(fontSize: 12)),
                                       style: TextButton.styleFrom(foregroundColor: Colors.red),
                                     ),
                         ),

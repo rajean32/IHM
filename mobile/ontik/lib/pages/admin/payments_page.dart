@@ -4,6 +4,7 @@ import '../../core/assets/app_colors.dart';
 import '../../models/reservation_model.dart';
 import '../../widgets/crud_list_view.dart';
 import '../../core/utils/error_helper.dart';
+import '../../localization/app_localizations.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
@@ -41,19 +42,19 @@ class _PaymentsPageState extends State<PaymentsPage> {
   @override
   Widget build(BuildContext context) {
     return CrudListView(
-      title: 'Paiements',
+      title: tr('admin.payments'),
       showAppBar: false,
       isLoading: _loading,
       error: _error,
       items: _payments.map((p) => CrudItem(
         id: p.idPaiement.toString(),
         title: 'Ar ${p.montant.toStringAsFixed(0)}',
-        subtitle: 'Réservation #${p.idReservation}  •  ${p.modePaiement}  •  ${p.datePaiement.toIso8601String().split('T').first}',
+        subtitle: '${tr('admin.payments.reservation')} #${p.idReservation}  •  ${p.modePaiement}  •  ${p.datePaiement.toIso8601String().split('T').first}',
         leading: const CircleAvatar(backgroundColor: Color(0x334CAF50), child: Icon(Icons.payment, color: AppColors.secondary)),
         data: {'montant': p.montant, 'modePaiement': p.modePaiement, 'date': p.datePaiement.toIso8601String()},
       )).toList(),
       onRefresh: _loadData,
-      emptyMessage: 'Aucun paiement trouvé',
+      emptyMessage: tr('admin.payments.empty'),
     );
   }
 }

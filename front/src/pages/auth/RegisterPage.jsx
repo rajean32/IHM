@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { register, setAuthToken, setUserInfo } from '../../api/entityApi'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
@@ -46,55 +48,55 @@ export default function RegisterPage() {
   return (
     <div className="auth-page">
       <form onSubmit={handleSubmit}>
-        <h2>Inscription</h2>
+        <h2>{t('auth.register.title')}</h2>
         <label>
-          Code utilisateur
+          {t('auth.register.code')}
           <input name="codeUtilisateur" value={form.codeUtilisateur} onChange={onChange} required />
         </label>
         <label>
-          Nom
+          {t('auth.register.lastName')}
           <input name="nom" value={form.nom} onChange={onChange} required />
         </label>
         <label>
-          Prénoms
+          {t('auth.register.firstName')}
           <input name="prenoms" value={form.prenoms} onChange={onChange} required />
         </label>
         <label>
-          Sexe
+          {t('auth.register.sexe')}
           <select name="sexe" value={form.sexe} onChange={onChange}>
-            <option value="M">Masculin</option>
-            <option value="F">Féminin</option>
+            <option value="M">{t('auth.register.male')}</option>
+            <option value="F">{t('auth.register.female')}</option>
           </select>
         </label>
         <label>
-          Date de naissance
+          {t('auth.register.birthDate')}
           <input name="dateDeNaissance" type="date" value={form.dateDeNaissance} onChange={onChange} required />
         </label>
         <label>
-          Email
+          {t('auth.register.email')}
           <input name="email" type="email" value={form.email} onChange={onChange} required />
         </label>
         <label>
-          Téléphone
+          {t('auth.register.phone')}
           <input name="tel" type="tel" value={form.tel} onChange={onChange} required />
         </label>
         <label>
-          Mot de passe
+          {t('auth.register.password')}
           <input name="motDePasse" type="password" value={form.motDePasse} onChange={onChange} required />
         </label>
         <label>
-          Type
+          {t('auth.register.type')}
           <select name="type" value={form.type} onChange={onChange}>
-            <option value="client">Client</option>
-            <option value="organisateur">Organisateur</option>
+            <option value="client">{t('auth.register.client')}</option>
+            <option value="organisateur">{t('auth.register.organizer')}</option>
           </select>
         </label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit" disabled={loading}>
-          {loading ? 'Inscription...' : "S'inscrire"}
+        {error && <p className="error-msg">{error}</p>}
+        <button type="submit" disabled={loading} className="btn-primary">
+          {loading ? t('auth.register.loading') : t('auth.register.submit')}
         </button>
         <p className="auth-link">
-          Déjà un compte ? <Link to="/login">Se connecter</Link>
+          {t('auth.register.hasAccount')} <Link to="/login">{t('auth.register.loginLink')}</Link>
         </p>
       </form>
     </div>

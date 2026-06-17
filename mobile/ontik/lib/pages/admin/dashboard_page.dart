@@ -6,8 +6,10 @@ import '../../core/services/dashboard_service.dart';
 import '../../core/utils/error_helper.dart';
 import '../../core/assets/app_colors.dart';
 import '../../models/dashboard_model.dart';
+import '../../core/services/app_config.dart';
 import '../../models/evenement_model.dart';
 import '../../widgets/error_state.dart';
+import '../../localization/app_localizations.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -63,9 +65,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       _buildChartsSection(),
                       if (_stats!.recentEvents.isNotEmpty) ...[
                         const SizedBox(height: 24),
-                        const Text(
-                          'Événements récents',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        Text(
+                          tr('admin.dashboard.recentEvents'),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 16),
                         ..._stats!.recentEvents.map((e) => _buildEventRow(e)),
@@ -87,7 +89,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Analytiques', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(tr('admin.dashboard.analytics'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         SizedBox(
           height: 200,
@@ -100,11 +102,11 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Par statut', style: TextStyle(fontWeight: FontWeight.w600)),
+                        Text(tr('admin.dashboard.byStatus'), style: const TextStyle(fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         Expanded(
                           child: stats.eventsByStatus.isEmpty
-                              ? const Center(child: Text('Aucune donnée'))
+                              ? Center(child: Text(tr('common.noData')))
                               : PieChart(
                                   PieChartData(
                                     sections: stats.eventsByStatus.entries.map((e) {
@@ -135,11 +137,11 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Par catégorie', style: TextStyle(fontWeight: FontWeight.w600)),
+                        Text(tr('admin.dashboard.byCategory'), style: const TextStyle(fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         Expanded(
                           child: stats.eventsByCategorie.isEmpty
-                              ? const Center(child: Text('Aucune donnée'))
+                              ? Center(child: Text(tr('common.noData')))
                               : BarChart(
                                   BarChartData(
                                     alignment: BarChartAlignment.spaceAround,
@@ -209,12 +211,12 @@ class _DashboardPageState extends State<DashboardPage> {
       crossAxisSpacing: 12,
       childAspectRatio: 1.5,
       children: [
-        _statCard('Événements', stats.totalEvents.toString(), Icons.event, AppColors.primary),
-        _statCard('Clients', stats.totalClients.toString(), Icons.people, AppColors.secondary),
-        _statCard('Organisateurs', stats.totalOrganisateurs.toString(), Icons.badge, AppColors.accent),
-        _statCard('Revenus', '${stats.totalRevenue.toStringAsFixed(0)} ${AppConstants.currency}', Icons.attach_money, const Color(0xFF7B1FA2)),
-        _statCard('Lieux', stats.totalLieux.toString(), Icons.location_city, const Color(0xFF00897B)),
-        _statCard('Salles', stats.totalSalles.toString(), Icons.meeting_room, const Color(0xFF0D47A1)),
+        _statCard(tr('admin.dashboard.statEvents'), stats.totalEvents.toString(), Icons.event, AppColors.primary),
+        _statCard(tr('admin.dashboard.statClients'), stats.totalClients.toString(), Icons.people, AppColors.secondary),
+        _statCard(tr('admin.dashboard.statOrganizers'), stats.totalOrganisateurs.toString(), Icons.badge, AppColors.accent),
+        _statCard(tr('admin.dashboard.statRevenue'), '${stats.totalRevenue.toStringAsFixed(0)} ${AppConstants.currency}', Icons.attach_money, const Color(0xFF7B1FA2)),
+        _statCard(tr('admin.dashboard.statVenues'), stats.totalLieux.toString(), Icons.location_city, const Color(0xFF00897B)),
+        _statCard(tr('admin.dashboard.statRooms'), stats.totalSalles.toString(), Icons.meeting_room, const Color(0xFF0D47A1)),
       ],
     );
   }
@@ -244,7 +246,7 @@ class _DashboardPageState extends State<DashboardPage> {
         leading: const Icon(Icons.event),
         title: Text(event.titre),
         subtitle: event.dateEvenement != null
-            ? Text(DateFormat('d MMM yyyy', 'fr').format(event.dateEvenement!))
+            ? Text(DateFormat('d MMM yyyy', appLanguage).format(event.dateEvenement!))
             : null,
         trailing: event.statut != null
             ? Container(

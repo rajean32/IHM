@@ -39,6 +39,18 @@ class EvenementApi {
     return resp.data['data'] as Map<String, dynamic>;
   }
 
+  Future<void> suspendEvent(int id) async {
+    await dio.put('${Endpoints.events}/$id/suspend');
+  }
+
+  Future<void> resumeEvent(int id) async {
+    await dio.put('${Endpoints.events}/$id/resume');
+  }
+
+  Future<void> cancelEvent(int id, String motif) async {
+    await dio.put('${Endpoints.events}/$id/cancel', data: {'motifAnnulation': motif});
+  }
+
   Future<List<dynamic>> getStandingZones(int eventId) async {
     final resp = await dio.get(Endpoints.eventStandingZones(eventId));
     return (resp.data['data'] as List?) ?? [];

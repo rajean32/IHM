@@ -6,6 +6,7 @@ import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
 import '../../models/user_model.dart';
 import '../../widgets/error_state.dart';
+import '../../localization/app_localizations.dart';
 
 class UsersPage extends StatefulWidget {
   const UsersPage({super.key});
@@ -56,10 +57,10 @@ class _UsersPageState extends State<UsersPage> {
     final role = await showDialog<String>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Changer le rôle'),
+        title: Text(tr('admin.users.changeRole')),
         children: [
-          SimpleDialogOption(onPressed: () => Navigator.pop(ctx, AppConstants.roleOrganisateur), child: const Text('Organisateur')),
-          SimpleDialogOption(onPressed: () => Navigator.pop(ctx, AppConstants.roleClient), child: const Text('Client')),
+          SimpleDialogOption(onPressed: () => Navigator.pop(ctx, AppConstants.roleOrganisateur), child: Text(tr('admin.users.roleOrganizer'))),
+          SimpleDialogOption(onPressed: () => Navigator.pop(ctx, AppConstants.roleClient), child: Text(tr('admin.users.roleClient'))),
         ],
       ),
     );
@@ -77,11 +78,11 @@ class _UsersPageState extends State<UsersPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Réinitialiser mot de passe'),
-        content: Text('Réinitialiser le mot de passe de ${user.nom} ${user.prenoms} ?'),
+        title: Text(tr('admin.users.resetPassword')),
+        content: Text('${tr('admin.users.resetPassword')} ${user.nom} ${user.prenoms} ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirmer')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('common.cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('common.confirm'))),
         ],
       ),
     );
@@ -91,18 +92,18 @@ class _UsersPageState extends State<UsersPage> {
       builder: (ctx) {
         final ctrl = TextEditingController();
         return AlertDialog(
-          title: const Text('Nouveau mot de passe'),
+          title: Text(tr('admin.users.newPassword')),
           content: TextField(
             controller: ctrl,
             obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Mot de passe',
-              hintText: 'Entrez un nouveau mot de passe',
+            decoration: InputDecoration(
+              labelText: tr('auth.login.password'),
+              hintText: tr('admin.users.newPasswordHint'),
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-            TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: const Text('Confirmer')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
+            TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: Text(tr('common.confirm'))),
           ],
         );
       },
@@ -115,7 +116,7 @@ class _UsersPageState extends State<UsersPage> {
       });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mot de passe réinitialisé'), backgroundColor: AppColors.secondary),
+        SnackBar(content: Text(tr('admin.users.passwordReset')), backgroundColor: AppColors.secondary),
       );
     } catch (e) {
       if (!mounted) return;
@@ -127,11 +128,11 @@ class _UsersPageState extends State<UsersPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer utilisateur'),
-        content: Text('Supprimer ${user.nom} ${user.prenoms} (${user.codeUtilisateur}) ?'),
+        title: Text(tr('admin.users.deleteUser')),
+        content: Text('${tr('admin.users.deleteUser')} ${user.nom} ${user.prenoms} (${user.codeUtilisateur}) ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: AppColors.error))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('common.cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('common.delete'), style: const TextStyle(color: AppColors.error))),
         ],
       ),
     );
@@ -155,12 +156,12 @@ class _UsersPageState extends State<UsersPage> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
           child: Row(children: [
-            const Text('Gestion utilisateurs', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('admin.users.management'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const Spacer(),
             TextButton.icon(
               onPressed: () => setState(() => _showAudit = !_showAudit),
               icon: Icon(_showAudit ? Icons.people : Icons.history, size: 18),
-              label: Text(_showAudit ? 'Utilisateurs' : 'Audit', style: const TextStyle(fontSize: 12)),
+              label: Text(_showAudit ? tr('admin.users') : tr('admin.users.audit'), style: const TextStyle(fontSize: 12)),
             ),
             IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
           ]),
@@ -177,7 +178,7 @@ class _UsersPageState extends State<UsersPage> {
                             children: [
                               Icon(Icons.people_outline, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.4)),
                               const SizedBox(height: 12),
-                              const Text('Aucun utilisateur trouvé', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                              Text(tr('admin.users.empty'), style: const TextStyle(color: AppColors.textSecondary, fontSize: 16)),
                             ],
                           ),
                         )
@@ -214,7 +215,7 @@ class _UsersPageState extends State<UsersPage> {
                 color: user.actif ? AppColors.secondary.withValues(alpha: 0.2) : AppColors.error.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(user.actif ? 'Actif' : 'Inactif', style: TextStyle(fontSize: 11, color: user.actif ? AppColors.secondary : AppColors.error)),
+              child: Text(user.actif ? tr('admin.users.active') : tr('admin.users.inactive'), style: TextStyle(fontSize: 11, color: user.actif ? AppColors.secondary : AppColors.error)),
             ),
             if (user.premiereConnexion)
               Container(
@@ -224,7 +225,7 @@ class _UsersPageState extends State<UsersPage> {
                   color: AppColors.accent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('Nouveau', style: TextStyle(fontSize: 11, color: AppColors.accent)),
+                child: Text(tr('admin.users.new'), style: const TextStyle(fontSize: 11, color: AppColors.accent)),
               ),
           ],
         ),
@@ -234,30 +235,30 @@ class _UsersPageState extends State<UsersPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Code: ${user.codeUtilisateur}', style: const TextStyle(fontSize: 13)),
-                Text('Tél: ${user.tel}', style: const TextStyle(fontSize: 13)),
+                Text('${tr('admin.users.code')} ${user.codeUtilisateur}', style: const TextStyle(fontSize: 13)),
+                Text('${tr('admin.users.tel')} ${user.tel}', style: const TextStyle(fontSize: 13)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: [
                     ActionChip(
                       avatar: const Icon(Icons.swap_horiz, size: 16),
-                      label: const Text('Rôle'),
+                      label: Text(tr('admin.users.role')),
                       onPressed: () => _changeRole(user),
                     ),
                     ActionChip(
                       avatar: Icon(user.actif ? Icons.block : Icons.check_circle, size: 16),
-                      label: Text(user.actif ? 'Désactiver' : 'Activer'),
+                      label: Text(user.actif ? tr('admin.users.deactivate') : tr('admin.users.activate')),
                       onPressed: () => _toggleActive(user),
                     ),
                     ActionChip(
                       avatar: const Icon(Icons.lock_reset, size: 16),
-                      label: const Text('Reset MDP'),
+                      label: Text(tr('admin.users.resetPwd')),
                       onPressed: () => _resetPassword(user),
                     ),
                     ActionChip(
                       avatar: const Icon(Icons.delete, size: 16),
-                      label: const Text('Supprimer'),
+                      label: Text(tr('common.delete')),
                       onPressed: () => _deleteUser(user),
                     ),
                   ],
@@ -272,7 +273,7 @@ class _UsersPageState extends State<UsersPage> {
 
   Widget _buildAuditLog() {
     if (_auditLog.isEmpty) {
-      return const Center(child: Text('Aucune activité'));
+      return Center(child: Text(tr('admin.users.noActivity')));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(8),

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getAll, create, getUserInfo } from '../../api/entityApi'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const TYPE_COLORS = {
   VIP: '#9b59b6',
@@ -9,13 +10,6 @@ const TYPE_COLORS = {
   'Première classe': '#2ecc71',
   Or: '#f1c40f',
   Argent: '#95a5a6',
-}
-
-const STATUT_LABELS = {
-  DISPONIBLE: 'Disponible',
-  RESERVEE: 'Réservée',
-  INDISPONIBLE: 'Indisponible',
-  EN_ATTENTE: 'En attente',
 }
 
 const TYPE_AGENCEMENT_LABELS = {
@@ -29,6 +23,7 @@ const TYPE_AGENCEMENT_LABELS = {
 export default function BookingFlow() {
   const { eventId } = useParams()
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [step, setStep] = useState(1)
   const [event, setEvent] = useState(null)
   const [seats, setSeats] = useState([])
@@ -130,18 +125,18 @@ export default function BookingFlow() {
 
   function getSeatStyle(seat) {
     const isSelected = selectedSeats.find(s => s.numeroPlace === seat.numeroPlace)
-    if (isSelected) return { background: '#3b82f6', borderColor: '#2563eb', color: '#fff', cursor: 'pointer' }
+    if (isSelected) return { background: 'var(--seat-selected)', borderColor: 'var(--seat-selected-border)', color: 'var(--seat-selected-text)', cursor: 'pointer' }
     switch (seat.statut) {
       case 'DISPONIBLE':
-        return { background: '#d5f5e3', borderColor: '#27ae60', color: '#1a7a3a', cursor: 'pointer' }
+        return { background: 'var(--seat-available)', borderColor: 'var(--seat-available-border)', color: 'var(--seat-available-text)', cursor: 'pointer' }
       case 'RESERVEE':
-        return { background: '#fadbd8', borderColor: '#e94560', color: '#a93226', cursor: 'not-allowed' }
+        return { background: 'var(--seat-reserved)', borderColor: 'var(--seat-reserved-border)', color: 'var(--seat-reserved-text)', cursor: 'not-allowed' }
       case 'INDISPONIBLE':
-        return { background: '#e0e0e0', borderColor: '#999', color: '#666', cursor: 'not-allowed' }
+        return { background: 'var(--seat-unavailable)', borderColor: 'var(--seat-unavailable-border)', color: 'var(--seat-unavailable-text)', cursor: 'not-allowed' }
       case 'EN_ATTENTE':
-        return { background: '#fef9e7', borderColor: '#f39c12', color: '#b7950b', cursor: 'not-allowed' }
+        return { background: 'var(--seat-pending)', borderColor: 'var(--seat-pending-border)', color: 'var(--seat-pending-text)', cursor: 'not-allowed' }
       default:
-        return { background: '#e0e0e0', borderColor: '#999', color: '#666', cursor: 'not-allowed' }
+        return { background: 'var(--seat-unavailable)', borderColor: 'var(--seat-unavailable-border)', color: 'var(--seat-unavailable-text)', cursor: 'not-allowed' }
     }
   }
 
@@ -225,27 +220,32 @@ export default function BookingFlow() {
     navigate('/client/my-reservations')
   }
 
-  if (loading) return <div className="error-state"><p>Chargement de la réservation...</p></div>
+  if (loading) return <div className="error-state"><p>{t('client.booking.loading')}</p></div>
   if (error) return <div className="error-msg">{error}</div>
-  if (!event) return <div className="error-state"><p>Événement introuvable.</p></div>
+  if (!event) return <div className="error-state"><p>{t('client.booking.eventNotFound')}</p></div>
 
   return (
     <div className="booking-flow">
       <div style={{ marginBottom: '1rem' }}>
         <h2>{event.titre}</h2>
-        <p style={{ color: '#666' }}>
+        <p style={{ color: 'var(--text-secondary)' }}>
           {event.dateEvenement ? new Date(event.dateEvenement).toLocaleDateString('fr-FR') : ''}
           {event.heureEvenement ? ` à ${event.heureEvenement}` : ''}
         </p>
-        <p style={{ color: '#666' }}>{event.lieuNom || event.lieu || event.venue || ''}</p>
-        <p style={{ color: '#666', fontSize: '0.9rem' }}>
-          {event.placesDisponibles ?? '?'} places disponibles · Prix: {event.prixMin ?? '?'} - {event.prixMax ?? '?'} €
-          {agencement && <span style={{ marginLeft: '8px', padding: '2px 8px', borderRadius: '8px', background: '#e8edf5', color: '#0f3460', fontSize: '0.8rem' }}>{TYPE_AGENCEMENT_LABELS[agencement]}</span>}
+        <p style={{ color: 'var(--text-secondary)' }}>{event.lieuNom || event.lieu || event.venue || ''}</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          {event.placesDisponibles ?? '?'} {t('client.booking.availablePlaces')} · {t('client.booking.price')}: {event.prixMin ?? '?'} - {event.prixMax ?? '?'} €
+          {agencement && <span style={{ marginLeft: '8px', padding: '2px 8px', borderRadius: '8px', background: 'var(--primary-light)', color: 'var(--primary)', fontSize: '0.8rem' }}>{TYPE_AGENCEMENT_LABELS[agencement] || agencement}</span>}
         </p>
       </div>
 
       <div className="wizard-steps" style={{ marginBottom: '1.5rem' }}>
-        {['Sélection des places', 'Confirmation', 'Paiement', 'Succès'].map((label, i) => (
+        {[
+          t('client.booking.stepSelect'),
+          t('client.booking.stepConfirm'),
+          t('client.booking.stepPayment'),
+          t('client.booking.stepSuccess')
+        ].map((label, i) => (
           <span key={i} className={`wizard-step ${step === i + 1 ? 'active' : ''} ${step > i + 1 ? 'completed' : ''}`}>
             <span className="step-num">{i + 1}</span>
             {label}
@@ -256,32 +256,32 @@ export default function BookingFlow() {
       {step === 1 && (
         <>
           <button className="btn-secondary" onClick={() => navigate('/client')} style={{ marginBottom: '1rem' }}>
-            &larr; Retour aux événements
+            {t('client.booking.back')}
           </button>
           {!isStandingOnly && (
             <>
               <div className="seat-legend">
                 <span className="seat-legend-item">
-                  <span className="seat-legend-color" style={{ background: '#d5f5e3', border: '2px solid #27ae60' }}></span>
-                  Disponible
+                  <span className="seat-legend-color" style={{ background: 'var(--seat-available)', border: '2px solid var(--seat-available-border)' }}></span>
+                  {t('client.booking.legendAvailable')}
                 </span>
                 <span className="seat-legend-item">
-                  <span className="seat-legend-color" style={{ background: '#fadbd8', border: '2px solid #e94560' }}></span>
-                  Réservée
+                  <span className="seat-legend-color" style={{ background: 'var(--seat-reserved)', border: '2px solid var(--seat-reserved-border)' }}></span>
+                  {t('client.booking.legendReserved')}
                 </span>
                 <span className="seat-legend-item">
-                  <span className="seat-legend-color" style={{ background: '#e0e0e0', border: '2px solid #999' }}></span>
-                  Indisponible
+                  <span className="seat-legend-color" style={{ background: 'var(--seat-unavailable)', border: '2px solid var(--seat-unavailable-border)' }}></span>
+                  {t('client.booking.legendUnavailable')}
                 </span>
                 <span className="seat-legend-item">
-                  <span className="seat-legend-color" style={{ background: '#3b82f6', border: '2px solid #2563eb' }}></span>
-                  Sélectionnée
+                  <span className="seat-legend-color" style={{ background: 'var(--seat-selected)', border: '2px solid var(--seat-selected-border)' }}></span>
+                  {t('client.booking.legendSelected')}
                 </span>
               </div>
 
               <div className="filter-chips" style={{ marginBottom: '1rem' }}>
                 <button className={typeFilter === 'all' ? 'active' : ''} onClick={() => setTypeFilter('all')}>
-                  Tous
+                  {t('client.booking.seatAll')}
                 </button>
                 {seatTypes.map(type => (
                   <button key={type} className={typeFilter === type ? 'active' : ''} onClick={() => setTypeFilter(type)}
@@ -297,21 +297,21 @@ export default function BookingFlow() {
 
               <div className="seat-map">
                 {rows.length === 0 ? (
-                  <p style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>Aucune place disponible avec ce filtre.</p>
+                  <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('client.booking.noSeats')}</p>
                 ) : (
                   rows.map(([row, rowSeats]) => (
                     <div key={row} className="seat-row">
                       <span className="seat-row-label">{row}</span>
-                      <div className="seat-row-seats" style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
                         {rowSeats.map(seat => (
                           <div key={seat.numeroPlace}
-                            className={`seat-tile`}
+                            className="seat-tile"
                             style={{
                               ...getSeatStyle(seat),
                               borderLeft: `3px solid ${getTypeIndicator(seat.typePlace)}`,
                             }}
                             onClick={() => toggleSeat(seat)}
-                            title={`${seat.numeroPlace} · ${seat.typePlace} · ${seat.prix ? seat.prix.toFixed(2) + ' €' : ''} · ${STATUT_LABELS[seat.statut] || seat.statut}`}>
+                            title={`${seat.numeroPlace} · ${seat.typePlace} · ${seat.prix ? seat.prix.toFixed(2) + ' €' : ''} · ${seat.statut}`}>
                             {seat.numeroPlace}
                           </div>
                         ))}
@@ -331,7 +331,7 @@ export default function BookingFlow() {
                     color: getTypeIndicator(type),
                   }}>
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: getTypeIndicator(type) }}></span>
-                    {type} · {selectedSeats.filter(s => s.typePlace === type).length} sélec.
+                    {type} · {selectedSeats.filter(s => s.typePlace === type).length} {t('client.booking.seatsSelected')}
                   </span>
                 ))}
               </div>
@@ -340,7 +340,7 @@ export default function BookingFlow() {
 
           {standingZones.length > 0 && (
             <div className="standing-zones" style={{ marginTop: isStandingOnly ? 0 : '1.5rem' }}>
-              {!isStandingOnly && <h4 style={{ marginBottom: '0.75rem' }}>Zones debout</h4>}
+              {!isStandingOnly && <h4 style={{ marginBottom: '0.75rem', color: 'var(--text)' }}>{t('client.booking.standingZones')}</h4>}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {standingZones.map(zone => {
                   const qty = selectedZones[zone.idZone] || 0
@@ -359,7 +359,7 @@ export default function BookingFlow() {
                               {remaining !== null && remaining > 0 && ` · ${remaining} restante${remaining > 1 ? 's' : ''}`}
                             </span>
                           ) : (
-                            <span className="standing-zone-capacity">Sans limite de places</span>
+                            <span className="standing-zone-capacity">{t('client.booking.standingNoLimit')}</span>
                           )}
                         </div>
                         <span className="standing-zone-price">{zone.prix?.toFixed(2)} €</span>
@@ -370,7 +370,7 @@ export default function BookingFlow() {
                         </div>
                       )}
                       {isFull ? (
-                        <p style={{ color: '#e94560', fontSize: '0.85rem' }}>Complet</p>
+                        <p style={{ color: 'var(--error)', fontSize: '0.85rem' }}>{t('client.booking.standingFull')}</p>
                       ) : (
                         <div className="quantity-selector">
                           <button onClick={() => updateZoneQuantity(zone.idZone, -1)} disabled={qty === 0}>−</button>
@@ -388,12 +388,12 @@ export default function BookingFlow() {
 
           <div className="summary-bar">
             <div>
-              <span><strong>{getSelectedItems().length}</strong> élément(s) sélectionné(s)</span>
+              <span><strong>{getSelectedItems().length}</strong> {t('client.booking.selectionCount')}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <span className="total">{totalPrice.toFixed(2)} €</span>
               <button className="btn-primary" disabled={!hasSelection} onClick={handleConfirm}>
-                Confirmer la sélection
+                {t('client.booking.confirmSelection')}
               </button>
             </div>
           </div>
@@ -401,24 +401,25 @@ export default function BookingFlow() {
       )}
 
       {step === 2 && (
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Confirmation de réservation</h3>
+        <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <h3 style={{ marginBottom: '1rem', color: 'var(--text)' }}>{t('client.booking.confirmTitle')}</h3>
           <div style={{ display: 'grid', gap: '8px', marginBottom: '1rem' }}>
-            <p><strong>Événement:</strong> {event.titre}</p>
-            <p><strong>Date:</strong> {event.dateEvenement ? new Date(event.dateEvenement).toLocaleDateString('fr-FR') : ''} {event.heureEvenement || ''}</p>
-            <p><strong>Lieu:</strong> {event.lieuNom || event.lieu || event.venue || ''}</p>
+            <p style={{ color: 'var(--text)' }}><strong>{t('client.booking.event')}:</strong> {event.titre}</p>
+            <p style={{ color: 'var(--text)' }}><strong>{t('client.booking.date')}:</strong> {event.dateEvenement ? new Date(event.dateEvenement).toLocaleDateString('fr-FR') : ''} {event.heureEvenement || ''}</p>
+            <p style={{ color: 'var(--text)' }}><strong>{t('client.booking.venue')}:</strong> {event.lieuNom || event.lieu || event.venue || ''}</p>
           </div>
-          <h4 style={{ marginBottom: '0.5rem' }}>Éléments sélectionnés</h4>
+          <h4 style={{ marginBottom: '0.5rem', color: 'var(--text)' }}>{t('client.booking.selectedItems')}</h4>
           <div style={{ display: 'grid', gap: '6px' }}>
             {selectedSeats.map(seat => (
               <div key={seat.numeroPlace} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '8px 12px', border: '1px solid #eee', borderRadius: '6px',
+                padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px',
+                color: 'var(--text)',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: getTypeIndicator(seat.typePlace) }}></span>
                   <strong>{seat.numeroPlace}</strong>
-                  <span style={{ color: '#666' }}>Rang {seat.rang || seat.range}</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('client.booking.seatRow')} {seat.rang || seat.range}</span>
                   <span style={{ fontSize: '0.8rem', padding: '1px 8px', borderRadius: '8px', background: `${getTypeIndicator(seat.typePlace)}22`, color: getTypeIndicator(seat.typePlace) }}>{seat.typePlace}</span>
                 </div>
                 <span>{seat.prix?.toFixed(2)} €</span>
@@ -430,70 +431,71 @@ export default function BookingFlow() {
               return (
                 <div key={`zone-${zone.idZone}`} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '8px 12px', border: '1px solid #eee', borderRadius: '6px',
+                  padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px',
+                  color: 'var(--text)',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f39c12' }}></span>
                     <strong>{zone.nom}</strong>
-                    <span style={{ color: '#666' }}>x{qty}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>x{qty}</span>
                   </div>
                   <span>{(zone.prix * qty).toFixed(2)} €</span>
                 </div>
               )
             })}
           </div>
-          <p style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 700, textAlign: 'right' }}>
-            Total: {totalPrice.toFixed(2)} €
+          <p style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 700, textAlign: 'right', color: 'var(--text)' }}>
+            {t('client.booking.total')}: {totalPrice.toFixed(2)} €
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            <button className="btn-secondary" onClick={() => setStep(1)}>Retour</button>
-            <button className="btn-primary" onClick={() => setStep(3)}>Procéder au paiement</button>
+            <button className="btn-secondary" onClick={() => setStep(1)}>{t('client.booking.backBtn')}</button>
+            <button className="btn-primary" onClick={() => setStep(3)}>{t('client.booking.proceedPayment')}</button>
           </div>
         </div>
       )}
 
       {step === 3 && (
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Paiement</h3>
-          <p style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>
-            Total à payer: <strong>{totalPrice.toFixed(2)} €</strong>
+        <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <h3 style={{ marginBottom: '1rem', color: 'var(--text)' }}>{t('client.booking.paymentTitle')}</h3>
+          <p style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--text)' }}>
+            {t('client.booking.totalToPay')}: <strong>{totalPrice.toFixed(2)} €</strong>
           </p>
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
-              Mode de paiement
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+              {t('client.booking.paymentMethod')}
             </label>
             <select value={modePaiement} onChange={e => setModePaiement(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px', border: '1px solid #ddd', borderRadius: '8px', fontSize: '0.95rem' }}>
-              <option value="Carte Bancaire">Carte Bancaire</option>
-              <option value="Mobile Money">Mobile Money</option>
-              <option value="PayPal">PayPal</option>
+              style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.95rem', background: 'var(--surface)', color: 'var(--text)' }}>
+              <option value="Carte Bancaire">{t('client.booking.card')}</option>
+              <option value="Mobile Money">{t('client.booking.mobileMoney')}</option>
+              <option value="PayPal">{t('client.booking.paypal')}</option>
             </select>
           </div>
           {error && <div className="error-msg">{error}</div>}
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            <button className="btn-secondary" onClick={() => setStep(2)}>Retour</button>
+            <button className="btn-secondary" onClick={() => setStep(2)}>{t('client.booking.backBtn')}</button>
             <button className="btn-primary" onClick={handlePayment} disabled={processing}>
-              {processing ? 'Traitement en cours...' : `Payer ${totalPrice.toFixed(2)} €`}
+              {processing ? t('client.booking.processing') : `${t('client.booking.pay')} ${totalPrice.toFixed(2)} €`}
             </button>
           </div>
         </div>
       )}
 
       {step === 4 && reservationResult && (
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           <div className="success-msg">
-            <strong>Paiement réussi !</strong> Votre réservation a été confirmée.
+            <strong>{t('client.booking.successTitle')}</strong> {t('client.booking.successMessage')}
           </div>
-          <h3 style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>Détails</h3>
+          <h3 style={{ marginTop: '1rem', marginBottom: '0.5rem', color: 'var(--text)' }}>{t('client.booking.details')}</h3>
           <div style={{ display: 'grid', gap: '6px' }}>
-            <p><strong>Événement:</strong> {event.titre}</p>
-            <p><strong>Date:</strong> {event.dateEvenement ? new Date(event.dateEvenement).toLocaleDateString('fr-FR') : ''}</p>
-            <p><strong>Places:</strong> {selectedSeats.map(s => s.numeroPlace).join(', ') || '—'}</p>
-            <p><strong>Zones debout:</strong> {standingZones.filter(z => (selectedZones[z.idZone] || 0) > 0).map(z => `${z.nom} x${selectedZones[z.idZone]}`).join(', ') || '—'}</p>
-            <p><strong>Total payé:</strong> {totalPrice.toFixed(2)} €</p>
-            <p><strong>Mode:</strong> {modePaiement}</p>
+            <p style={{ color: 'var(--text)' }}><strong>{t('client.booking.event')}:</strong> {event.titre}</p>
+            <p style={{ color: 'var(--text)' }}><strong>{t('client.booking.date')}:</strong> {event.dateEvenement ? new Date(event.dateEvenement).toLocaleDateString('fr-FR') : ''}</p>
+            <p style={{ color: 'var(--text)' }}><strong>{t('client.booking.seats')}:</strong> {selectedSeats.map(s => s.numeroPlace).join(', ') || '—'}</p>
+            <p style={{ color: 'var(--text)' }}><strong>{t('client.booking.standingAreas')}:</strong> {standingZones.filter(z => (selectedZones[z.idZone] || 0) > 0).map(z => `${z.nom} x${selectedZones[z.idZone]}`).join(', ') || '—'}</p>
+            <p style={{ color: 'var(--text)' }}><strong>{t('client.booking.totalPaid')}:</strong> {totalPrice.toFixed(2)} €</p>
+            <p style={{ color: 'var(--text)' }}><strong>{t('client.booking.mode')}:</strong> {modePaiement}</p>
           </div>
-          <h4 style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>Vos tickets</h4>
+          <h4 style={{ marginTop: '1rem', marginBottom: '0.5rem', color: 'var(--text)' }}>{t('client.booking.tickets')}</h4>
           <div className="tickets-list">
             {reservationResult.ticketCodes.map(code => (
               <div key={code} className="ticket-card">
@@ -509,7 +511,7 @@ export default function BookingFlow() {
           </div>
           <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
             <button className="btn-primary" onClick={handleFinish}>
-              Voir mes réservations
+              {t('client.booking.viewReservations')}
             </button>
           </div>
         </div>

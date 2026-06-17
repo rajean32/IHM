@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/services/notification_service.dart';
 import '../../widgets/notification_bell.dart';
+import '../../localization/app_localizations.dart';
 import 'home_page.dart';
 import 'tickets_page.dart';
 import 'client_profile_page.dart';
@@ -41,11 +42,18 @@ class _ClientLayoutState extends State<ClientLayout> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
         title: Row(
           children: [
             Image.asset(
               'lib/utils/logo_icon.png',
-              height: 28,
+              height: 35,
               fit: BoxFit.contain,
               color: Colors.white,
             ),
@@ -54,6 +62,10 @@ class _ClientLayoutState extends State<ClientLayout> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
           const NotificationBell(),
         ],
       ),
@@ -68,18 +80,18 @@ class _ClientLayoutState extends State<ClientLayout> {
             _currentIndex = index;
           });
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.event),
-            label: 'Événements',
+            icon: const Icon(Icons.event),
+            label: tr('client.home'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.confirmation_number),
-            label: 'Mes billets',
+            icon: const Icon(Icons.confirmation_number),
+            label: tr('client.tickets'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.person),
-            label: 'Compte',
+            icon: const Icon(Icons.person),
+            label: tr('client.account'),
           ),
         ],
       ),

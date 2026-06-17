@@ -25,7 +25,7 @@ public class InAppNotification {
     private String type;
 
     @Column(name = "is_read", nullable = false)
-    private boolean isRead = false;
+    private boolean read = false;
 
     @Column(name = "id_cible", length = 255)
     private String idCible;
@@ -41,7 +41,7 @@ public class InAppNotification {
         this.message = message;
         this.type = type;
         this.idCible = idCible;
-        this.isRead = false;
+        this.read = false;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -55,8 +55,8 @@ public class InAppNotification {
     public void setMessage(String message) { this.message = message; }
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
-    public boolean isRead() { return isRead; }
-    public void setRead(boolean read) { isRead = read; }
+    public boolean isRead() { return read; }
+    public void setRead(boolean read) { this.read = read; }
     public String getIdCible() { return idCible; }
     public void setIdCible(String idCible) { this.idCible = idCible; }
     public LocalDateTime getCreatedAt() { return createdAt; }

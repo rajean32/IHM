@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/services/dashboard_service.dart';
+import '../../core/services/app_config.dart';
 import '../../core/api/dio_config.dart';
 import '../../models/dashboard_model.dart';
 import '../../models/evenement_model.dart';
 import '../../core/assets/app_colors.dart';
 import '../../widgets/error_state.dart';
-import 'create_event_page.dart';
-import 'scan_page.dart';
-import 'refund_page.dart';
-import 'data_export_page.dart';
 import '../../core/utils/error_helper.dart';
+import '../../generated/app_localizations.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final VoidCallback? onNavigateToEvents;
+
+  const DashboardPage({super.key, this.onNavigateToEvents});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -24,13 +24,21 @@ class _DashboardPageState extends State<DashboardPage> {
   String? _error;
   OrganizerDashboardStats? _stats;
 
-  int? _filterEventId;
-  String _periodFilter = 'all';
-
   @override
   void initState() {
     super.initState();
+    eventContextNotifier.addListener(_onContextChanged);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    eventContextNotifier.removeListener(_onContextChanged);
+    super.dispose();
+  }
+
+  void _onContextChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadData() async {
@@ -50,54 +58,36 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  List<Evenement> get _timelineEvents {
-    final events = _stats?.myEvents ?? [];
-    return events.where((e) {
-      if (_filterEventId != null && e.idEvenement != _filterEventId) return false;
-      if (_periodFilter == 'all') return true;
-      final now = DateTime.now();
-      if (e.dateEvenement == null) return true;
-      if (_periodFilter == 'ongoing') {
-        final diff = e.dateEvenement!.difference(now);
-        return diff.isNegative && diff.inDays > -1;
-      }
-      if (_periodFilter == 'upcoming') return e.dateEvenement!.isAfter(now);
-      if (_periodFilter == 'past') return e.dateEvenement!.isBefore(now);
-      return true;
-    }).toList();
+  String _eventStatusKey(Evenement event) {
+    final statut = event.statut;
+    if (statut == 'suspendu') return 'suspended';
+    if (statut == 'annule') return 'cancelled';
+    if (event.dateEvenement == null) return 'upcoming';
+    final now = DateTime.now();
+    final diff = event.dateEvenement!.difference(now);
+    if (diff.isNegative && diff.inDays > -1) return 'in_progress';
+    if (diff.isNegative) return 'ended';
+    return 'upcoming';
   }
 
   String _eventStatusLabel(Evenement event) {
-    if (event.dateEvenement == null) return 'UPCOMING';
-    final now = DateTime.now();
-    final diff = event.dateEvenement!.difference(now);
-    if (diff.isNegative && diff.inDays > -1) return 'ONGOING';
-    if (diff.isNegative) return 'TERMINATED';
-    return 'UPCOMING';
-  }
-
-  String _eventCountdown(Evenement event) {
-    if (event.dateEvenement == null) return '';
-    final now = DateTime.now();
-    final diff = event.dateEvenement!.difference(now);
-    if (diff.isNegative) {
-      final past = -diff;
-      if (past.inMinutes < 60) return 'Terminé il y a ${past.inMinutes} min';
-      if (past.inHours < 24) return 'Terminé il y a ${past.inHours}h';
-      if (past.inDays < 30) return 'Terminé il y a ${past.inDays}j';
-      if (past.inDays < 365) return 'Terminé il y a ${(past.inDays / 30).round()} mois';
-      return 'Terminé il y a ${(past.inDays / 365).round()} an(s)';
+    switch (_eventStatusKey(event)) {
+      case 'upcoming': return AppLocalizations.of(context)!.statusUpcoming;
+      case 'in_progress': return AppLocalizations.of(context)!.statusInProgress;
+      case 'ended': return AppLocalizations.of(context)!.statusEnded;
+      case 'suspended': return AppLocalizations.of(context)!.statusSuspended;
+      case 'cancelled': return AppLocalizations.of(context)!.statusCancelled;
+      default: return AppLocalizations.of(context)!.statusUpcoming;
     }
-    if (diff.inMinutes < 60) return 'Commence dans ${diff.inMinutes} min';
-    if (diff.inHours < 24) return 'Commence dans ${diff.inHours}h';
-    return 'Commence dans ${diff.inDays}j';
   }
 
-  Color _eventStatusColor(String status) {
-    switch (status) {
-      case 'UPCOMING': return AppColors.statusPlanned;
-      case 'ONGOING': return AppColors.statusInProgress;
-      case 'TERMINATED': return AppColors.statusDone;
+  Color _eventStatusColor(String key) {
+    switch (key) {
+      case 'upcoming': return AppColors.statusPlanned;
+      case 'in_progress': return AppColors.statusInProgress;
+      case 'ended': return AppColors.statusDone;
+      case 'suspended': return AppColors.statusSuspended;
+      case 'cancelled': return AppColors.statusCancelled;
       default: return AppTheme.textSecondary;
     }
   }
@@ -116,17 +106,15 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildFilters(),
-                        const SizedBox(height: 12),
+                        _buildPageHeader(),
+                        const SizedBox(height: 16),
                         _buildStatsGrid(),
-                        const SizedBox(height: 16),
-                        _buildEventTimeline(),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
                         _buildDailySalesChart(),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
                         _buildTopEvents(),
-                        const SizedBox(height: 16),
-                        _buildQuickActions(),
+                        const SizedBox(height: 20),
+                        _buildCompactEventList(),
                       ],
                     ),
                   ),
@@ -134,51 +122,42 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildFilters() {
-    final events = _stats?.myEvents ?? [];
+  Widget _buildPageHeader() {
     return Card(
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(children: [
-          Row(children: [
+        padding: const EdgeInsets.all(16),
+              child: Row(children: [
             Expanded(
-              child: DropdownButtonFormField<int>(
-                value: _filterEventId,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Événement', border: OutlineInputBorder(), isDense: true,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                ),
-                items: [
-                  const DropdownMenuItem<int>(value: null, child: Text('Tous', style: TextStyle(fontSize: 12))),
-                  ...events.map((e) => DropdownMenuItem<int>(
-                    value: e.idEvenement,
-                    child: Text(e.titre, style: const TextStyle(fontSize: 12)),
-                  )),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Text(AppLocalizations.of(context)!.overview, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                    if (activeEventId != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(activeEventName, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                      ),
+                    ],
+                  ]),
+                  const SizedBox(height: 4),
+                  Text(AppLocalizations.of(context)!.eventsActive('${_stats?.myEvents.length ?? 0}'),
+                      style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                 ],
-                onChanged: (v) => setState(() => _filterEventId = v),
               ),
             ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 100,
-              child: DropdownButtonFormField<String>(
-                value: _periodFilter,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(), isDense: true,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'all', child: Text('Tout', style: TextStyle(fontSize: 11))),
-                  DropdownMenuItem(value: 'ongoing', child: Text('En cours', style: TextStyle(fontSize: 11))),
-                  DropdownMenuItem(value: 'upcoming', child: Text('À venir', style: TextStyle(fontSize: 11))),
-                  DropdownMenuItem(value: 'past', child: Text('Passés', style: TextStyle(fontSize: 11))),
-                ],
-                onChanged: (v) => setState(() => _periodFilter = v!),
-              ),
+            if (widget.onNavigateToEvents != null)
+              FilledButton.tonalIcon(
+              onPressed: widget.onNavigateToEvents,
+              icon: const Icon(Icons.arrow_forward, size: 16),
+              label: Text(AppLocalizations.of(context)!.manage, style: TextStyle(fontSize: 12)),
             ),
-          ]),
         ]),
       ),
     );
@@ -188,82 +167,151 @@ class _DashboardPageState extends State<DashboardPage> {
     return Column(
       children: [
         Row(children: [
-          Expanded(child: _statCard('Recettes', '${_stats!.totalRevenue.toStringAsFixed(2)} ${AppConstants.currency}', Icons.attach_money, AppTheme.secondaryColor)),
+          Expanded(child: _buildModernStatCard(
+            label: AppLocalizations.of(context)!.revenue,
+            value: '${_stats!.totalRevenue.toStringAsFixed(0)} ${AppConstants.currency}',
+            icon: Icons.attach_money,
+            color: AppColors.secondary,
+          )),
           const SizedBox(width: 12),
-          Expanded(child: _statCard('Taux Remplissage', '${_stats!.fillRate.toStringAsFixed(1)}%', Icons.pie_chart, AppTheme.primaryColor)),
+          Expanded(child: _buildModernStatCard(
+            label: AppLocalizations.of(context)!.fillRate,
+            value: '${_stats!.fillRate.toStringAsFixed(1)}%',
+            icon: Icons.pie_chart,
+            color: AppColors.primary,
+          )),
         ]),
         const SizedBox(height: 12),
         Row(children: [
-          Expanded(child: _statCard('Billets Vendus', '${_stats!.totalTicketsSold}', Icons.confirmation_number, AppTheme.accentColor)),
+          Expanded(child: _buildModernStatCard(
+            label: AppLocalizations.of(context)!.ticketsSold,
+            value: '${_stats!.totalTicketsSold}',
+            icon: Icons.confirmation_number,
+            color: AppColors.accent,
+          )),
           const SizedBox(width: 12),
-          Expanded(child: _statCard('Places Dispo.', '${_stats!.placesDisponibles}', Icons.event_seat, const Color(0xFF7B1FA2))),
+          Expanded(child: _buildModernStatCard(
+            label: AppLocalizations.of(context)!.seatsAvailable,
+            value: '${_stats!.placesDisponibles}',
+            icon: Icons.event_seat,
+            color: const Color(0xFF7B1FA2),
+          )),
         ]),
       ],
     );
   }
 
-  Widget _statCard(String label, String value, IconData icon, Color color) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(icon, size: 28, color: color),
-            const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+  Widget _buildModernStatCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            isDark ? color.withValues(alpha: 0.25) : color.withValues(alpha: 0.12),
+            isDark ? color.withValues(alpha: 0.10) : color.withValues(alpha: 0.04),
           ],
+        ),
+      ),
+      child: Card(
+        elevation: 0,
+        color: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          child: Column(
+            children: [
+              Icon(icon, size: 24, color: color),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : color,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? Colors.white70 : AppTheme.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildEventTimeline() {
-    final events = _timelineEvents;
+  Widget _buildCompactEventList() {
+    final events = _stats?.myEvents ?? [];
     if (events.isEmpty) return const SizedBox.shrink();
-    final sorted = List<Evenement>.from(events)
-      ..sort((a, b) {
-        if (a.dateEvenement == null && b.dateEvenement == null) return 0;
-        if (a.dateEvenement == null) return 1;
-        if (b.dateEvenement == null) return -1;
-        return a.dateEvenement!.compareTo(b.dateEvenement!);
-      });
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Chronologie des événements', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Row(children: [
+              Icon(Icons.event, size: 18, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(child: Text(AppLocalizations.of(context)!.myEvents, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface))),
+              if (widget.onNavigateToEvents != null)
+                TextButton(
+                  onPressed: widget.onNavigateToEvents,
+                  child: Text(AppLocalizations.of(context)!.seeAll, style: TextStyle(fontSize: 12)),
+                ),
+            ]),
             const SizedBox(height: 8),
-            ...sorted.take(5).map((e) {
+            ...events.take(5).map((e) {
+              final sk = _eventStatusKey(e);
               final status = _eventStatusLabel(e);
-              final color = _eventStatusColor(status);
-              return ListTile(
-                dense: true,
-                leading: CircleAvatar(
-                  radius: 14,
-                  backgroundColor: color.withValues(alpha: 0.15),
-                  child: Icon(
-                    status == 'ONGOING' ? Icons.play_circle : (status == 'TERMINATED' ? Icons.check_circle_outline : Icons.schedule),
-                    size: 16, color: color,
-                  ),
-                ),
-                title: Text(e.titre, style: const TextStyle(fontSize: 14)),
-                subtitle: Text(
-                  status == 'TERMINATED'
-                      ? 'Top Découlé — ${_eventCountdown(e)}'
-                      : _eventCountdown(e),
-                  style: TextStyle(fontSize: 11, color: color, fontStyle: FontStyle.italic),
-                ),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              final sc = _eventStatusColor(sk);
+              final total = e.placesTotal ?? 0;
+              final dispo = e.placesDisponibles ?? 0;
+              final reserved = total - dispo;
+              final rate = total > 0 ? (reserved / total) : 0.0;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: color.withValues(alpha: 0.4)),
+                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.3)),
                   ),
-                  child: Text(status, style: TextStyle(fontSize: 8, color: color, fontWeight: FontWeight.w700)),
+                  child: Row(children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(e.titre, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Theme.of(context).colorScheme.onSurface)),
+                          const SizedBox(height: 2),
+                          Text('$reserved / $total places', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 40, child: Text('${(rate * 100).toStringAsFixed(0)}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sc))),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: sc.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(status, style: TextStyle(fontSize: 8, color: sc, fontWeight: FontWeight.w700)),
+                    ),
+                  ]),
                 ),
               );
             }),
@@ -277,6 +325,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final sales = _stats!.dailySales;
     if (sales.isEmpty) return const SizedBox.shrink();
     final maxY = sales.fold<double>(0, (m, s) => s.ticketsSold > m ? s.ticketsSold.toDouble() : m) * 1.3;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
       child: Padding(
@@ -284,7 +333,7 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Évolution des Ventes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.salesEvolution, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 16),
             SizedBox(
               height: 200,
@@ -296,23 +345,32 @@ class _DashboardPageState extends State<DashboardPage> {
                     x: e.key,
                     barRods: [BarChartRodData(
                       toY: e.value.ticketsSold.toDouble(),
-                      color: AppTheme.primaryColor,
+                      color: isDark ? AppColors.primaryLight : AppTheme.primaryColor,
                       width: 14,
                       borderRadius: BorderRadius.circular(4),
                     )],
                   )).toList(),
                   titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 30, getTitlesWidget: (v, m) => Text('${v.toInt()}', style: const TextStyle(fontSize: 10)))),
+                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 30, getTitlesWidget: (v, m) {
+                      return Text('${v.toInt()}', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)));
+                    })),
                     bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, m) {
                       final idx = v.toInt();
                       if (idx < 0 || idx >= sales.length) return const Text('');
                       final parts = sales[idx].date.split('-');
-                      return Text('${parts[2]}/${parts[1]}', style: const TextStyle(fontSize: 8));
+                      return Text('${parts[2]}/${parts[1]}', style: TextStyle(fontSize: 8, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)));
                     })),
                     topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
-                  gridData: FlGridData(show: true, drawVerticalLine: false),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+                      strokeWidth: 1,
+                    ),
+                  ),
                   borderData: FlBorderData(show: false),
                 ),
               ),
@@ -333,16 +391,17 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Top Événements', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.topEvents, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 8),
             ...top.take(5).toList().asMap().entries.map((e) => ListTile(
               dense: true,
               leading: CircleAvatar(
                 radius: 14,
-                child: Text('${e.key + 1}', style: const TextStyle(fontSize: 12)),
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                child: Text('${e.key + 1}', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary)),
               ),
-              title: Text(e.value.titre, style: const TextStyle(fontSize: 14)),
-              trailing: Text('${e.value.placesDisponibles ?? 0} billets', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+              title: Text(e.value.titre, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface)),
+              trailing: Text('${e.value.placesDisponibles ?? 0} billets', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
             )),
           ],
         ),
@@ -350,39 +409,4 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildQuickActions() {
-    return Column(children: [
-      Row(children: [
-        Expanded(child: _actionButton('Créer', Icons.add, AppTheme.primaryColor, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateEventPage())))),
-        const SizedBox(width: 12),
-        Expanded(child: _actionButton('Scanner', Icons.qr_code_scanner, AppTheme.secondaryColor, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanPage())))),
-      ]),
-      const SizedBox(height: 12),
-      Row(children: [
-        Expanded(child: _actionButton('Remboursements', Icons.money_off, AppTheme.accentColor, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RefundPage())))),
-        const SizedBox(width: 12),
-        Expanded(child: _actionButton('Export', Icons.download, AppColors.statusPlanned, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DataExportPage())))),
-      ]),
-    ]);
-  }
-
-  Widget _actionButton(String label, IconData icon, Color color, VoidCallback onTap) {
-    return SizedBox(
-      height: 80,
-      child: Card(
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 28),
-              const SizedBox(height: 4),
-              Text(label, style: const TextStyle(fontSize: 11)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

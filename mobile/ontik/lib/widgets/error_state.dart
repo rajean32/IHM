@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/assets/app_colors.dart';
+import '../localization/app_localizations.dart';
 
 class ErrorState extends StatelessWidget {
   final String message;
@@ -30,7 +31,7 @@ class ErrorState extends StatelessWidget {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: onRetry,
-                child: const Text('Réessayer'),
+                child: Text(tr('widgets.error.retry')),
               ),
             ],
           ],

@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../../models/reservation_model.dart';
 import '../../models/ticket_model.dart';
 import '../../core/api/endpoints.dart';
-import '../../core/services/auth_service.dart';
 import '../../core/services/reservation_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/assets/app_colors.dart';
@@ -11,6 +10,8 @@ import '../../core/routes/client_routes.dart';
 import '../../widgets/error_state.dart';
 import '../../widgets/event_image_widget.dart';
 import '../../core/utils/error_helper.dart';
+import '../../core/services/app_config.dart';
+import '../../localization/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -26,10 +27,6 @@ class _ProfilePageState extends State<ProfilePage>
   String? _error;
   List<Reservation> _reservations = [];
   List<Ticket> _tickets = [];
-  final _currentPasswordCtrl = TextEditingController();
-  final _newPasswordCtrl = TextEditingController();
-  final _confirmPasswordCtrl = TextEditingController();
-  bool _is2faEnabled = false;
 
   @override
   void initState() {
@@ -41,9 +38,6 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   void dispose() {
     _tabController.dispose();
-    _currentPasswordCtrl.dispose();
-    _newPasswordCtrl.dispose();
-    _confirmPasswordCtrl.dispose();
     super.dispose();
   }
 
@@ -120,12 +114,12 @@ class _ProfilePageState extends State<ProfilePage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Réservation #${r.idReservation}',
+                              '${tr('client.profile.reservation')} #${r.idReservation}',
                               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                             ),
                             if (r.dateReservation != null)
                               Text(
-                                DateFormat('d MMMM yyyy \'à\' HH:mm', 'fr').format(r.dateReservation!),
+                                DateFormat('d MMMM yyyy \'à\' HH:mm', appLanguage).format(r.dateReservation!),
                                 style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                               ),
                           ],
@@ -136,15 +130,15 @@ class _ProfilePageState extends State<ProfilePage>
                   const SizedBox(height: 20),
                   const Divider(),
                   const SizedBox(height: 12),
-                  const Text('Billets', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                  Text(tr('client.profile.ticketsTab'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                   const SizedBox(height: 8),
                   if (r.tickets != null && r.tickets!.isNotEmpty)
                     ...r.tickets!.map((t) => _buildTicketDetailTile(t))
                   else
-                    const Text('Aucun billet', style: TextStyle(color: AppColors.textMuted)),
+                    Text(tr('client.profile.noTickets'), style: const TextStyle(color: AppColors.textMuted)),
                   const SizedBox(height: 16),
                   if (r.codeTickets != null && r.codeTickets!.isNotEmpty) ...[
-                    const Text('Codes de référence', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                    Text(tr('client.profile.referenceCodes'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                     const SizedBox(height: 8),
                     ...r.codeTickets!.map((c) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),
@@ -195,9 +189,9 @@ class _ProfilePageState extends State<ProfilePage>
                 Row(
                   children: [
                     if (t.numeroPlace != null)
-                      Text('Place ${t.numeroPlace}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      Text('${tr('client.profile.seat')} ${t.numeroPlace}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                     if (t.rang != null)
-                      Text(' (Rang ${t.rang})', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      Text(' (${tr('client.profile.row')} ${t.rang})', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   ],
                 ),
                 if (t.prix != null)
@@ -230,281 +224,24 @@ class _ProfilePageState extends State<ProfilePage>
     }
   }
 
-  Future<void> _changePassword() async {
-    if (_currentPasswordCtrl.text.isEmpty) return;
-    if (_newPasswordCtrl.text.length < 6) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le mot de passe doit contenir au moins 6 caractères'), backgroundColor: AppColors.error),
-      );
-      return;
-    }
-    if (_newPasswordCtrl.text != _confirmPasswordCtrl.text) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Les mots de passe ne correspondent pas'), backgroundColor: AppColors.error),
-      );
-      return;
-    }
-    try {
-      await AuthService().changePassword(_currentPasswordCtrl.text, _newPasswordCtrl.text);
-      if (!mounted) return;
-      Navigator.pop(context);
-      _currentPasswordCtrl.clear();
-      _newPasswordCtrl.clear();
-      _confirmPasswordCtrl.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mot de passe modifié'), backgroundColor: AppColors.secondary),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
-      );
-    }
-  }
-
-  void _showPasswordDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 24, right: 24, top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Mot de passe & 2FA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  IconButton(
-                    icon: Icon(_is2faEnabled ? Icons.lock : Icons.lock_open, color: _is2faEnabled ? AppColors.secondary : AppColors.textMuted),
-                    onPressed: () => _show2faSetup(ctx),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Authentification à deux facteurs', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                  Switch(
-                    value: _is2faEnabled,
-                    activeColor: AppColors.primary,
-                    onChanged: (v) {
-                      if (v) {
-                        _show2faSetup(ctx);
-                      } else {
-                        _show2faDisableConfirm(ctx);
-                      }
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _is2faEnabled ? 'Code à 6 chiffres envoyé par email' : 'Activez pour sécuriser votre compte',
-                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-              ),
-              const SizedBox(height: 20),
-              const Divider(),
-              const SizedBox(height: 12),
-              const Text('Changer le mot de passe', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _currentPasswordCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Mot de passe actuel', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _newPasswordCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Nouveau mot de passe', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _confirmPasswordCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Confirmer', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _changePassword,
-                  child: const Text('Changer le mot de passe'),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _show2faSetup(BuildContext parentCtx) {
-    final codeCtrl = TextEditingController();
-    bool sending = false;
-    bool verifying = false;
-    bool codeSent = false;
-    String? sentCode;
-
-    showDialog(
-      context: parentCtx,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return AlertDialog(
-              title: const Text('Activer la 2FA'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Un code à 6 chiffres sera envoyé à votre adresse email.'),
-                    const SizedBox(height: 16),
-                    if (!codeSent) ...[
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: sending ? null : () async {
-                            setDialogState(() => sending = true);
-                            await Future.delayed(const Duration(seconds: 1));
-                            sentCode = '123456';
-                            setDialogState(() { sending = false; codeSent = true; });
-                          },
-                          icon: sending
-                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Icon(Icons.email_outlined),
-                          label: Text(sending ? 'Envoi...' : 'Envoyer le code'),
-                        ),
-                      ),
-                    ],
-                    if (codeSent) ...[
-                      TextField(
-                        controller: codeCtrl,
-                        keyboardType: TextInputType.number,
-                        maxLength: 6,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 24, letterSpacing: 8, fontWeight: FontWeight.w700),
-                        decoration: InputDecoration(
-                          hintText: '000000',
-                          border: OutlineInputBorder(),
-                          counterText: '',
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.refresh),
-                            onPressed: () async {
-                              setDialogState(() => sending = true);
-                              await Future.delayed(const Duration(seconds: 1));
-                              sentCode = '123456';
-                              setDialogState(() => sending = false);
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: verifying ? null : () async {
-                            if (codeCtrl.text.length != 6) return;
-                            setDialogState(() => verifying = true);
-                            await Future.delayed(const Duration(seconds: 1));
-                            if (codeCtrl.text == sentCode) {
-                              if (!ctx.mounted) return;
-                              Navigator.pop(ctx);
-                              setState(() => _is2faEnabled = true);
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('2FA activée'), backgroundColor: AppColors.secondary),
-                              );
-                            } else {
-                              setDialogState(() => verifying = false);
-                              ScaffoldMessenger.of(ctx).showSnackBar(
-                                const SnackBar(content: Text('Code incorrect'), backgroundColor: AppColors.error),
-                              );
-                            }
-                          },
-                          child: verifying
-                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Text('Vérifier et activer'),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _show2faDisableConfirm(BuildContext parentCtx) {
-    showDialog(
-      context: parentCtx,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Désactiver la 2FA'),
-        content: const Text('Voulez-vous vraiment désactiver l\'authentification à deux facteurs ?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              setState(() => _is2faEnabled = false);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('2FA désactivée'), backgroundColor: AppColors.secondary),
-              );
-            },
-            child: const Text('Désactiver', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mes Réservations'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            } else {
-              Navigator.pushReplacementNamed(context, ClientRoutes.home);
-            }
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.lock_outline),
-            onPressed: _showPasswordDialog,
-            tooltip: 'Mot de passe & 2FA',
-          ),
-        ],
+        title: Text(tr('client.profile.myReservations')),
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        actions: const [],
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.receipt_long), text: 'Réservations'),
-            Tab(icon: Icon(Icons.confirmation_number), text: 'Billets'),
+          tabs: [
+            Tab(icon: const Icon(Icons.receipt_long), text: tr('client.profile.reservationsTab')),
+            Tab(icon: const Icon(Icons.confirmation_number), text: tr('client.profile.ticketsTab')),
           ],
         ),
       ),
@@ -530,10 +267,10 @@ class _ProfilePageState extends State<ProfilePage>
           children: [
             Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.textMuted),
             const SizedBox(height: 16),
-            const Text('Aucune réservation', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            Text(tr('client.profile.noReservations'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
             const SizedBox(height: 4),
-            const Text('Vos réservations apparaîtront ici.',
-                style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
+            Text(tr('client.profile.reservationsWillAppear'),
+                style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
           ],
         ),
       );
@@ -630,7 +367,7 @@ class _ProfilePageState extends State<ProfilePage>
                           Icon(Icons.receipt_long, size: 40, color: AppColors.textMuted.withValues(alpha: 0.3)),
                           const SizedBox(height: 6),
                           Text(
-                            'Réservation #${r.idReservation}',
+                            '${tr('client.profile.reservation')} #${r.idReservation}',
                             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textMuted),
                           ),
                         ],
@@ -646,7 +383,7 @@ class _ProfilePageState extends State<ProfilePage>
                         children: [
                           Expanded(
                             child: Text(
-                              hasTickets ? firstTicket!.evenementTitre ?? 'Réservation #${r.idReservation}' : 'Réservation #${r.idReservation}',
+                              hasTickets ? firstTicket!.evenementTitre ?? '${tr('client.profile.reservation')} #${r.idReservation}' : '${tr('client.profile.reservation')} #${r.idReservation}',
                               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -664,8 +401,8 @@ class _ProfilePageState extends State<ProfilePage>
                           const SizedBox(width: 6),
                           Text(
                             r.dateReservation != null
-                                ? DateFormat('d MMM yyyy', 'fr').format(r.dateReservation!)
-                                : 'Date inconnue',
+                                ? DateFormat('d MMM yyyy', appLanguage).format(r.dateReservation!)
+                                : tr('client.profile.unknownDate'),
                             style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           ),
                         ],
@@ -676,7 +413,7 @@ class _ProfilePageState extends State<ProfilePage>
                           const Icon(Icons.confirmation_number, size: 14, color: AppColors.textSecondary),
                           const SizedBox(width: 6),
                           Text(
-                            '${r.tickets?.length ?? 0} billet(s)',
+                            '${r.tickets?.length ?? 0} ${tr('client.profile.ticketsCount')}',
                             style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           ),
                         ],
@@ -710,8 +447,8 @@ class _ProfilePageState extends State<ProfilePage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Référence réservation',
-                                style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                            Text(tr('client.profile.reservationReference'),
+                                style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                             Text(
                               '#${r.idReservation}',
                               style: const TextStyle(
@@ -766,10 +503,10 @@ class _ProfilePageState extends State<ProfilePage>
           children: [
             Icon(Icons.confirmation_number_outlined, size: 64, color: AppColors.textMuted),
             const SizedBox(height: 16),
-            const Text('Aucun billet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            Text(tr('client.profile.noTickets'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
             const SizedBox(height: 4),
-            const Text('Vos billets apparaîtront ici après réservation.',
-                style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
+            Text(tr('client.profile.ticketsWillAppear'),
+                style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
           ],
         ),
       );
@@ -874,7 +611,7 @@ class _ProfilePageState extends State<ProfilePage>
                         children: [
                           Expanded(
                             child: Text(
-                              t.evenementTitre ?? 'Événement',
+                              t.evenementTitre ?? tr('client.profile.event'),
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -904,11 +641,11 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                         child: Row(
                           children: [
-                            _placementItem(Icons.meeting_room, 'Salle', t.salleNom ?? '—'),
-                            Container(height: 24, width: 1, color: AppColors.divider),
-                            _placementItem(Icons.view_column, 'Rang', t.rang ?? '—'),
-                            Container(height: 24, width: 1, color: AppColors.divider),
-                            _placementItem(Icons.event_seat, 'Place', t.numeroPlace ?? '—'),
+            _placementItem(Icons.meeting_room, tr('client.profile.room'), t.salleNom ?? '—'),
+            Container(height: 24, width: 1, color: AppColors.divider),
+            _placementItem(Icons.view_column, tr('client.profile.row'), t.rang ?? '—'),
+            Container(height: 24, width: 1, color: AppColors.divider),
+            _placementItem(Icons.event_seat, tr('client.profile.seat'), t.numeroPlace ?? '—'),
                           ],
                         ),
                       ),
@@ -940,7 +677,7 @@ class _ProfilePageState extends State<ProfilePage>
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Référence', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                          Text(tr('client.profile.reference'), style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                           const SizedBox(height: 2),
                           Text(
                             t.codeTicket,
@@ -970,8 +707,8 @@ class _ProfilePageState extends State<ProfilePage>
                       color: Colors.black.withValues(alpha: 0.65),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
-                      'EXPIRÉ',
+                    child: Text(
+                      tr('client.profile.expired'),
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14, letterSpacing: 1.5),
                     ),
                   ),

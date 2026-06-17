@@ -14,13 +14,12 @@ import '../../models/categorie_model.dart';
 import '../../models/caracteristique_model.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
+import '../../generated/app_localizations.dart';
 import 'create_event_page/step_1_general.dart';
 import 'create_event_page/step_2_date_time.dart';
 import 'create_event_page/step_3_location.dart';
 import 'create_event_page/step_4_pricing.dart';
 import 'create_event_page/step_5_summary.dart';
-
-const _steps = ['Infos', 'Date & Heure', 'Lieu & Places', 'Prix', 'Récapitulatif'];
 
 class CreateEventPage extends StatefulWidget {
   final Evenement? event;
@@ -32,6 +31,16 @@ class CreateEventPage extends StatefulWidget {
 
 class _CreateEventPageState extends State<CreateEventPage> {
   bool get _isEditing => widget.event != null;
+
+  String _stepLabel(int i) {
+    return [
+      AppLocalizations.of(context)!.stepInfos,
+      AppLocalizations.of(context)!.stepDateTime,
+      AppLocalizations.of(context)!.stepLocationSeats,
+      AppLocalizations.of(context)!.stepPricing,
+      AppLocalizations.of(context)!.stepSummary,
+    ][i];
+  }
 
   int _currentStep = 0;
 
@@ -134,6 +143,15 @@ class _CreateEventPageState extends State<CreateEventPage> {
     _titreCtrl.text = event.titre;
     if (event.description != null) _descriptionCtrl.text = event.description!;
     _selectedDate = event.dateEvenement;
+    if (event.heureEvenement != null) {
+      final parts = event.heureEvenement!.split(':');
+      if (parts.length >= 2) {
+        _selectedHeureDebut = TimeOfDay(
+          hour: int.tryParse(parts[0]) ?? 0,
+          minute: int.tryParse(parts[1]) ?? 0,
+        );
+      }
+    }
     _selectedCategorie = event.codeCategorie;
     _selectedLieu = event.codeLieu;
     if (event.typeAgencement != null) {
@@ -387,7 +405,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(_isEditing ? 'Événement modifié' : 'Événement créé'),
+        content: Text(_isEditing ? AppLocalizations.of(context)!.eventUpdatedMsg : AppLocalizations.of(context)!.eventCreatedMsg),
         backgroundColor: AppTheme.secondaryColor,
       ));
       Navigator.pop(context);
@@ -404,98 +422,123 @@ class _CreateEventPageState extends State<CreateEventPage> {
     return text.isNotEmpty && double.tryParse(text) != null;
   }).toList();
 
-  @override
-  Future<bool> _onWillPop() async {
-    if (_currentStep > 0) {
-      setState(() => _currentStep--);
-      return false;
+  bool _isStepValid(int index) {
+    switch (index) {
+      case 0: return _step1Valid;
+      case 1: return _step2Valid;
+      case 2:
+        if (_typePlacement == 'LIBRE') return _selectedLieu != null;
+        return _selectedLieu != null && _selectedSalle != null;
+      case 3: return true;
+      default: return true;
     }
-    final dirty = _titreCtrl.text.isNotEmpty || _descriptionCtrl.text.isNotEmpty;
-    if (!dirty) return true;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Quitter la création ?'),
-        content: const Text('Les informations saisies seront perdues.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Quitter')),
-        ],
-      ),
-    );
-    return confirm ?? false;
   }
 
+  bool get _isDirty =>
+      _titreCtrl.text.isNotEmpty ||
+      _descriptionCtrl.text.isNotEmpty ||
+      _selectedDate != null ||
+      _selectedHeureDebut != null ||
+      _selectedLieu != null ||
+      _selectedSalle != null ||
+      _standingZones.isNotEmpty;
+
+  @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
-        final shouldPop = await _onWillPop();
-        if (shouldPop && context.mounted) {
-          Navigator.of(context).pop();
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(title: Text(_isEditing ? 'Modifier' : 'Créer un événement')),
-        body: _dataLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  _buildStepper(),
-                  Expanded(
-                    child: Form(
-                      key: _formKey,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: _buildCurrentStep(),
-                      ),
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: Text(_isEditing
+            ? AppLocalizations.of(context)!.editEventTitle
+            : AppLocalizations.of(context)!.createEventTitle('${_currentStep + 1}', _stepLabel(_currentStep))),
+      ),
+      body: _dataLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildStepper(),
+                Expanded(
+                  child: Form(
+                    key: _formKey,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: _buildCurrentStep(),
                     ),
                   ),
-                  _buildFooter(),
-                ],
-              ),
-      ),
+                ),
+                _buildFooter(),
+              ],
+            ),
     );
   }
 
   Widget _buildStepper() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
-        border: Border(bottom: BorderSide(color: AppTheme.dividerColor)),
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3))),
       ),
       child: Row(
-        children: List.generate(_steps.length, (i) {
+        children: List.generate(5, (i) {
           final isActive = i == _currentStep;
           final isDone = i < _currentStep;
+          final canNavigate = () {
+            for (int j = 0; j < i; j++) {
+              if (!_isStepValid(j)) return false;
+            }
+            return true;
+          }();
           return Expanded(
             child: GestureDetector(
-              onTap: i <= _currentStep ? () => setState(() => _currentStep = i) : null,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 28, height: 28,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isActive ? AppTheme.primaryColor : (isDone ? AppTheme.secondaryColor : AppTheme.surfaceColor),
-                      border: Border.all(color: isActive || isDone ? Colors.transparent : AppTheme.textSecondary),
+              onTap: canNavigate ? () => setState(() => _currentStep = i) : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 28, height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isActive
+                            ? Theme.of(context).colorScheme.primary
+                            : isDone
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        border: Border.all(
+                          color: isActive || isDone
+                              ? Colors.transparent
+                              : Theme.of(context).colorScheme.outline,
+                        ),
+                      ),
+                      child: Center(
+                        child: isDone
+                            ? Icon(Icons.check, color: Theme.of(context).colorScheme.onSecondary, size: 16)
+                            : Text('${i + 1}', style: TextStyle(
+                                color: isActive
+                                    ? Theme.of(context).colorScheme.onPrimary
+                                    : Theme.of(context).colorScheme.onSurfaceVariant,
+                                fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
                     ),
-                    child: Center(
-                      child: isDone
-                          ? const Icon(Icons.check, color: Colors.white, size: 16)
-                          : Text('${i + 1}', style: TextStyle(
-                              color: isActive ? Colors.white : AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(_steps[i], style: TextStyle(
-                    fontSize: 9, color: isActive ? AppTheme.primaryColor : AppTheme.textSecondary,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                  )),
-                ],
+                    const SizedBox(height: 4),
+                    Text(_stepLabel(i), style: TextStyle(
+                      fontSize: 9,
+                      color: isActive
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                    )),
+                  ],
+                ),
               ),
             ),
           );
@@ -517,6 +560,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   Widget _buildStep1() {
     return buildStep1(
+      context: context,
       titreCtrl: _titreCtrl,
       descriptionCtrl: _descriptionCtrl,
       selectedCategorie: _selectedCategorie,
@@ -536,12 +580,14 @@ class _CreateEventPageState extends State<CreateEventPage> {
       },
       onPlacementChanged: (v) => setState(() => _typePlacement = v),
       onImagePicked: (path) => setState(() => _selectedImagePath = path),
+      onImageRemove: () => setState(() => _selectedImagePath = null),
       onRefresh: () => setState(() {}),
     );
   }
 
   Widget _buildStep2() {
     return buildStep2(
+      context: context,
       selectedDate: _selectedDate,
       nombreJours: _nombreJours,
       selectedHeureDebut: _selectedHeureDebut,
@@ -558,6 +604,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
   Widget _buildStep3() {
     return buildStep3(
+      context: context,
       selectedLieu: _selectedLieu,
       lieux: _lieux,
       selectedSalle: _selectedSalle,
@@ -577,26 +624,29 @@ class _CreateEventPageState extends State<CreateEventPage> {
       newPlaceTypeCtrl: _newPlaceTypeCtrl,
       places: _places,
       onLieuChanged: (v) {
-        setState(() { _selectedLieu = v; _selectedSalle = null; _salles = []; });
+        setState(() => _selectedLieu = v);
         if (v != null) _loadSalles(v);
       },
-      onSalleChanged: (v) {
-        setState(() => _selectedSalle = v);
-        _loadPlaces();
-      },
-      onSalleOptionnelleChanged: (v) => setState(() { _salleOptionnelle = v; _selectedSalle = null; _salles = []; }),
+      onSalleChanged: (v) => setState(() => _selectedSalle = v),
+      onSalleOptionnelleChanged: (v) => setState(() => _salleOptionnelle = v),
       onCapaciteIllimiteeChanged: (v) => setState(() => _capaciteIllimitee = v),
       onAddPlaceType: _addPlaceType,
-      onRemovePlaceType: _removePlaceType,
+      onRemovePlaceType: (t) => setState(() {
+        if (t != 'Standard' && t != 'VIP') {
+          _placeTypes.remove(t);
+          _typePriceCtrls.remove(t)?.dispose();
+        }
+      }),
       onAddStandingZone: _addStandingZone,
-      onRemoveStandingZone: _removeStandingZone,
-      onToggleCapaciteIllimitee: (v) => setState(() => _zoneCapaciteIllimitee = v),
+      onRemoveStandingZone: (i) => setState(() => _standingZones.removeAt(i)),
+      onToggleCapaciteIllimitee: (v) => setState(() => _capaciteIllimitee = v),
       onRefresh: () => setState(() {}),
     );
   }
 
   Widget _buildStep4() {
     return buildStep4(
+      context: context,
       typePlacement: _typePlacement,
       placeTypes: _placeTypes,
       typePriceCtrls: _typePriceCtrls,
@@ -612,17 +662,25 @@ class _CreateEventPageState extends State<CreateEventPage> {
       pendingPlaceAssignments: _pendingPlaceAssignments,
       onAssignTypeChanged: (v) => setState(() => _assignType = v),
       onAddPendingAssignment: _addPendingAssignment,
-      onClearPendingAssignments: () => setState(() { _pendingRowAssignments.clear(); _pendingPlaceAssignments.clear(); }),
-      onToggleRow: (v) => setState(() { if (_selectedRows.contains(v)) _selectedRows.remove(v); else _selectedRows.add(v); }),
-      onTogglePlace: (v) => setState(() { if (_selectedPlaceIds.contains(v)) _selectedPlaceIds.remove(v); else _selectedPlaceIds.add(v); }),
+      onClearPendingAssignments: () => setState(() {
+        _pendingRowAssignments.clear();
+        _pendingPlaceAssignments.clear();
+      }),
+      onToggleRow: (r) => setState(() {
+        if (_selectedRows.contains(r)) { _selectedRows.remove(r); } else { _selectedRows.add(r); }
+      }),
+      onTogglePlace: (p) => setState(() {
+        if (_selectedPlaceIds.contains(p)) { _selectedPlaceIds.remove(p); } else { _selectedPlaceIds.add(p); }
+      }),
       onToggleGridExpanded: (v) => setState(() => _gridExpanded = v),
-      onRemoveStandingZone: _removeStandingZone,
+      onRemoveStandingZone: (i) => setState(() => _standingZones.removeAt(i)),
       onRefresh: () => setState(() {}),
     );
   }
 
   Widget _buildStep5() {
     return buildStep5(
+      context: context,
       titreCtrl: _titreCtrl,
       selectedImagePath: _selectedImagePath,
       hasNewImage: _hasNewImage,
@@ -651,48 +709,64 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }
 
   Widget _buildFooter() {
+    final isLastStep = _currentStep == 4;
+    final canProceed = _isStepValid(_currentStep);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
-        border: Border(top: BorderSide(color: AppTheme.dividerColor)),
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3))),
       ),
       child: Row(children: [
-        if (_currentStep > 0)
-          TextButton.icon(
-            onPressed: () => setState(() => _currentStep--),
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Retour'),
-          )
-        else
-          const SizedBox(),
+        TextButton.icon(
+          onPressed: () async {
+            if (!_isDirty) {
+              Navigator.of(context).pop();
+              return;
+            }
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text(_isEditing ? AppLocalizations.of(context)!.cancelEditTitle : AppLocalizations.of(context)!.cancelCreateTitle),
+                content: Text(AppLocalizations.of(context)!.unsavedWarning),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.continueButton)),
+                  TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.cancelButton2)),
+                ],
+              ),
+            );
+            if (confirm == true && context.mounted) {
+              Navigator.of(context).pop();
+            }
+          },
+          icon: const Icon(Icons.close),
+          label: Text(AppLocalizations.of(context)!.cancelButton2),
+          style: TextButton.styleFrom(foregroundColor: AppColors.error),
+        ),
         const Spacer(),
-        if (_currentStep < _steps.length - 1)
-          ElevatedButton(
-            onPressed: _canNext() ? () => setState(() => _currentStep++) : null,
-            child: const Text('Suivant'),
-          )
-        else
-          ElevatedButton(
+        if (!isLastStep) ...[
+          if (_currentStep > 0)
+            TextButton.icon(
+              onPressed: () => setState(() => _currentStep--),
+              icon: const Icon(Icons.arrow_back),
+              label: Text(AppLocalizations.of(context)!.backButton),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              onPressed: canProceed ? () => setState(() => _currentStep++) : null,
+              child: Text(AppLocalizations.of(context)!.nextButton),
+          ),
+        ] else
+          FilledButton(
             onPressed: _loading ? null : _submit,
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.secondaryColor),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+            ),
             child: _loading
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Publier l\'événement'),
+                : Text(_isEditing ? AppLocalizations.of(context)!.editButton : AppLocalizations.of(context)!.publishButton),
           ),
       ]),
     );
-  }
-
-  bool _canNext() {
-    switch (_currentStep) {
-      case 0: return _step1Valid;
-      case 1: return _step2Valid;
-      case 2:
-        if (_typePlacement == 'LIBRE') return _selectedLieu != null;
-        return _selectedLieu != null && _selectedSalle != null;
-      case 3: return true;
-      default: return true;
-    }
   }
 }

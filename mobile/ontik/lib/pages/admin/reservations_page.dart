@@ -3,6 +3,7 @@ import '../../core/services/reservation_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/utils/error_helper.dart';
+import '../../localization/app_localizations.dart';
 
 import '../../models/reservation_model.dart';
 import '../../widgets/crud_list_view.dart';
@@ -20,7 +21,10 @@ class _ReservationsPageState extends State<ReservationsPage> {
   final _api = ReservationService();
 
   @override
-  void initState() { super.initState(); _loadData(); }
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
   Future<void> _loadData() async {
     setState(() => _loading = true);
@@ -28,13 +32,18 @@ class _ReservationsPageState extends State<ReservationsPage> {
       final resData = await _api.getReservations();
       if (!mounted) return;
       setState(() {
-        _reservations = resData.map((e) => Reservation.fromJson(e as Map<String, dynamic>)).toList();
+        _reservations = resData
+            .map((e) => Reservation.fromJson(e as Map<String, dynamic>))
+            .toList();
         _loading = false;
         _error = null;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = apiErrorString(e); _loading = false; });
+      setState(() {
+        _error = apiErrorString(e);
+        _loading = false;
+      });
     }
   }
 
@@ -43,26 +52,36 @@ class _ReservationsPageState extends State<ReservationsPage> {
       await dio.put('${Endpoints.reservations}/$id/cancel');
       _loadData();
       return true;
-    } catch (_) { return false; }
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return CrudListView(
-      title: 'Réservations',
+      title: tr('admin.reservations'),
       showAppBar: false,
       isLoading: _loading,
       error: _error,
-      items: _reservations.map((r) => CrudItem(
-        id: r.idReservation.toString(),
-        title: 'Réservation #${r.idReservation ?? '-'}',
-        subtitle: 'Client: ${r.codeClient}  •  ${r.dateReservation?.toIso8601String().split('T').first ?? ''}  •  ${r.codeTickets?.length ?? 0} ticket(s)',
-        leading: const CircleAvatar(backgroundColor: Color(0x339C27B0), child: Icon(Icons.book_online, color: Color(0xFF9C27B0))),
-        data: {'id': r.idReservation},
-      )).toList(),
+      items: _reservations
+          .map(
+            (r) => CrudItem(
+              id: r.idReservation.toString(),
+              title: '${tr('admin.reservations.item')} #${r.idReservation ?? '-'}',
+              subtitle:
+                  '${tr('admin.reservations.client')} ${r.codeClient}  •  ${r.dateReservation?.toIso8601String().split('T').first ?? ''}  •  ${r.codeTickets?.length ?? 0} ${tr('admin.reservations.tickets')}',
+              leading: const CircleAvatar(
+                backgroundColor: Color(0x339C27B0),
+                child: Icon(Icons.book_online, color: Color(0xFF9C27B0)),
+              ),
+              data: {'id': r.idReservation},
+            ),
+          )
+          .toList(),
       onDelete: _cancel,
       onRefresh: _loadData,
-      emptyMessage: 'Aucune réservation trouvée',
+      emptyMessage: tr('admin.reservations.empty'),
     );
   }
 }

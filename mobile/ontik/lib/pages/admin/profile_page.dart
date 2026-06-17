@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/user_service.dart';
@@ -6,8 +5,8 @@ import '../../core/api/dio_config.dart';
 import '../../core/routes/auth_routes.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
+import '../../localization/app_localizations.dart';
 import '../../widgets/profile_body.dart';
-import '../../widgets/two_factor_widget.dart';
 import 'action_history_page.dart';
 
 class AdminProfilePage extends StatefulWidget {
@@ -19,7 +18,6 @@ class AdminProfilePage extends StatefulWidget {
 
 class _AdminProfilePageState extends State<AdminProfilePage> {
   bool _loading = true;
-  bool _is2faEnabled = false;
   String _nom = '';
   String _prenoms = '';
   String _email = '';
@@ -88,13 +86,13 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Informations personnelles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  Text(tr('admin.profile.personalInfo'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 20),
-                  TextField(controller: nomCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder())),
+                  TextField(controller: nomCtrl, enabled: isEditing, decoration: InputDecoration(labelText: tr('admin.profile.lastName'), border: const OutlineInputBorder())),
                   const SizedBox(height: 12),
-                  TextField(controller: prenomsCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Prénoms', border: OutlineInputBorder())),
+                  TextField(controller: prenomsCtrl, enabled: isEditing, decoration: InputDecoration(labelText: tr('admin.profile.firstName'), border: const OutlineInputBorder())),
                   const SizedBox(height: 12),
-                  TextField(controller: emailCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
+                  TextField(controller: emailCtrl, enabled: isEditing, decoration: InputDecoration(labelText: tr('admin.profile.email'), border: const OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -107,11 +105,11 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                         final confirmed = await showDialog<bool>(
                           context: ctx,
                           builder: (dctx) => AlertDialog(
-                            title: const Text('Confirmer'),
-                            content: const Text('Voulez-vous enregistrer les modifications ?'),
+                            title: Text(tr('common.confirm')),
+                            content: Text(tr('admin.profile.saveConfirm')),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(dctx, false), child: const Text('Annuler')),
-                              TextButton(onPressed: () => Navigator.pop(dctx, true), child: const Text('Confirmer')),
+                              TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text(tr('common.cancel'))),
+                              TextButton(onPressed: () => Navigator.pop(dctx, true), child: Text(tr('common.confirm'))),
                             ],
                           ),
                         );
@@ -136,7 +134,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                           _loadProfile();
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Informations mises à jour'), backgroundColor: AppColors.secondary),
+                            SnackBar(content: Text(tr('admin.profile.updated')), backgroundColor: AppColors.secondary),
                           );
                         } catch (e) {
                           setSheetState(() => saving = false);
@@ -148,7 +146,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                       },
                       child: saving
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text(isEditing ? 'Enregistrer' : 'Modifier'),
+                          : Text(isEditing ? tr('common.save') : tr('common.edit')),
                     ),
                   ),
                 ],
@@ -160,116 +158,32 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     );
   }
 
-  void _showPasswordAnd2FA() {
-    showPasswordAnd2FABottomSheet(
-      context,
-      _is2faEnabled,
-      (val) {
-        if (mounted) setState(() => _is2faEnabled = val);
-      },
-    );
-  }
-
   void _showActionHistory() {
     Navigator.push(context, MaterialPageRoute(
       builder: (_) => Scaffold(
-        appBar: AppBar(title: const Text('Historique des actions')),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: ModalRoute.of(context)?.canPop == true
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new),
+                  onPressed: () => Navigator.pop(context),
+                )
+              : null,
+          title: Text(tr('admin.profile.actionHistory')),
+        ),
         body: const ActionHistoryPage(),
       ),
     ));
-  }
-
-  void _showConnectedDevices() {
-    final deviceName = Platform.isAndroid ? 'Android' : Platform.isIOS ? 'iOS' : 'Web';
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Appareils connectés',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                const Icon(Icons.phone_android, size: 32, color: AppColors.primary),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(deviceName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      Text('${userCode ?? "—"} • Appareil actuel',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text('Actif', style: TextStyle(fontSize: 11, color: AppColors.secondary)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            const Divider(),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  showDialog(
-                    context: context,
-                    builder: (dctx) => AlertDialog(
-                      title: const Text('Déconnexion'),
-                      content: const Text('Voulez-vous déconnecter tous les autres appareils ?'),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Annuler')),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(dctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Tous les autres appareils ont été déconnectés'),
-                                backgroundColor: AppColors.secondary,
-                              ),
-                            );
-                          },
-                          child: const Text('Déconnecter', style: TextStyle(color: Colors.red)),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.logout, size: 18),
-                label: const Text('Déconnecter les autres appareils'),
-                style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
   }
 
   void _logout() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Déconnexion'),
-        content: const Text('Voulez-vous vraiment vous déconnecter ?'),
+        title: Text(tr('admin.profile.logout')),
+        content: Text(tr('admin.profile.logoutConfirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -277,7 +191,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
               if (!context.mounted) return;
               Navigator.pushNamedAndRemoveUntil(context, AuthRoutes.login, (route) => false);
             },
-            child: const Text('Déconnexion', style: TextStyle(color: AppColors.error)),
+            child: Text(tr('admin.profile.logout'), style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -292,19 +206,15 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
 
     final displayName = '$_prenoms $_nom'.trim();
     return ProfileBody(
-      name: displayName.isNotEmpty ? displayName : (userNom ?? 'Administrateur'),
+      name: displayName.isNotEmpty ? displayName : (userNom ?? tr('admin.profile.admin')),
       email: _email.isNotEmpty ? _email : (userCode ?? '—'),
-      badge: 'ADMINISTRATEUR',
+      badge: tr('admin.profile.badge'),
       badgeColor: const Color(0xFF1565C0),
       onEditProfile: _showEditInfo,
       menuGroups: [
-        ProfileMenuGroup('Compte', [
-          ProfileMenuItem('Informations personnelles', Icons.person, onTap: _showEditInfo),
-          ProfileMenuItem('Historique des actions', Icons.history, onTap: _showActionHistory),
-        ]),
-        ProfileMenuGroup('Sécurité', [
-          ProfileMenuItem('Mot de passe & 2FA', Icons.lock, status: 'Sécurisé', onTap: _showPasswordAnd2FA),
-          ProfileMenuItem('Appareils connectés', Icons.devices, onTap: _showConnectedDevices),
+        ProfileMenuGroup(tr('admin.profile.account'), [
+          ProfileMenuItem(tr('admin.profile.personalInfo'), Icons.person, onTap: _showEditInfo),
+          ProfileMenuItem(tr('admin.profile.actionHistory'), Icons.history, onTap: _showActionHistory),
         ]),
       ],
       onLogout: _logout,

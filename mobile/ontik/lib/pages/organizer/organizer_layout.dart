@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
+import '../../core/services/app_config.dart';
+import '../../core/services/evenement_service.dart';
 import '../../core/services/notification_service.dart';
+import '../../models/evenement_model.dart';
 import '../../widgets/notification_bell.dart';
 import 'dashboard_page.dart';
 import 'event_page.dart';
 import 'profile_page.dart';
-import 'tickets_page.dart';
+import '../../generated/app_localizations.dart';
 import 'reservations_page.dart';
 
 class OrganizerLayout extends StatefulWidget {
@@ -17,12 +20,14 @@ class OrganizerLayout extends StatefulWidget {
 
 class _OrganizerLayoutState extends State<OrganizerLayout> {
   int _currentIndex = 0;
+  List<Evenement> _events = [];
 
   @override
   void initState() {
     super.initState();
     if (userCode != null) {
       NotificationManager.connect(userCode!, null);
+      _loadEvents();
     }
   }
 
@@ -32,36 +37,65 @@ class _OrganizerLayoutState extends State<OrganizerLayout> {
     super.dispose();
   }
 
-  void _navigateToTicket(int eventId) {
-    setState(() => _currentIndex = 2);
+  Future<void> _loadEvents() async {
+    try {
+      final data = await EvenementService().getEvents(orgCode: userCode ?? '');
+      if (!mounted) return;
+      setState(() {
+        _events = data.map((e) => Evenement.fromJson(e as Map<String, dynamic>)).toList();
+      });
+    } catch (_) {} 
+
+  }
+
+  void _navigateToEvents() {
+    setState(() => _currentIndex = 1);
   }
 
   void _navigateToReservation(int eventId) {
-    setState(() => _currentIndex = 3);
+    try {
+      final ev = _events.firstWhere((e) => e.idEvenement == eventId);
+      setActiveEvent(eventId, ev.titre);
+    } catch (_) {
+      setActiveEvent(eventId, '');
+    }
+    setState(() => _currentIndex = 2);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        surfaceTintColor: Theme.of(context).colorScheme.surfaceTint,
+        scrolledUnderElevation: 1.0,
+        centerTitle: false,
         title: Row(children: [
           Image.asset('lib/utils/logo_icon.png', height: 28, fit: BoxFit.contain, color: Colors.white),
           const SizedBox(width: 8),
-          const Text('Ontik - Organisateur'),
+          Text(AppLocalizations.of(context)!.layoutTitle),
         ]),
-        actions: const [
-          NotificationBell(),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
+          const NotificationBell(),
         ],
       ),
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          const DashboardPage(),
+          DashboardPage(onNavigateToEvents: _navigateToEvents),
           EventPage(
-            onViewTickets: _navigateToTicket,
             onViewReservations: _navigateToReservation,
           ),
-          const TicketsPage(),
           const ReservationsPage(),
           const ProfilePage(),
         ],
@@ -69,12 +103,11 @@ class _OrganizerLayoutState extends State<OrganizerLayout> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.event), label: '\u00C9v\u00E9nements'),
-          NavigationDestination(icon: Icon(Icons.confirmation_number), label: 'Tickets'),
-          NavigationDestination(icon: Icon(Icons.receipt_long), label: 'R\u00E9servations'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Compte'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.dashboard), label: AppLocalizations.of(context)!.dashboard),
+          NavigationDestination(icon: const Icon(Icons.event), label: AppLocalizations.of(context)!.events),
+          NavigationDestination(icon: const Icon(Icons.receipt_long), label: AppLocalizations.of(context)!.reservations),
+          NavigationDestination(icon: const Icon(Icons.person), label: AppLocalizations.of(context)!.account),
         ],
       ),
     );

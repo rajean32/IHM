@@ -6,6 +6,7 @@ import '../../models/evenement_model.dart';
 import '../../core/assets/app_colors.dart';
 import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
+import '../../generated/app_localizations.dart';
 import 'reservation_detail_page.dart';
 import 'create_event_page.dart';
 
@@ -32,7 +33,7 @@ class _TicketsPageState extends State<TicketsPage> {
   Future<void> _loadEvents() async {
     final orgCode = userCode ?? '';
     if (orgCode.isEmpty) {
-      if (mounted) setState(() { _loading = false; _error = 'Code organisateur introuvable. Reconnectez-vous.'; });
+      if (mounted) setState(() { _loading = false; _error = AppLocalizations.of(context)!.orgCodeMissingReconnect; });
       return;
     }
     setState(() => _loading = true);
@@ -71,11 +72,11 @@ class _TicketsPageState extends State<TicketsPage> {
 
   String _statusLabel(String? statut) {
     switch (statut) {
-      case 'PAYE': return 'Payé';
-      case 'EN_ATTENTE': return 'En attente';
-      case 'DISPONIBLE': return 'Disponible';
-      case 'CHECKED_IN': return 'Scanné';
-      default: return statut ?? 'Inconnu';
+      case 'PAYE': return AppLocalizations.of(context)!.paidStatus;
+      case 'EN_ATTENTE': return AppLocalizations.of(context)!.pendingStatus;
+      case 'DISPONIBLE': return AppLocalizations.of(context)!.availableStatus;
+      case 'CHECKED_IN': return AppLocalizations.of(context)!.scannedStatus;
+      default: return statut ?? AppLocalizations.of(context)!.unknownStatus;
     }
   }
 
@@ -105,7 +106,7 @@ class _TicketsPageState extends State<TicketsPage> {
                       Expanded(
                         child: DropdownButtonFormField<int>(
                           value: _selectedEventId,
-                          decoration: const InputDecoration(labelText: 'Événement', border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
+                          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.eventDropdown, border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8)),
                           items: _events.map((e) => DropdownMenuItem(value: e.idEvenement, child: Text(e.titre, style: const TextStyle(fontSize: 12)))).toList(),
                           onChanged: (v) { if (v != null) _loadTickets(v); },
                         ),
@@ -117,10 +118,10 @@ class _TicketsPageState extends State<TicketsPage> {
                           value: _periodFilter,
                           isExpanded: true,
                           decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 8)),
-                          items: const [
-                            DropdownMenuItem(value: 'all', child: Text('Tous', style: TextStyle(fontSize: 11))),
-                            DropdownMenuItem(value: 'paid', child: Text('Payés', style: TextStyle(fontSize: 11))),
-                            DropdownMenuItem(value: 'pending', child: Text('En att.', style: TextStyle(fontSize: 11))),
+                          items: [
+                            DropdownMenuItem(value: 'all', child: Text(AppLocalizations.of(context)!.allFilter, style: TextStyle(fontSize: 11))),
+                            DropdownMenuItem(value: 'paid', child: Text(AppLocalizations.of(context)!.paidFilter, style: TextStyle(fontSize: 11))),
+                            DropdownMenuItem(value: 'pending', child: Text(AppLocalizations.of(context)!.pendingFilter, style: TextStyle(fontSize: 11))),
                           ],
                           onChanged: (v) => setState(() => _periodFilter = v!),
                         ),
@@ -140,7 +141,7 @@ class _TicketsPageState extends State<TicketsPage> {
                             Expanded(child: Text(_ticketsError!, style: const TextStyle(fontSize: 11, color: AppTheme.errorColor))),
                             TextButton(
                               onPressed: () { if (_selectedEventId != null) _loadTickets(_selectedEventId!); },
-                              child: const Text('Réessayer', style: TextStyle(fontSize: 10)),
+                              child: Text(AppLocalizations.of(context)!.retryButton, style: TextStyle(fontSize: 10)),
                             ),
                           ]),
                         ),
@@ -153,10 +154,10 @@ class _TicketsPageState extends State<TicketsPage> {
                             ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                                 Icon(Icons.confirmation_number, size: 48, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
                                 const SizedBox(height: 12),
-                                const Text('Sélectionnez un événement', style: TextStyle(color: AppTheme.textSecondary)),
+                                Text(AppLocalizations.of(context)!.selectEvent, style: TextStyle(color: AppTheme.textSecondary)),
                               ]))
                             : filteredTickets.isEmpty
-                                ? const Center(child: Text('Aucun billet', style: TextStyle(color: AppTheme.textSecondary)))
+                                ? Center(child: Text(AppLocalizations.of(context)!.noTicketsText, style: TextStyle(color: AppTheme.textSecondary)))
                                 : RefreshIndicator(
                                     onRefresh: () => _loadTickets(_selectedEventId!),
                                     child: ListView.builder(
@@ -169,7 +170,7 @@ class _TicketsPageState extends State<TicketsPage> {
                                         final rang = t['rang'] ?? '';
                                         final type = t['typePlace'] ?? '';
                                         final prix = _fmtPrix(t['prix']);
-                                        final client = t['clientNom'] ?? 'Inconnu';
+                                        final client = t['clientNom'] ?? AppLocalizations.of(context)!.unknownClient;
                                         final statut = t['statut'] as String?;
                                         final sc = _statusColor(statut);
                                         final idReservation = t['idReservation'];
@@ -196,10 +197,10 @@ class _TicketsPageState extends State<TicketsPage> {
                                                 ]),
                                                 const SizedBox(height: 8),
                                                 Row(children: [
-                                                  _chip(Icons.event_seat, 'Place $place'),
+                                                  _chip(Icons.event_seat, AppLocalizations.of(context)!.seatPlace('$place')),
                                                   if (rang.isNotEmpty) ...[
                                                     const SizedBox(width: 8),
-                                                    _chip(Icons.format_line_spacing, 'Rang $rang'),
+                                                    _chip(Icons.format_line_spacing, AppLocalizations.of(context)!.rowDetail('$rang')),
                                                   ],
                                                 ]),
                                                 const SizedBox(height: 4),
@@ -223,7 +224,7 @@ class _TicketsPageState extends State<TicketsPage> {
                                                         child: OutlinedButton.icon(
                                                           onPressed: () => _openReservation(idReservation is int ? idReservation : int.parse(idReservation.toString())),
                                                           icon: const Icon(Icons.receipt, size: 12),
-                                                          label: const Text('Réservation', style: TextStyle(fontSize: 10)),
+                                                          label: Text(AppLocalizations.of(context)!.reservations, style: TextStyle(fontSize: 10)),
                                                           style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
                                                         ),
                                                       ),
@@ -235,7 +236,7 @@ class _TicketsPageState extends State<TicketsPage> {
                                                       child: OutlinedButton.icon(
                                                         onPressed: _selectedEventId != null ? () => _showEventDetail(_selectedEventId!) : null,
                                                         icon: const Icon(Icons.event, size: 12),
-                                                        label: const Text('Événement', style: TextStyle(fontSize: 10)),
+                                                        label: Text(AppLocalizations.of(context)!.eventLabel, style: TextStyle(fontSize: 10)),
                                                         style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
                                                       ),
                                                     ),

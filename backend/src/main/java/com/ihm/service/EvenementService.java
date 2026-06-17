@@ -318,6 +318,39 @@ public class EvenementService {
 
         Evenement saved = evenementRepository.save(event);
         log.info("Event updated: id={}", id);
+
+        // Notifier les clients réservés des modifications
+        try {
+            List<String> changes = new ArrayList<>();
+            if (dto.getTitre() != null && !dto.getTitre().equals(event.getTitre())) changes.add("titre");
+            if (dto.getDescription() != null && !dto.getDescription().equals(event.getDescription())) changes.add("description");
+            if (dto.getDateEvenement() != null && !dto.getDateEvenement().equals(event.getDateEvenement())) changes.add("date");
+            if (dto.getHeureEvenement() != null && !dto.getHeureEvenement().equals(event.getHeureEvenement())) changes.add("horaire");
+            if (dto.getPrix() != null && !dto.getPrix().equals(event.getPrix())) changes.add("prix");
+            if (dto.getStatut() != null && !dto.getStatut().equals(event.getStatut())) changes.add("statut");
+            if (!changes.isEmpty()) {
+                String titre = saved.getTitre();
+                String changeDesc = String.join(", ", changes);
+                String msg = "L'événement \"" + titre + "\" a été modifié : " + changeDesc + ".";
+                List<Reservation> reservations = reservationRepository.findByEvenementId(id);
+                for (Reservation r : reservations) {
+                    try {
+                        notificationService.create(
+                            r.getClient().getCodeUtilisateur(),
+                            "Événement modifié",
+                            msg,
+                            "EVENT_UPDATED",
+                            String.valueOf(id)
+                        );
+                    } catch (Exception ex) {
+                        log.warn("Failed to notify user {}: {}", r.getClient().getCodeUtilisateur(), ex.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to send change notifications for event {}: {}", id, e.getMessage());
+        }
+
         return toDTO(saved);
     }
 

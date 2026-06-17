@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { ENTITY_CONFIG } from '../../utils/entityConfig'
 import { getAll, getById, create, update, remove } from '../../api/entityApi'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const PAGE_SIZE = 15
 
 export default function AdminDataTable() {
   const { entity } = useParams()
   const config = ENTITY_CONFIG[entity]
+  const { t } = useLanguage()
 
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -33,7 +35,7 @@ export default function AdminDataTable() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  if (!config) return <div className="empty">Entity not found</div>
+  if (!config) return <div className="empty">{t('admin.dataTable.entityNotFound')}</div>
 
   const fields = config.fields || []
   const displayFields = config.displayFields || []
@@ -99,7 +101,7 @@ export default function AdminDataTable() {
   }
 
   async function handleDelete(row) {
-    if (!window.confirm('Delete this record?')) return
+    if (!window.confirm(t('admin.dataTable.deleteConfirm'))) return
     try {
       const idField = fields.find(f => !f.editable)
       const id = idField ? row[idField.key] : row._id
@@ -142,21 +144,21 @@ export default function AdminDataTable() {
     <div className="data-table-page">
       <div className="section-header">
         <h2>{config.label}</h2>
-        <button className="btn-primary" onClick={openCreate}>Add New</button>
+        <button className="btn-primary" onClick={openCreate}>{t('admin.dataTable.addNew')}</button>
       </div>
 
-      {error && <p className="msg error">{error}</p>}
+      {error && <p className="error-msg">{error}</p>}
 
       <input
         className="search-bar"
         type="text"
-        placeholder="Search..."
+        placeholder={t('admin.dataTable.search')}
         value={search}
         onChange={e => { setSearch(e.target.value); setPage(1) }}
       />
 
       {loading ? (
-        <div className="loading">Loading...</div>
+        <div className="loading">{t('common.loading')}</div>
       ) : (
         <>
           <div className="table-wrap">
@@ -172,7 +174,7 @@ export default function AdminDataTable() {
                       </th>
                     )
                   })}
-                  <th>Actions</th>
+                  <th>{t('admin.dataTable.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -182,22 +184,22 @@ export default function AdminDataTable() {
                       <td key={fk}>{row[fk] != null ? String(row[fk]) : '—'}</td>
                     ))}
                     <td>
-                      <button className="btn-icon" onClick={() => openEdit(row)}>Edit</button>
-                      <button className="btn-icon danger" onClick={() => handleDelete(row)}>Delete</button>
+                      <button className="btn-icon" onClick={() => openEdit(row)}>{t('admin.dataTable.edit')}</button>
+                      <button className="btn-icon danger" onClick={() => handleDelete(row)}>{t('admin.dataTable.delete')}</button>
                     </td>
                   </tr>
                 ))}
                 {paginated.length === 0 && (
-                  <tr><td colSpan={displayFields.length + 1} className="empty">No records</td></tr>
+                  <tr><td colSpan={displayFields.length + 1} className="empty">{t('admin.dataTable.noRecords')}</td></tr>
                 )}
               </tbody>
             </table>
           </div>
 
           <div className="pagination">
-            <button disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Prev</button>
-            <span>Page {safePage} of {totalPages}</span>
-            <button disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Next</button>
+            <button className="btn-secondary" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>{t('admin.dataTable.prev')}</button>
+            <span>{t('admin.dataTable.page')} {safePage} {t('admin.dataTable.of')} {totalPages}</span>
+            <button className="btn-secondary" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>{t('admin.dataTable.next')}</button>
           </div>
         </>
       )}
@@ -205,7 +207,7 @@ export default function AdminDataTable() {
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>{modal === 'create' ? 'Create' : 'Edit'} {config.label}</h3>
+            <h3>{modal === 'create' ? t('admin.dataTable.create') : t('admin.dataTable.edit')} {config.label}</h3>
             <form onSubmit={handleSave}>
               {fields.map(f => (
                 <label key={f.key}>
@@ -214,8 +216,8 @@ export default function AdminDataTable() {
                 </label>
               ))}
               <div className="form-actions">
-                <button type="submit" className="btn-primary">Save</button>
-                <button type="button" className="btn-secondary" onClick={() => setModal(null)}>Cancel</button>
+                <button type="submit" className="btn-primary">{t('admin.dataTable.save')}</button>
+                <button type="button" className="btn-secondary" onClick={() => setModal(null)}>{t('admin.dataTable.cancel')}</button>
               </div>
             </form>
           </div>

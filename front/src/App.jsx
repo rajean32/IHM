@@ -17,6 +17,7 @@ import ClientLayout from './pages/client/ClientLayout'
 import ClientHome from './pages/client/ClientHome'
 import BookingFlow from './pages/client/BookingFlow'
 import MyReservations from './pages/client/MyReservations'
+import SettingsPage from './pages/Settings/SettingsPage'
 
 function RequireAuth({ children, roles }) {
   const auth = getAuthToken()
@@ -50,7 +51,7 @@ export default function App() {
     else setReady(true)
   }, [])
 
-  if (!ready) return <div className="app-loading">Chargement...</div>
+  if (!ready) return <div className="app-loading">Loading...</div>
 
   return (
     <BrowserRouter>
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
         <Route path="/first-login" element={<RequireAuth><FirstLoginPage /></RequireAuth>} />
         <Route path="/" element={<RequireAuth><RoleHome /></RequireAuth>} />
+        <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
 
         <Route path="/admin" element={<RequireAuth roles={['ADMINISTRATEUR']}><AdminLayout /></RequireAuth>}>
           <Route index element={<AdminDashboard />} />

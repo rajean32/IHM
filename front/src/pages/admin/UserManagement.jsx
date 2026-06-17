@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getAll, create, update, remove } from '../../api/entityApi'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const PAGE_SIZE = 15
 
 export default function UserManagement() {
+  const { t } = useLanguage()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -65,7 +67,7 @@ export default function UserManagement() {
   }
 
   async function handleDelete(code) {
-    if (!window.confirm(`Delete user ${code}?`)) return
+    if (!window.confirm(`${t('admin.users.deleteConfirm')} ${code}?`)) return
     try {
       await remove('/api/admin/users', code)
       loadUsers()
@@ -93,11 +95,11 @@ export default function UserManagement() {
   }
 
   async function handleResetPassword(code) {
-    const newPassword = prompt('Enter new password:')
+    const newPassword = prompt(t('admin.users.resetPwdPrompt'))
     if (!newPassword || !newPassword.trim()) return
     try {
       await create('/api/admin/users/reset-password', { codeUtilisateur: code, newPassword })
-      alert('Password reset successfully')
+      alert(t('admin.users.resetPwdSuccess'))
     } catch (err) {
       setError(err.message)
     }
@@ -106,35 +108,35 @@ export default function UserManagement() {
   return (
     <div className="user-mgmt">
       <div className="section-header">
-        <h2>User Management</h2>
-        <button className="btn-primary" onClick={openCreate}>Add User</button>
+        <h2>{t('admin.users.title')}</h2>
+        <button className="btn-primary" onClick={openCreate}>{t('admin.users.addUser')}</button>
       </div>
 
-      {error && <p className="msg error">{error}</p>}
+      {error && <p className="error-msg">{error}</p>}
 
       <input
         className="search-bar"
         type="text"
-        placeholder="Search users..."
+        placeholder={t('admin.users.search')}
         value={search}
         onChange={e => { setSearch(e.target.value); setPage(1) }}
       />
 
       {loading ? (
-        <div className="loading">Loading...</div>
+        <div className="loading">{t('common.loading')}</div>
       ) : (
         <>
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Nom</th>
-                  <th>Prénoms</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Active</th>
-                  <th>Actions</th>
+                  <th>{t('admin.users.code')}</th>
+                  <th>{t('admin.users.lastName')}</th>
+                  <th>{t('admin.users.firstName')}</th>
+                  <th>{t('admin.users.email')}</th>
+                  <th>{t('admin.users.role')}</th>
+                  <th>{t('admin.users.active')}</th>
+                  <th>{t('admin.users.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,40 +147,40 @@ export default function UserManagement() {
                     <td>{u.prenoms}</td>
                     <td>{u.email}</td>
                     <td>{u.role}</td>
-                    <td>{u.active != null ? (u.active ? 'Yes' : 'No') : (u.enabled != null ? (u.enabled ? 'Yes' : 'No') : '—')}</td>
+                    <td>{u.active != null ? (u.active ? t('admin.users.yes') : t('admin.users.no')) : (u.enabled != null ? (u.enabled ? t('admin.users.yes') : t('admin.users.no')) : '—')}</td>
                     <td>
-                      <button className="btn-icon" onClick={() => openEdit(u)}>Edit</button>
+                      <button className="btn-icon" onClick={() => openEdit(u)}>{t('admin.users.edit')}</button>
                       <select
                         className="mod-select"
                         value=""
                         onChange={e => { if (e.target.value) handleChangeRole(u.codeUtilisateur, e.target.value) }}
                       >
-                        <option value="">Change Role</option>
+                        <option value="">{t('admin.users.changeRole')}</option>
                         <option value="CLIENT">CLIENT</option>
                         <option value="ORGANISATEUR">ORGANISATEUR</option>
                         <option value="ADMINISTRATEUR">ADMINISTRATEUR</option>
                       </select>
                       <button className="btn-icon" onClick={() => handleToggleActive(u.codeUtilisateur)}>
-                        Toggle Active
+                        {t('admin.users.toggleActive')}
                       </button>
                       <button className="btn-icon" onClick={() => handleResetPassword(u.codeUtilisateur)}>
-                        Reset Pwd
+                        {t('admin.users.resetPwd')}
                       </button>
-                      <button className="btn-icon danger" onClick={() => handleDelete(u.codeUtilisateur)}>Delete</button>
+                      <button className="btn-icon danger" onClick={() => handleDelete(u.codeUtilisateur)}>{t('admin.users.delete')}</button>
                     </td>
                   </tr>
                 ))}
                 {paginated.length === 0 && (
-                  <tr><td colSpan={7} className="empty">No users found</td></tr>
+                  <tr><td colSpan={7} className="empty">{t('admin.users.noUsers')}</td></tr>
                 )}
               </tbody>
             </table>
           </div>
 
           <div className="pagination">
-            <button disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Prev</button>
-            <span>Page {safePage} of {totalPages}</span>
-            <button disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Next</button>
+            <button className="btn-secondary" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>{t('admin.users.prev')}</button>
+            <span>{t('admin.dataTable.page')} {safePage} {t('admin.dataTable.of')} {totalPages}</span>
+            <button className="btn-secondary" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>{t('admin.users.next')}</button>
           </div>
         </>
       )}
@@ -186,22 +188,22 @@ export default function UserManagement() {
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>{modal === 'create' ? 'Create' : 'Edit'} User</h3>
+            <h3>{modal === 'create' ? t('admin.users.create') : t('admin.users.edit')} User</h3>
             <form onSubmit={handleSave}>
               <label>
-                Code
+                {t('admin.users.code')}
                 <input type="text" value={form.codeUtilisateur || ''} onChange={e => setForm({ ...form, codeUtilisateur: e.target.value })} required />
               </label>
               <label>
-                Nom
+                {t('admin.users.lastName')}
                 <input type="text" value={form.nom || ''} onChange={e => setForm({ ...form, nom: e.target.value })} required />
               </label>
               <label>
-                Prénoms
+                {t('admin.users.firstName')}
                 <input type="text" value={form.prenoms || ''} onChange={e => setForm({ ...form, prenoms: e.target.value })} required />
               </label>
               <label>
-                Sexe
+                {t('admin.users.sexe')}
                 <select value={form.sexe || ''} onChange={e => setForm({ ...form, sexe: e.target.value })}>
                   <option value="">—</option>
                   <option value="M">M</option>
@@ -209,31 +211,31 @@ export default function UserManagement() {
                 </select>
               </label>
               <label>
-                Date de Naissance
+                {t('admin.users.birthDate')}
                 <input type="date" value={form.dateDeNaissance || ''} onChange={e => setForm({ ...form, dateDeNaissance: e.target.value })} />
               </label>
               <label>
-                Email
+                {t('admin.users.email')}
                 <input type="email" value={form.email || ''} onChange={e => setForm({ ...form, email: e.target.value })} required />
               </label>
               <label>
-                Téléphone
+                {t('admin.users.phone')}
                 <input type="text" value={form.tel || ''} onChange={e => setForm({ ...form, tel: e.target.value })} />
               </label>
               {modal === 'create' && (
                 <label>
-                  Mot de passe
+                  {t('admin.users.password')}
                   <input type="password" value={form.motDePasse || ''} onChange={e => setForm({ ...form, motDePasse: e.target.value })} required />
                 </label>
               )}
               {modal === 'edit' && (
                 <label>
-                  Mot de passe (leave empty to keep)
+                  {t('admin.users.passwordKeep')}
                   <input type="password" value={form.motDePasse || ''} onChange={e => setForm({ ...form, motDePasse: e.target.value })} />
                 </label>
               )}
               <label>
-                Rôle
+                {t('admin.users.roleLabel')}
                 <select value={form.role || 'CLIENT'} onChange={e => setForm({ ...form, role: e.target.value })}>
                   <option value="CLIENT">CLIENT</option>
                   <option value="ORGANISATEUR">ORGANISATEUR</option>
@@ -241,8 +243,8 @@ export default function UserManagement() {
                 </select>
               </label>
               <div className="form-actions">
-                <button type="submit" className="btn-primary">Save</button>
-                <button type="button" className="btn-secondary" onClick={() => setModal(null)}>Cancel</button>
+                <button type="submit" className="btn-primary">{t('admin.users.save')}</button>
+                <button type="button" className="btn-secondary" onClick={() => setModal(null)}>{t('admin.users.cancel')}</button>
               </div>
             </form>
           </div>

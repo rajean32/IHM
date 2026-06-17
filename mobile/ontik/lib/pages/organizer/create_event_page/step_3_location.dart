@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../models/lieu_model.dart';
 import '../../../models/event_place_config_model.dart';
 import '../../../core/assets/app_colors.dart';
+import '../../../generated/app_localizations.dart';
 
 Widget buildStep3({
+  required BuildContext context,
   required String? selectedLieu,
   required List<Lieu> lieux,
   required String? selectedSalle,
@@ -35,30 +37,30 @@ Widget buildStep3({
 }) {
   final lieuxFiltres = lieux;
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    const Text('Lieu & Configuration', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+    Text(AppLocalizations.of(context)!.locationConfig, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     const SizedBox(height: 16),
     DropdownButtonFormField<String>(
       value: selectedLieu,
       isExpanded: true,
-      decoration: const InputDecoration(labelText: 'Lieu / Bâtiment', border: OutlineInputBorder()),
+      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.venueDropdown, border: OutlineInputBorder()),
       items: lieuxFiltres.map((l) => DropdownMenuItem(value: l.code, child: Text(l.nomLieu))).toList(),
       onChanged: onLieuChanged,
     ),
     const SizedBox(height: 12),
-    if (typePlacement == 'LIBRE') _buildLibreSection(selectedLieu, selectedSalle, salles, loadingSalles,
+    if (typePlacement == 'LIBRE') _buildLibreSection(context, selectedLieu, selectedSalle, salles, loadingSalles,
         salleOptionnelle, capaciteIllimitee, capaciteLibreCtrl, placeTypes, newPlaceTypeCtrl, typePriceCtrls,
         onSalleChanged, onSalleOptionnelleChanged, onCapaciteIllimiteeChanged,
         onAddPlaceType, onRemovePlaceType, onRefresh),
-    if (typePlacement == 'NUMEROTE') _buildNumeroteSection(selectedLieu, salles, loadingSalles, selectedSalle,
+    if (typePlacement == 'NUMEROTE') _buildNumeroteSection(context, selectedLieu, salles, loadingSalles, selectedSalle,
         placeTypes, newPlaceTypeCtrl, onSalleChanged, onAddPlaceType, onRemovePlaceType, onRefresh),
-    if (typePlacement == 'MIXTE') _buildMixteSection(selectedLieu, salles, loadingSalles, selectedSalle,
+    if (typePlacement == 'MIXTE') _buildMixteSection(context, selectedLieu, salles, loadingSalles, selectedSalle,
         placeTypes, newPlaceTypeCtrl, standingZones, zoneNomCtrl, zoneCapaciteCtrl, zonePrixCtrl, zoneCapaciteIllimitee,
         onSalleChanged, onAddPlaceType, onRemovePlaceType, onAddStandingZone, onRemoveStandingZone, onToggleCapaciteIllimitee, onRefresh),
   ]);
 }
 
 Widget _buildLibreSection(
-    String? selectedLieu, String? selectedSalle, List<Map<String, dynamic>> salles, bool loadingSalles,
+    BuildContext context, String? selectedLieu, String? selectedSalle, List<Map<String, dynamic>> salles, bool loadingSalles,
     bool salleOptionnelle, bool capaciteIllimitee, TextEditingController capaciteLibreCtrl,
     List<String> placeTypes, TextEditingController newPlaceTypeCtrl, Map<String, TextEditingController> typePriceCtrls,
     ValueChanged<String> onSalleChanged, ValueChanged<bool> onSalleOptionnelleChanged,
@@ -66,7 +68,7 @@ Widget _buildLibreSection(
     VoidCallback onAddPlaceType, ValueChanged<String> onRemovePlaceType, VoidCallback onRefresh) {
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     SwitchListTile(
-      title: const Text('Sans salle spécifique', style: TextStyle(fontSize: 14)),
+      title: Text(AppLocalizations.of(context)!.withoutRoom, style: TextStyle(fontSize: 14)),
       value: salleOptionnelle,
       onChanged: onSalleOptionnelleChanged,
       contentPadding: EdgeInsets.zero,
@@ -75,18 +77,18 @@ Widget _buildLibreSection(
       if (loadingSalles)
         const Center(child: CircularProgressIndicator(strokeWidth: 2))
       else if (salles.isEmpty)
-        Text('Aucune salle disponible', style: TextStyle(color: AppTheme.textSecondary))
+        Text(AppLocalizations.of(context)!.noRoomsAvailable, style: TextStyle(color: AppTheme.textSecondary))
       else ...[
-        const Text('Salle', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        Text(AppLocalizations.of(context)!.roomLabel, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        ...salles.map((s) => _buildSalleTile(s, selectedSalle, onSalleChanged)),
+        ...salles.map((s) => _buildSalleTile(context, s, selectedSalle, onSalleChanged)),
       ],
     ],
     const SizedBox(height: 16),
-    const Text('Capacité', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+    Text(AppLocalizations.of(context)!.capacityLabel, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
     const SizedBox(height: 8),
     SwitchListTile(
-      title: const Text('Sans limite de personnes', style: TextStyle(fontSize: 14)),
+      title: Text(AppLocalizations.of(context)!.unlimitedCapacity, style: TextStyle(fontSize: 14)),
       value: capaciteIllimitee,
       onChanged: onCapaciteIllimiteeChanged,
       contentPadding: EdgeInsets.zero,
@@ -94,13 +96,13 @@ Widget _buildLibreSection(
     if (!capaciteIllimitee)
       TextFormField(
         controller: capaciteLibreCtrl,
-        decoration: const InputDecoration(labelText: 'Nombre max de personnes', border: OutlineInputBorder(),
-            helperText: 'Laissez vide pour illimité'),
+        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.maxPeopleLabel, border: OutlineInputBorder(),
+            helperText: AppLocalizations.of(context)!.unlimitedHint),
         keyboardType: TextInputType.number,
       ),
     const SizedBox(height: 8),
     const Divider(),
-    const Text('Types de places tarifs', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+    Text(AppLocalizations.of(context)!.seatTypesPricingLabel, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
     const SizedBox(height: 8),
     ...placeTypes.map((type) {
       typePriceCtrls.putIfAbsent(type, () => TextEditingController());
@@ -114,8 +116,8 @@ Widget _buildLibreSection(
               width: 100,
               child: TextField(
                 controller: typePriceCtrls[type]!,
-                decoration: const InputDecoration(hintText: 'Prix', border: OutlineInputBorder(), isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8), prefixText: 'Ar '),
+                decoration: InputDecoration(hintText: AppLocalizations.of(context)!.priceField, border: OutlineInputBorder(), isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8), prefixText: AppLocalizations.of(context)!.pricePrefix),
                 keyboardType: TextInputType.number,
                 style: const TextStyle(fontSize: 13),
               ),
@@ -124,12 +126,12 @@ Widget _buildLibreSection(
         ),
       );
     }),
-    _buildPlaceTypeManager(placeTypes, newPlaceTypeCtrl, onAddPlaceType, onRemovePlaceType, onRefresh),
+    _buildPlaceTypeManager(context, placeTypes, newPlaceTypeCtrl, onAddPlaceType, onRemovePlaceType, onRefresh),
   ]);
 }
 
 Widget _buildNumeroteSection(
-    String? selectedLieu, List<Map<String, dynamic>> salles, bool loadingSalles, String? selectedSalle,
+    BuildContext context, String? selectedLieu, List<Map<String, dynamic>> salles, bool loadingSalles, String? selectedSalle,
     List<String> placeTypes, TextEditingController newPlaceTypeCtrl,
     ValueChanged<String> onSalleChanged,
     VoidCallback onAddPlaceType, ValueChanged<String> onRemovePlaceType, VoidCallback onRefresh) {
@@ -138,18 +140,18 @@ Widget _buildNumeroteSection(
     if (loadingSalles)
       const Center(child: CircularProgressIndicator(strokeWidth: 2))
     else if (salles.isEmpty)
-      Text('Aucune salle disponible', style: TextStyle(color: AppTheme.textSecondary))
+      Text(AppLocalizations.of(context)!.noRoomsAvailable, style: TextStyle(color: AppTheme.textSecondary))
     else ...[
-      const Text('Salle *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+      Text(AppLocalizations.of(context)!.roomRequiredLabel, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
       const SizedBox(height: 6),
-      ...salles.map((s) => _buildSalleTile(s, selectedSalle, onSalleChanged)),
+      ...salles.map((s) => _buildSalleTile(context, s, selectedSalle, onSalleChanged)),
     ],
-    _buildPlaceTypeManager(placeTypes, newPlaceTypeCtrl, onAddPlaceType, onRemovePlaceType, onRefresh),
+    _buildPlaceTypeManager(context, placeTypes, newPlaceTypeCtrl, onAddPlaceType, onRemovePlaceType, onRefresh),
   ]);
 }
 
 Widget _buildMixteSection(
-    String? selectedLieu, List<Map<String, dynamic>> salles, bool loadingSalles, String? selectedSalle,
+    BuildContext context, String? selectedLieu, List<Map<String, dynamic>> salles, bool loadingSalles, String? selectedSalle,
     List<String> placeTypes, TextEditingController newPlaceTypeCtrl, List<Map<String, dynamic>> standingZones,
     TextEditingController zoneNomCtrl, TextEditingController zoneCapaciteCtrl,
     TextEditingController zonePrixCtrl, bool zoneCapaciteIllimitee,
@@ -161,16 +163,16 @@ Widget _buildMixteSection(
     if (loadingSalles)
       const Center(child: CircularProgressIndicator(strokeWidth: 2))
     else if (salles.isEmpty)
-      Text('Aucune salle disponible', style: TextStyle(color: AppTheme.textSecondary))
+      Text(AppLocalizations.of(context)!.noRoomsAvailable, style: TextStyle(color: AppTheme.textSecondary))
     else ...[
-      const Text('Salle *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+      Text(AppLocalizations.of(context)!.roomRequiredLabel, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
       const SizedBox(height: 6),
-      ...salles.map((s) => _buildSalleTile(s, selectedSalle, onSalleChanged)),
+      ...salles.map((s) => _buildSalleTile(context, s, selectedSalle, onSalleChanged)),
     ],
-    _buildPlaceTypeManager(placeTypes, newPlaceTypeCtrl, onAddPlaceType, onRemovePlaceType, onRefresh),
+    _buildPlaceTypeManager(context, placeTypes, newPlaceTypeCtrl, onAddPlaceType, onRemovePlaceType, onRefresh),
     const SizedBox(height: 16),
     const Divider(),
-    const Text('Zones debout', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+    Text(AppLocalizations.of(context)!.standingZonesLabel, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
     const SizedBox(height: 8),
     ...standingZones.asMap().entries.map((entry) {
       final i = entry.key;
@@ -181,8 +183,8 @@ Widget _buildMixteSection(
           dense: true,
           title: Text(z['nom'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
           subtitle: Text(
-            '${z['capacite'] != null ? '${z['capacite']} pers. max' : 'Sans limite'}'
-            ' — Ar ${(z['prix'] as num).toStringAsFixed(2)}',
+            '${z['capacite'] != null ? AppLocalizations.of(context)!.zoneCapacityInfo('${z['capacite']}') : AppLocalizations.of(context)!.zoneCapacityUnlimited}'
+            ' — ${AppLocalizations.of(context)!.zonePricePrefix((z['prix'] as num).toStringAsFixed(2))}',
             style: const TextStyle(fontSize: 12),
           ),
           trailing: IconButton(
@@ -192,12 +194,12 @@ Widget _buildMixteSection(
         ),
       );
     }),
-    _buildAddZoneForm(zoneNomCtrl, zoneCapaciteCtrl, zonePrixCtrl, zoneCapaciteIllimitee, onAddStandingZone, onToggleCapaciteIllimitee, onRefresh),
+    _buildAddZoneForm(context, zoneNomCtrl, zoneCapaciteCtrl, zonePrixCtrl, zoneCapaciteIllimitee, onAddStandingZone, onToggleCapaciteIllimitee, onRefresh),
   ]);
 }
 
 Widget _buildAddZoneForm(
-    TextEditingController zoneNomCtrl, TextEditingController zoneCapaciteCtrl,
+    BuildContext context, TextEditingController zoneNomCtrl, TextEditingController zoneCapaciteCtrl,
     TextEditingController zonePrixCtrl, bool zoneCapaciteIllimitee,
     VoidCallback onAddStandingZone, ValueChanged<bool> onToggleCapaciteIllimitee,
     VoidCallback onRefresh) {
@@ -206,12 +208,12 @@ Widget _buildAddZoneForm(
     child: Padding(
       padding: const EdgeInsets.all(12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Ajouter une zone debout', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        Text(AppLocalizations.of(context)!.addStandingZoneTitle, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: zoneNomCtrl,
-          decoration: const InputDecoration(labelText: 'Nom de la zone', border: OutlineInputBorder(), isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10), hintText: 'Fosse, Balcon...'),
+          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.zoneNameLabel, border: OutlineInputBorder(), isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10), hintText: AppLocalizations.of(context)!.zoneNameHint),
           style: const TextStyle(fontSize: 13),
         ),
         const SizedBox(height: 8),
@@ -219,7 +221,7 @@ Widget _buildAddZoneForm(
           Expanded(
             child: TextField(
               controller: zoneCapaciteCtrl,
-              decoration: const InputDecoration(labelText: 'Capacité max', border: OutlineInputBorder(), isDense: true,
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.zoneCapacityLabel, border: OutlineInputBorder(), isDense: true,
                   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
               keyboardType: TextInputType.number,
               enabled: !zoneCapaciteIllimitee,
@@ -229,13 +231,13 @@ Widget _buildAddZoneForm(
           const SizedBox(width: 8),
           TextButton(
             onPressed: () => onToggleCapaciteIllimitee(!zoneCapaciteIllimitee),
-            child: Text(zoneCapaciteIllimitee ? 'Illimité' : 'Limitée', style: const TextStyle(fontSize: 12)),
+            child: Text(zoneCapaciteIllimitee ? AppLocalizations.of(context)!.unlimitedToggle : AppLocalizations.of(context)!.limitedToggle, style: TextStyle(fontSize: 12)),
           ),
         ]),
         const SizedBox(height: 8),
         TextField(
           controller: zonePrixCtrl,
-          decoration: const InputDecoration(labelText: 'Prix unitaire (Ar)', border: OutlineInputBorder(), isDense: true,
+          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.zonePriceLabel, border: OutlineInputBorder(), isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
           keyboardType: TextInputType.number,
           style: const TextStyle(fontSize: 13),
@@ -246,7 +248,7 @@ Widget _buildAddZoneForm(
           child: ElevatedButton.icon(
             onPressed: zoneNomCtrl.text.trim().isEmpty ? null : onAddStandingZone,
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('Ajouter la zone', style: TextStyle(fontSize: 12)),
+            label: Text(AppLocalizations.of(context)!.addZoneButton, style: TextStyle(fontSize: 12)),
           ),
         ),
       ]),
@@ -254,7 +256,7 @@ Widget _buildAddZoneForm(
   );
 }
 
-Widget _buildSalleTile(Map<String, dynamic> s, String? selectedSalle, ValueChanged<String> onSalleChanged) {
+Widget _buildSalleTile(BuildContext context, Map<String, dynamic> s, String? selectedSalle, ValueChanged<String> onSalleChanged) {
   final id = s['numeroSalle'] as String? ?? '';
   final nom = s['nomSalle'] as String? ?? id;
   final capacite = s['capacite'];
@@ -273,19 +275,19 @@ Widget _buildSalleTile(Map<String, dynamic> s, String? selectedSalle, ValueChang
         Icon(Icons.meeting_room, size: 20, color: selected ? AppTheme.primaryColor : AppTheme.textSecondary),
         const SizedBox(width: 10),
         Expanded(child: Text(nom, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
-        if (capacite != null) Text('$capacite pl.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+        if (capacite != null) Text(AppLocalizations.of(context)!.capacityPlaces('$capacite'), style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
       ]),
     ),
   );
 }
 
-Widget _buildPlaceTypeManager(List<String> placeTypes, TextEditingController newPlaceTypeCtrl,
+Widget _buildPlaceTypeManager(BuildContext context, List<String> placeTypes, TextEditingController newPlaceTypeCtrl,
     VoidCallback onAddPlaceType, ValueChanged<String> onRemovePlaceType, VoidCallback onRefresh) {
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     const SizedBox(height: 16),
-    const Text('Types de places', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+    Text(AppLocalizations.of(context)!.seatTypesLabel, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
     const SizedBox(height: 4),
-    Text('Créez les catégories de places (Standard, VIP, Fosse, Balcon...)',
+    Text(AppLocalizations.of(context)!.seatTypesDesc,
         style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
     const SizedBox(height: 8),
     Wrap(spacing: 8, runSpacing: 8, children: placeTypes.map((type) {
@@ -302,7 +304,7 @@ Widget _buildPlaceTypeManager(List<String> placeTypes, TextEditingController new
       Expanded(
         child: TextField(
           controller: newPlaceTypeCtrl,
-          decoration: const InputDecoration(hintText: 'Nouveau type...', border: OutlineInputBorder(), isDense: true,
+          decoration: InputDecoration(hintText: AppLocalizations.of(context)!.newTypeHint, border: OutlineInputBorder(), isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10)),
           style: const TextStyle(fontSize: 13),
         ),

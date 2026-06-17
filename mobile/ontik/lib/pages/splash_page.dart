@@ -46,14 +46,11 @@ class _SplashPageState extends State<SplashPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.confirmation_number_rounded, size: 64, color: Colors.white),
-            const SizedBox(height: 20),
-            Text(
-              'Ontik',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+            Image.asset(
+              'lib/utils/logo_icon.png',
+              height: 100,
+              fit: BoxFit.contain,
+              color: Colors.white,
             ),
             const SizedBox(height: 32),
             const CircularProgressIndicator(color: Colors.white),

@@ -8,6 +8,7 @@ import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
+import '../../localization/app_localizations.dart';
 
 class TicketPage extends StatefulWidget {
   final String ticketCode;
@@ -63,7 +64,16 @@ class _TicketPageState extends State<TicketPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Billet')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: ModalRoute.of(context)?.canPop == true
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: Text(tr('client.ticket.title')),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -77,13 +87,13 @@ class _TicketPageState extends State<TicketPage> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadTicket,
-                        child: const Text('Réessayer'),
+                        child: Text(tr('common.retry')),
                       ),
                     ],
                   ),
                 )
               : _qrData == null
-                  ? const Center(child: Text('Billet non trouvé'))
+                  ? Center(child: Text(tr('client.ticket.notFound')))
                   : _buildTicket(),
     );
   }
@@ -116,7 +126,7 @@ class _TicketPageState extends State<TicketPage> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    isValid ? 'VALIDE' : 'INVALIDE',
+                    isValid ? tr('client.ticket.valid') : tr('client.ticket.invalid'),
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -127,22 +137,22 @@ class _TicketPageState extends State<TicketPage> {
                 ElevatedButton.icon(
                   onPressed: _downloadPDF,
                   icon: const Icon(Icons.download, size: 18),
-                  label: const Text('Télécharger PDF'),
+                  label: Text(tr('client.ticket.downloadPDF')),
                 ),
                 const SizedBox(height: 12),
                 const Divider(),
-                _infoRow('Événement', _qrData!['evenementTitre'] ?? 'N/A'),
-                _infoRow('Place', _qrData!['placeNumero'] ?? 'N/A'),
+                _infoRow(tr('client.ticket.event'), _qrData!['evenementTitre'] ?? 'N/A'),
+                _infoRow(tr('client.ticket.seat'), _qrData!['placeNumero'] ?? 'N/A'),
                 if (_qrData!['rang'] != null)
-                  _infoRow('Rangée', _qrData!['rang']),
+                  _infoRow(tr('client.ticket.row'), _qrData!['rang']),
                 if (_qrData!['typePlace'] != null)
-                  _infoRow('Type', _qrData!['typePlace']),
+                  _infoRow(tr('client.ticket.type'), _qrData!['typePlace']),
                 if (_qrData!['zoneNom'] != null)
-                  _infoRow('Zone', _qrData!['zoneNom']),
+                  _infoRow(tr('client.ticket.zone'), _qrData!['zoneNom']),
                 if (_qrData!['prix'] != null)
-                  _infoRow('Prix', 'Ar ${_qrData!['prix']}'),
+                  _infoRow(tr('client.ticket.price'), 'Ar ${_qrData!['prix']}'),
                 if (_qrData!['clientNom'] != null)
-                  _infoRow('Titulaire', _qrData!['clientNom']),
+                  _infoRow(tr('client.ticket.holder'), _qrData!['clientNom']),
                 const Divider(),
                 Text(
                   _qrData!['codeTicket'] ?? '',
@@ -167,12 +177,12 @@ class _TicketPageState extends State<TicketPage> {
       await file.writeAsBytes(response.data as List<int>);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('PDF enregistré dans ${file.path}'), backgroundColor: AppColors.secondary),
+        SnackBar(content: Text('${tr('client.ticket.pdfSaved')} ${file.path}'), backgroundColor: AppColors.secondary),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Échec du téléchargement : $e'), backgroundColor: AppColors.error),
+        SnackBar(content: Text('${tr('client.ticket.downloadFailed')} $e'), backgroundColor: AppColors.error),
       );
     }
   }
