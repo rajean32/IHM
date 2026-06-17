@@ -155,6 +155,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
     }
     _selectedCategorie = event.codeCategorie;
     _selectedLieu = event.codeLieu;
+    if (event.codeLieu != null) _loadSalles(event.codeLieu!);
+    _selectedSalle = event.numeroSalle;
+    if (event.numeroSalle != null && event.idEvenement != null) _loadPlaces();
     if (event.typeAgencement != null) {
       if (event.typeAgencement == 'DEBOUT_SANS_LIMITE' || event.typeAgencement == 'DEBOUT_AVEC_LIMITE') {
         _typePlacement = 'LIBRE';
@@ -628,7 +631,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
         setState(() => _selectedLieu = v);
         if (v != null) _loadSalles(v);
       },
-      onSalleChanged: (v) => setState(() => _selectedSalle = v),
+      onSalleChanged: (v) {
+        setState(() => _selectedSalle = v);
+        if (v != null) _loadPlaces();
+      },
       onSalleOptionnelleChanged: (v) => setState(() => _salleOptionnelle = v),
       onCapaciteIllimiteeChanged: (v) => setState(() => _capaciteIllimitee = v),
       onAddPlaceType: _addPlaceType,
@@ -654,6 +660,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       standingZones: _standingZones,
       selectedSalle: _selectedSalle,
       places: _places,
+      loadingPlaces: _loadingPlaces,
       selectedRows: _selectedRows,
       selectedPlaceIds: _selectedPlaceIds,
       assignType: _assignType,

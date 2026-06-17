@@ -188,7 +188,7 @@ Widget _buildMixteSection(
             style: const TextStyle(fontSize: 12),
           ),
           trailing: IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+            icon: Icon(Icons.delete_outline, color: AppTheme.errorColor, size: 20),
             onPressed: () => onRemoveStandingZone(i),
           ),
         ),

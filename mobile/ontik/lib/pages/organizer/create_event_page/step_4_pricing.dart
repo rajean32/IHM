@@ -11,6 +11,7 @@ Widget buildStep4({
   required List<Map<String, dynamic>> standingZones,
   required String? selectedSalle,
   required List<EventPlaceConfig> places,
+  required bool loadingPlaces,
   required Set<String> selectedRows,
   required Set<String> selectedPlaceIds,
   required String assignType,
@@ -27,17 +28,17 @@ Widget buildStep4({
   required ValueChanged<int> onRemoveStandingZone,
   required VoidCallback onRefresh,
 }) {
+  final l10n = AppLocalizations.of(context)!;
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(AppLocalizations.of(context)!.stepPricing, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+    Text(l10n.stepPricing, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     const SizedBox(height: 4),
-    Text(AppLocalizations.of(context)!.pricingDesc,
-        style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+    Text(l10n.pricingDesc, style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
     const SizedBox(height: 16),
     if (typePlacement == 'LIBRE') ...[
-      ...placeTypes.map((t) => _buildPriceCard(context, t, typePlacement, typePriceCtrls, places)),
+      ...placeTypes.map((t) => _buildPriceCard(t, typePlacement, typePriceCtrls, places, l10n)),
       if (standingZones.isNotEmpty) ...[
         const Divider(),
-        Text(AppLocalizations.of(context)!.standingZonesLabel, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        Text(l10n.standingZonesLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         ...standingZones.map((z) => Card(
           margin: const EdgeInsets.only(bottom: 6),
@@ -54,81 +55,85 @@ Widget buildStep4({
       if (selectedSalle == null)
         Padding(
           padding: const EdgeInsets.all(16),
-          child: Text(AppLocalizations.of(context)!.selectRoomFirstHint,
+          child: Text(l10n.selectRoomFirstHint,
               style: TextStyle(color: AppTheme.textSecondary)),
         )
+      else if (loadingPlaces)
+        const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator(strokeWidth: 2)))
+      else if (places.isEmpty)
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text('Aucune place disponible dans cette salle', style: TextStyle(color: AppTheme.textSecondary)),
+        )
       else ...[
-        ...placeTypes.map((t) => _buildPriceCard(context, t, typePlacement, typePriceCtrls, places)),
+        ...placeTypes.map((t) => _buildPriceCard(t, typePlacement, typePriceCtrls, places, l10n)),
         const SizedBox(height: 8),
-        if (places.isNotEmpty) ...[
-          Text(AppLocalizations.of(context)!.seatPlanConfig, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          _buildRowSelector(context, places, selectedRows, onToggleRow),
-          const SizedBox(height: 4),
-          InkWell(
-            onTap: () => onToggleGridExpanded(!gridExpanded),
-            child: Row(children: [
-              Icon(gridExpanded ? Icons.expand_less : Icons.expand_more, size: 18),
-              Text(AppLocalizations.of(context)!.individualSeats, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.primaryColor)),
-              const SizedBox(width: 8),
-              Text(AppLocalizations.of(context)!.seatsSelectedCount('${selectedPlaceIds.length}'), style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-            ]),
+        Text(l10n.seatPlanConfig, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 4),
+        _buildRowSelector(places, selectedRows, onToggleRow, l10n),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: () => onToggleGridExpanded(!gridExpanded),
+          child: Row(children: [
+            Icon(gridExpanded ? Icons.expand_less : Icons.expand_more, size: 18),
+            Text(l10n.individualSeats, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.primaryColor)),
+            const SizedBox(width: 8),
+            Text(l10n.seatsSelectedCount('${selectedPlaceIds.length}'), style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+          ]),
+        ),
+        if (gridExpanded) ...[const SizedBox(height: 4), _buildSeatGrid(places, selectedPlaceIds, onTogglePlace, l10n)],
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: DropdownButtonFormField<String>(
+            value: availableTypes.contains(assignType) ? assignType : null,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder(), isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6)),
+            items: availableTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(fontSize: 12)))).toList(),
+            onChanged: (v) => onAssignTypeChanged(v!),
+          )),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: selectedRows.isEmpty && selectedPlaceIds.isEmpty ? null : onAddPendingAssignment,
+            child: Text(l10n.applyButton, style: const TextStyle(fontSize: 12)),
           ),
-          if (gridExpanded) ...[const SizedBox(height: 4), _buildSeatGrid(context, places, selectedPlaceIds, onTogglePlace)],
+        ]),
+        if (pendingRowAssignments.isNotEmpty || pendingPlaceAssignments.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Builder(builder: (context) {
-            return SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: selectedRows.isEmpty && selectedPlaceIds.isEmpty
-                    ? null
-                    : () => _showAssignBottomSheet(context, availableTypes, assignType, onAssignTypeChanged, onAddPendingAssignment),
-                icon: const Icon(Icons.sell_outlined, size: 18),
-                label: Text(AppLocalizations.of(context)!.assignTariff),
-              ),
-            );
-          }),
-          if (pendingRowAssignments.isNotEmpty || pendingPlaceAssignments.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Icon(Icons.pending, size: 16, color: AppTheme.primaryColor),
-                    const SizedBox(width: 6),
-                    Text(AppLocalizations.of(context)!.pendingAssignments('${pendingRowAssignments.length + pendingPlaceAssignments.length}'),
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primaryColor)),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: onClearPendingAssignments,
-                      child: Text(AppLocalizations.of(context)!.clearAll, style: TextStyle(fontSize: 11, color: AppTheme.errorColor)),
-                    ),
-                  ]),
-                  const SizedBox(height: 6),
-                  ...pendingRowAssignments.entries.map((e) => Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(AppLocalizations.of(context)!.rowAssignmentText(e.key, e.value), style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                  )),
-                  ...pendingPlaceAssignments.entries.map((e) => Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(AppLocalizations.of(context)!.seatAssignmentText(e.key, e.value), style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-                  )),
-                ],
-              ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Icon(Icons.pending, size: 14, color: AppTheme.primaryColor),
+                  const SizedBox(width: 4),
+                  Text(l10n.pendingAssignments('${pendingRowAssignments.length + pendingPlaceAssignments.length}'),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.primaryColor)),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: onClearPendingAssignments,
+                    child: Text(l10n.clearAll, style: TextStyle(fontSize: 10, color: AppTheme.errorColor)),
+                  ),
+                ]),
+                ...pendingRowAssignments.entries.map((e) => Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(l10n.rowAssignmentText(e.key, e.value), style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+                )),
+                ...pendingPlaceAssignments.entries.map((e) => Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(l10n.seatAssignmentText(e.key, e.value), style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+                )),
+              ],
             ),
-          ],
+          ),
         ],
       ],
     ],
     if (typePlacement == 'MIXTE') ...[
       const Divider(),
-      Text(AppLocalizations.of(context)!.standingZonesLabel, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+      Text(l10n.standingZonesLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
       ...standingZones.asMap().entries.map((entry) {
         final i = entry.key;
@@ -141,15 +146,15 @@ Widget buildStep4({
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(z['nom'] as String, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  Text(z['capacite'] != null ? AppLocalizations.of(context)!.zoneCapacityInfo('${z['capacite']}') : AppLocalizations.of(context)!.zoneCapacityUnlimited,
+                  Text(z['capacite'] != null ? l10n.zoneCapacityInfo('${z['capacite']}') : l10n.zoneCapacityUnlimited,
                       style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                 ]),
               ),
-            Text(AppLocalizations.of(context)!.zonePricePrefix((z['prix'] as num).toStringAsFixed(2)),
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(l10n.zonePricePrefix((z['prix'] as num).toStringAsFixed(2)),
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(width: 4),
               IconButton(
-                icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                icon: Icon(Icons.delete_outline, size: 18, color: AppTheme.errorColor),
                 onPressed: () => onRemoveStandingZone(i),
               ),
             ]),
@@ -160,8 +165,9 @@ Widget buildStep4({
   ]);
 }
 
-Widget _buildPriceCard(BuildContext context, String type, String typePlacement,
-    Map<String, TextEditingController> typePriceCtrls, List<EventPlaceConfig> places) {
+Widget _buildPriceCard(String type, String typePlacement,
+    Map<String, TextEditingController> typePriceCtrls, List<EventPlaceConfig> places,
+    AppLocalizations l10n) {
   typePriceCtrls.putIfAbsent(type, () => TextEditingController());
   final count = places.where((p) => (p.typePlace ?? 'Standard') == type).length;
   return Card(
@@ -173,18 +179,18 @@ Widget _buildPriceCard(BuildContext context, String type, String typePlacement,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(type, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
             if (typePlacement != 'LIBRE')
-              Text(AppLocalizations.of(context)!.placesCountSuffix('$count'), style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+              Text(l10n.placesCountSuffix('$count'), style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
           ]),
         ),
         SizedBox(
           width: 100,
           child: TextField(
             controller: typePriceCtrls[type]!,
-              decoration: InputDecoration(
-                hintText: AppLocalizations.of(context)!.priceField, border: OutlineInputBorder(), isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                prefixText: AppLocalizations.of(context)!.pricePrefix,
-              ),
+            decoration: InputDecoration(
+              hintText: l10n.priceField, border: const OutlineInputBorder(), isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              prefixText: l10n.pricePrefix,
+            ),
             keyboardType: TextInputType.number,
             style: const TextStyle(fontSize: 13),
           ),
@@ -194,10 +200,10 @@ Widget _buildPriceCard(BuildContext context, String type, String typePlacement,
   );
 }
 
-Widget _buildRowSelector(BuildContext context, List<EventPlaceConfig> places, Set<String> selectedRows,
-    ValueChanged<String> onToggleRow) {
+Widget _buildRowSelector(List<EventPlaceConfig> places, Set<String> selectedRows,
+    ValueChanged<String> onToggleRow, AppLocalizations l10n) {
   final rangs = places.map((p) => p.range).whereType<String>().toSet().toList()..sort();
-  if (rangs.isEmpty) return Text(AppLocalizations.of(context)!.noRowLabel, style: TextStyle(color: AppTheme.textSecondary));
+  if (rangs.isEmpty) return Text(l10n.noRowLabel, style: TextStyle(color: AppTheme.textSecondary));
   return Wrap(spacing: 6, runSpacing: 4, children: rangs.map((rang) {
     final selected = selectedRows.contains(rang);
     final count = places.where((p) => p.range == rang).length;
@@ -209,8 +215,8 @@ Widget _buildRowSelector(BuildContext context, List<EventPlaceConfig> places, Se
   }).toList());
 }
 
-Widget _buildSeatGrid(BuildContext context, List<EventPlaceConfig> places, Set<String> selectedPlaceIds,
-    ValueChanged<String> onTogglePlace) {
+Widget _buildSeatGrid(List<EventPlaceConfig> places, Set<String> selectedPlaceIds,
+    ValueChanged<String> onTogglePlace, AppLocalizations l10n) {
   final rangs = places.map((p) => p.range).whereType<String>().toSet().toList()..sort();
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rangs.map((rang) {
     final rowPlaces = places.where((p) => p.range == rang).toList()
@@ -218,7 +224,7 @@ Widget _buildSeatGrid(BuildContext context, List<EventPlaceConfig> places, Set<S
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('${AppLocalizations.of(context)!.rowPrefix} $rang', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+        Text('${l10n.rowPrefix} $rang', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
         const SizedBox(height: 2),
         Wrap(spacing: 3, runSpacing: 3, children: rowPlaces.map((p) {
           final selected = selectedPlaceIds.contains(p.numeroPlace);
@@ -239,59 +245,4 @@ Widget _buildSeatGrid(BuildContext context, List<EventPlaceConfig> places, Set<S
       ]),
     );
   }).toList());
-}
-
-void _showAssignBottomSheet(BuildContext context, List<String> availableTypes,
-    String currentAssignType, ValueChanged<String> onAssignTypeChanged, VoidCallback onAddPendingAssignment) {
-  String selectedType = availableTypes.contains(currentAssignType) ? currentAssignType : (availableTypes.firstOrNull ?? '');
-  showModalBottomSheet(
-    context: context,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-    builder: (ctx) {
-      return StatefulBuilder(builder: (context, setSheetState) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(children: [
-                const Icon(Icons.sell_outlined, size: 20),
-                const SizedBox(width: 8),
-                Text(AppLocalizations.of(context)!.tariffTypeTitle, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(ctx),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ]),
-              const SizedBox(height: 16),
-              if (availableTypes.isEmpty)
-                Text(AppLocalizations.of(context)!.noTypesWithPrice, style: TextStyle(fontSize: 14, color: AppTheme.textSecondary))
-              else
-                ...availableTypes.map((t) => RadioListTile<String>(
-                  title: Text(t),
-                  value: t,
-                  groupValue: selectedType,
-                  onChanged: (v) => setSheetState(() => selectedType = v!),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  activeColor: Theme.of(context).colorScheme.primary,
-                )),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: availableTypes.isEmpty ? null : () {
-                  onAssignTypeChanged(selectedType);
-                  onAddPendingAssignment();
-                  Navigator.pop(ctx);
-                },
-                child: Text(AppLocalizations.of(context)!.applyTariff),
-              ),
-            ],
-          ),
-        );
-      });
-    },
-  );
 }

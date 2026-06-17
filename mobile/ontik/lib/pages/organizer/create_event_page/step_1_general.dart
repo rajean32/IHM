@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/assets/app_colors.dart';
 import '../../../models/categorie_model.dart';
 import '../../../models/caracteristique_model.dart';
-import '../../../core/assets/app_colors.dart';
 import '../../../generated/app_localizations.dart';
 
 Widget buildStep1({
@@ -68,7 +68,7 @@ Widget buildStep1({
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
+                          color: AppColors.textPrimary.withValues(alpha: 0.6),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.close, color: Colors.white, size: 16),
