@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/evenement_model.dart';
 import '../../core/services/evenement_service.dart';
 import '../../core/assets/app_colors.dart';
@@ -21,11 +23,55 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
   EventDetail? _event;
   bool _isLoading = true;
   String? _error;
+  bool _isFavorited = false;
 
   @override
   void initState() {
     super.initState();
     _loadDetail();
+    _checkFavorite();
+  }
+
+  Future<void> _checkFavorite() async {
+    final prefs = await SharedPreferences.getInstance();
+    final favorites = prefs.getStringList('event_favorites') ?? [];
+    if (mounted) setState(() => _isFavorited = favorites.contains(widget.eventId.toString()));
+  }
+
+  Future<void> _toggleFavorite() async {
+    final prefs = await SharedPreferences.getInstance();
+    final favorites = prefs.getStringList('event_favorites') ?? [];
+    final idStr = widget.eventId.toString();
+    if (_isFavorited) {
+      favorites.remove(idStr);
+    } else {
+      favorites.add(idStr);
+    }
+    await prefs.setStringList('event_favorites', favorites);
+    if (mounted) setState(() => _isFavorited = !_isFavorited);
+    if (!mounted) return;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_isFavorited ? loc.clientFavoriteAdded : loc.clientFavoriteRemoved),
+        backgroundColor: AppColors.secondary,
+      ),
+    );
+  }
+
+  void _shareEvent() {
+    final event = _event;
+    if (event == null) return;
+    final text = '${event.titre}\n'
+        '${DateFormat('d MMMM yyyy', appLanguage).format(event.dateEvenement ?? DateTime.now())}'
+        '${event.heureEvenement != null ? ' à ${event.heureEvenement!.substring(0, 5)}' : ''}\n'
+        '📍 ${event.lieuNom ?? ''}\n'
+        '${AppConstants.currency}${event.prixMin?.toStringAsFixed(0) ?? ''} - ${AppConstants.currency}${event.prixMax?.toStringAsFixed(0) ?? ''}';
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context)!.clientShareCopied), backgroundColor: AppColors.secondary),
+    );
   }
 
   Future<void> _loadDetail() async {
@@ -64,12 +110,17 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
-        title: const Text('Event Details'),
+        title: Text(AppLocalizations.of(context)!.clientHomeDetailTitle),
         actions: [
+          IconButton(
+            icon: Icon(_isFavorited ? Icons.bookmark : Icons.bookmark_border),
+            tooltip: AppLocalizations.of(context)!.clientProfileFavorites,
+            onPressed: _toggleFavorite,
+          ),
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: AppLocalizations.of(context)!.clientHomeDetailShare,
-            onPressed: () {},
+            onPressed: _shareEvent,
           ),
         ],
       ),

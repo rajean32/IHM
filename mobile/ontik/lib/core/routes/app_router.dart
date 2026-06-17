@@ -55,6 +55,7 @@ class AppRouter {
         final a = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(builder: (_) => PaymentPage(
           eventId: a['eventId'] as int,
+          eventTitle: a['eventTitle'] as String? ?? '',
           amount: (a['amount'] as num).toDouble(),
           tickets: (a['tickets'] as List).cast<Map<String, dynamic>>(),
         ));

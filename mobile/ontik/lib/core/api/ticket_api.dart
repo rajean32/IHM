@@ -3,6 +3,11 @@ import 'endpoints.dart';
 
 class TicketApi {
   Future<Map<String, dynamic>> getTicket(String code) async {
+    final resp = await dio.get('${Endpoints.tickets}/$code');
+    return resp.data['data'] as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getTicketQRCode(String code) async {
     final resp = await dio.get('${Endpoints.tickets}/$code/qrcode');
     return resp.data['data'] as Map<String, dynamic>;
   }

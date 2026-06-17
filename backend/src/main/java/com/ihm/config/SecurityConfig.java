@@ -54,7 +54,8 @@ public class SecurityConfig {
                     "/api/salles/**",
                     "/api/places/**",
                     "/api/lieux/**",
-                    "/api/tickets/*/qrcode"
+                    "/api/tickets/*/qrcode",
+                    "/api/tickets/*/pdf"
                 ).permitAll()
                 .requestMatchers(HttpMethod.POST,
                     "/api/tickets/validate"

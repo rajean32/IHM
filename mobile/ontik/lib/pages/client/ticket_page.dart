@@ -23,6 +23,9 @@ class _TicketPageState extends State<TicketPage> {
   String? _error;
   Map<String, dynamic>? _qrData;
 
+  String? _nz(dynamic v) =>
+      (v != null && v.toString().isNotEmpty) ? v.toString() : null;
+
   @override
   void initState() {
     super.initState();
@@ -33,20 +36,21 @@ class _TicketPageState extends State<TicketPage> {
     setState(() => _loading = true);
     try {
       final _ticketService = TicketService();
-      final qrResponse = await _ticketService.getTicket(widget.ticketCode);
+      final ticketDetail = await _ticketService.getTicket(widget.ticketCode);
+      final qrResponse = await _ticketService.getTicketQRCode(widget.ticketCode);
       final validation = await _ticketService.validateTicket(widget.ticketCode);
 
       if (!mounted) return;
       setState(() {
         _qrData = {
-          'codeTicket': qrResponse['codeTicket'],
-          'evenementTitre': qrResponse['evenementTitre'],
-          'placeNumero': qrResponse['placeNumero'],
-          'rang': qrResponse['rang'],
-          'typePlace': qrResponse['typePlace'],
-          'zoneNom': qrResponse['zoneNom'],
-          'prix': qrResponse['prix'],
-          'qrCodeBase64': qrResponse['qrCodeBase64'],
+          'codeTicket': ticketDetail['codeTicket'],
+          'evenementTitre': _nz(ticketDetail['evenementTitre']) ?? _nz(qrResponse['evenementTitre']),
+          'placeNumero': _nz(qrResponse['placeNumero']) ?? _nz(ticketDetail['numeroPlace']),
+          'rang': _nz(ticketDetail['rang']) ?? _nz(qrResponse['rang']),
+          'typePlace': _nz(ticketDetail['typePlace']) ?? _nz(qrResponse['typePlace']),
+          'zoneNom': _nz(ticketDetail['zoneNom']),
+          'prix': _nz(ticketDetail['prix']) ?? _nz(qrResponse['prix']),
+          'qrCodeBase64': _nz(qrResponse['qrCodeBase64']),
           'valid': validation['valid'],
           'clientNom': validation['clientNom'],
         };
@@ -172,19 +176,40 @@ class _TicketPageState extends State<TicketPage> {
         '${Endpoints.tickets}/${widget.ticketCode}/pdf',
         options: Options(responseType: ResponseType.bytes),
       );
+      if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! >= 300) {
+        throw Exception('HTTP ${response.statusCode}');
+      }
+      final data = response.data;
+      if (data is! List<int>) {
+        throw Exception('Format de réponse invalide');
+      }
       final dir = await getApplicationDocumentsDirectory();
       final file = File('${dir.path}/billet_${widget.ticketCode}.pdf');
-      await file.writeAsBytes(response.data as List<int>);
+      await file.writeAsBytes(data);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${AppLocalizations.of(context)!.clientTicketPdfSaved} ${file.path}'), backgroundColor: AppColors.secondary),
       );
     } catch (e) {
       if (!mounted) return;
+      final msg = e is DioException ? _describeDioError(e) : e.toString();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${AppLocalizations.of(context)!.clientTicketDownloadFailed} $e'), backgroundColor: AppColors.error),
+        SnackBar(content: Text('${AppLocalizations.of(context)!.clientTicketDownloadFailed} $msg'), backgroundColor: AppColors.error),
       );
     }
+  }
+
+  String _describeDioError(DioException e) {
+    if (e.response != null) {
+      return 'Erreur ${e.response!.statusCode}';
+    }
+    if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+      return 'Timeout';
+    }
+    if (e.type == DioExceptionType.connectionError) {
+      return 'Connexion';
+    }
+    return e.message ?? 'Erreur inconnue';
   }
 
   Widget _buildQRCode(String base64) {

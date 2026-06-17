@@ -60,6 +60,9 @@ public class QRCodeService {
 
     // donnees d'un ticket pour QR code
     public String generateTicketData(String codeTicket, String evenementTitre, String placeNumero) {
-        return String.format("TICKET:%s|EVENT:%s|PLACE:%s", codeTicket, evenementTitre, placeNumero);
+        return String.format("TICKET:%s|EVENT:%s|PLACE:%s",
+                codeTicket,
+                evenementTitre != null ? evenementTitre : "",
+                placeNumero != null ? placeNumero : "");
     }
 }

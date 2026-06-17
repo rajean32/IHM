@@ -824,5 +824,17 @@
   "adminCategoriesBlock": "Block",
   "adminVenuesRoomType": "Room type",
   "adminActionHistory": "History",
-  "commonAdd": "Add"
+  "commonAdd": "Add",
+  "clientHomeDateRange": "Date Range",
+  "clientHomePriceRange": "Price Range",
+  "clientHomeMin": "Min",
+  "clientHomeMax": "Max",
+  "clientHomeDetailTitle": "Event Details",
+  "clientSavedEventsEmpty": "No saved events",
+  "clientFavoriteAdded": "Event added to favorites",
+  "clientFavoriteRemoved": "Event removed from favorites",
+  "clientShareCopied": "Details copied to clipboard",
+  "clientPaymentShareText": "Current order on Ontik",
+  "clientPaymentOrderCopied": "Order information copied",
+  "clientPaymentEventName": "Event"
 }

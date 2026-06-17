@@ -2626,4 +2626,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonAdd => 'Add';
+
+  @override
+  String get clientHomeDateRange => 'Date Range';
+
+  @override
+  String get clientHomePriceRange => 'Price Range';
+
+  @override
+  String get clientHomeMin => 'Min';
+
+  @override
+  String get clientHomeMax => 'Max';
+
+  @override
+  String get clientHomeDetailTitle => 'Event Details';
+
+  @override
+  String get clientSavedEventsEmpty => 'No saved events';
+
+  @override
+  String get clientFavoriteAdded => 'Event added to favorites';
+
+  @override
+  String get clientFavoriteRemoved => 'Event removed from favorites';
+
+  @override
+  String get clientShareCopied => 'Details copied to clipboard';
+
+  @override
+  String get clientPaymentShareText => 'Current order on Ontik';
+
+  @override
+  String get clientPaymentOrderCopied => 'Order information copied';
+
+  @override
+  String get clientPaymentEventName => 'Event';
 }

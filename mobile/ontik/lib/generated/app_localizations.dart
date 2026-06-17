@@ -5041,6 +5041,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add'**
   String get commonAdd;
+
+  /// No description provided for @clientHomeDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Range'**
+  String get clientHomeDateRange;
+
+  /// No description provided for @clientHomePriceRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Price Range'**
+  String get clientHomePriceRange;
+
+  /// No description provided for @clientHomeMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Min'**
+  String get clientHomeMin;
+
+  /// No description provided for @clientHomeMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get clientHomeMax;
+
+  /// No description provided for @clientHomeDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event Details'**
+  String get clientHomeDetailTitle;
+
+  /// No description provided for @clientSavedEventsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved events'**
+  String get clientSavedEventsEmpty;
+
+  /// No description provided for @clientFavoriteAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Event added to favorites'**
+  String get clientFavoriteAdded;
+
+  /// No description provided for @clientFavoriteRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Event removed from favorites'**
+  String get clientFavoriteRemoved;
+
+  /// No description provided for @clientShareCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Details copied to clipboard'**
+  String get clientShareCopied;
+
+  /// No description provided for @clientPaymentShareText.
+  ///
+  /// In en, this message translates to:
+  /// **'Current order on Ontik'**
+  String get clientPaymentShareText;
+
+  /// No description provided for @clientPaymentOrderCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Order information copied'**
+  String get clientPaymentOrderCopied;
+
+  /// No description provided for @clientPaymentEventName.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get clientPaymentEventName;
 }
 
 class _AppLocalizationsDelegate

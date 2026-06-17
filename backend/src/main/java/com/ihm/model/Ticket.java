@@ -24,6 +24,11 @@ public class Ticket {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private ZoneStanding zoneStanding;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_evenement", nullable = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Evenement evenement;
+
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Concerner> concerners = new ArrayList<>();
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -35,6 +40,8 @@ public class Ticket {
     public void setPrix(BigDecimal prix) { this.prix = prix; }
     public ZoneStanding getZoneStanding() { return zoneStanding; }
     public void setZoneStanding(ZoneStanding zoneStanding) { this.zoneStanding = zoneStanding; }
+    public Evenement getEvenement() { return evenement; }
+    public void setEvenement(Evenement evenement) { this.evenement = evenement; }
     public List<Concerner> getConcerners() { return concerners; }
     public void setConcerners(List<Concerner> concerners) { this.concerners = concerners; }
     public List<CorrespondA> getCorrespondances() { return correspondances; }

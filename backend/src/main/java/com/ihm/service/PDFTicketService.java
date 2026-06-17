@@ -61,12 +61,10 @@ public class PDFTicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", "codeTicket", codeTicket));
 
         List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(codeTicket);
-        if (concerners.isEmpty()) {
-            throw new ResourceNotFoundException("Concerner", "codeTicket", codeTicket);
-        }
-        Concerner concerner = concerners.get(0);
-        Place place = concerner.getPlace();
-        Evenement evenement = concerner.getEvenement();
+        boolean hasConcerner = !concerners.isEmpty();
+        Concerner concerner = hasConcerner ? concerners.get(0) : null;
+        Place place = hasConcerner ? concerner.getPlace() : null;
+        Evenement evenement = hasConcerner ? concerner.getEvenement() : null;
 
         List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(codeTicket);
         String clientNom = "";
@@ -75,7 +73,12 @@ public class PDFTicketService {
                     correspondances.get(0).getReservation().getClient().getPrenoms();
         }
 
-        String qrData = qrCodeService.generateTicketData(codeTicket, evenement.getTitre(), place.getNumeroPlace());
+        String evenementTitre = evenement != null ? evenement.getTitre()
+                : (ticket.getZoneStanding() != null ? ticket.getZoneStanding().getEvenement().getTitre() : ticket.getCodeTicket());
+        String placeNumero = place != null ? place.getNumeroPlace()
+                : (ticket.getZoneStanding() != null ? ticket.getZoneStanding().getNom() : ticket.getCodeTicket());
+
+        String qrData = qrCodeService.generateTicketData(codeTicket, evenementTitre, placeNumero);
         String qrBase64 = qrCodeService.generateQRCodeBase64(qrData);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -104,20 +107,24 @@ public class PDFTicketService {
             table.setSpacingAfter(12);
             table.setWidths(new float[]{1, 2});
 
-            addRow(table, "Evenement", evenement.getTitre(), labelFont, valueFont);
-            addRow(table, "Date", evenement.getDateEvenement().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), labelFont, valueFont);
-            if (evenement.getHeureEvenement() != null) {
-                addRow(table, "Heure", evenement.getHeureEvenement().format(DateTimeFormatter.ofPattern("HH:mm")), labelFont, valueFont);
+            addRow(table, "Evenement", evenementTitre, labelFont, valueFont);
+            if (evenement != null && evenement.getDateEvenement() != null) {
+                addRow(table, "Date", evenement.getDateEvenement().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), labelFont, valueFont);
+                if (evenement.getHeureEvenement() != null) {
+                    addRow(table, "Heure", evenement.getHeureEvenement().format(DateTimeFormatter.ofPattern("HH:mm")), labelFont, valueFont);
+                }
+                addRow(table, "Lieu", evenement.getLieu() != null ? evenement.getLieu().getNomLieu() : "-", labelFont, valueFont);
             }
-            addRow(table, "Lieu", evenement.getLieu() != null ? evenement.getLieu().getNomLieu() : "-", labelFont, valueFont);
-            addRow(table, "Siege", place.getNumeroPlace(), labelFont, valueFont);
-            EvenementPlaceConfiguration pdfConfig = configRepository
-                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(evenement.getIdEvenement(), place.getNumeroPlace())
-                    .orElse(null);
-            String rangee = pdfConfig != null && pdfConfig.getRange() != null ? pdfConfig.getRange() : "-";
-            String type = pdfConfig != null && pdfConfig.getTypePlace() != null ? pdfConfig.getTypePlace() : "-";
-            addRow(table, "Rangee", rangee, labelFont, valueFont);
-            addRow(table, "Type", type, labelFont, valueFont);
+            addRow(table, "Place", placeNumero, labelFont, valueFont);
+            if (hasConcerner) {
+                EvenementPlaceConfiguration pdfConfig = configRepository
+                        .findByEvenement_IdEvenementAndPlace_NumeroPlace(evenement.getIdEvenement(), place.getNumeroPlace())
+                        .orElse(null);
+                String rangee = pdfConfig != null && pdfConfig.getRange() != null ? pdfConfig.getRange() : "-";
+                String type = pdfConfig != null && pdfConfig.getTypePlace() != null ? pdfConfig.getTypePlace() : "-";
+                addRow(table, "Rangee", rangee, labelFont, valueFont);
+                addRow(table, "Type", type, labelFont, valueFont);
+            }
             if (!clientNom.isEmpty()) {
                 addRow(table, "Client", clientNom, labelFont, valueFont);
             }

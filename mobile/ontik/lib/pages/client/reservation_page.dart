@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../models/evenement_model.dart';
 import '../../models/lieu_model.dart';
@@ -180,6 +181,7 @@ class _ReservationPageState extends State<ReservationPage> {
       ClientRoutes.payment,
       arguments: {
         'eventId': widget.eventId,
+        'eventTitle': _event?.titre ?? '',
         'tickets': ticketItems,
         'amount': _totalAmount,
       },
@@ -206,12 +208,23 @@ class _ReservationPageState extends State<ReservationPage> {
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
-        title: const Text('Event Details'),
+        title: Text(AppLocalizations.of(context)!.clientHomeDetailTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: AppLocalizations.of(context)!.clientReservationShare,
-            onPressed: () {},
+            onPressed: () {
+              final event = _event;
+              if (event == null) return;
+              final text = '${event.titre}\n'
+                  '📍 ${event.lieuNom ?? ''}\n'
+                  '${_event?.prixMin != null ? "${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)}" : ""}'
+                  '${_event?.prixMax != null ? " - ${AppConstants.currency}${event.prixMax!.toStringAsFixed(0)}" : ""}';
+              Clipboard.setData(ClipboardData(text: text));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppLocalizations.of(context)!.clientShareCopied), backgroundColor: AppColors.secondary),
+              );
+            },
           ),
         ],
       ),

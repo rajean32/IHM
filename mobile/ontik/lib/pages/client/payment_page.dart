@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/services/paiement_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/assets/app_colors.dart';
@@ -13,12 +14,14 @@ import '../../generated/app_localizations.dart';
 
 class PaymentPage extends StatefulWidget {
   final int eventId;
+  final String eventTitle;
   final double amount;
   final List<Map<String, dynamic>> tickets;
 
   const PaymentPage({
     super.key,
     required this.eventId,
+    this.eventTitle = '',
     required this.amount,
     required this.tickets,
   });
@@ -209,11 +212,19 @@ class _PaymentPageState extends State<PaymentPage> {
                   onPressed: () => Navigator.of(context).pop(),
                 )
               : null,
-          title: const Text('Event Details'),
+          title: Text(AppLocalizations.of(context)!.clientHomeDetailTitle),
           actions: [
             IconButton(
               icon: const Icon(Icons.share),
-              onPressed: () {},
+              onPressed: () {
+                final loc = AppLocalizations.of(context);
+                if (loc == null) return;
+                final text = '${loc.clientPaymentShareText}\n${loc.clientPaymentPrice}: ${AppConstants.currency}${widget.amount.toStringAsFixed(0)}';
+                Clipboard.setData(ClipboardData(text: text));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(loc.clientPaymentOrderCopied), backgroundColor: AppColors.secondary),
+                );
+              },
             ),
           ],
         ),
@@ -306,7 +317,7 @@ class _PaymentPageState extends State<PaymentPage> {
       ),
       child: Column(
         children: [
-          _summaryRow(AppLocalizations.of(context)!.clientPaymentVenue, '${AppLocalizations.of(context)!.clientPaymentEvent} #${widget.eventId}', AppColors.textSecondary),
+          _summaryRow(AppLocalizations.of(context)!.clientPaymentVenue, widget.eventTitle.isNotEmpty ? widget.eventTitle : '${AppLocalizations.of(context)!.clientPaymentEventName} #${widget.eventId}', AppColors.textSecondary),
           const Divider(height: 1, indent: 16, endIndent: 16),
           _summaryRow(AppLocalizations.of(context)!.clientPaymentPrice, _formatAmount(_montantFinal), AppColors.primary, highlight: true),
           const Divider(height: 1, indent: 16, endIndent: 16),

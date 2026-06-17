@@ -50,12 +50,13 @@ class _ProfilePageState extends State<ProfilePage>
       final _reservationService = ReservationService();
       final reservationsData = await _reservationService.getMyReservations(clientCode);
 
+      final ticketsResp = await dio.get('${Endpoints.tickets}?client=$clientCode');
+      final ticketsData = (ticketsResp.data['data'] as List?) ?? [];
+
       if (!mounted) return;
       final reservations = reservationsData.map((e) => Reservation.fromJson(e as Map<String, dynamic>)).toList();
-      final tickets = <Ticket>[];
-      for (final r in reservations) {
-        if (r.tickets != null) tickets.addAll(r.tickets!);
-      }
+      final tickets = ticketsData.map((e) => Ticket.fromJson(e as Map<String, dynamic>)).toList();
+
       setState(() {
         _reservations = reservations;
         _tickets = tickets;
@@ -184,14 +185,14 @@ class _ProfilePageState extends State<ProfilePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(t.evenementTitre ?? 'Ticket', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                Text(_nn(t.evenementTitre, 'Ticket'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    if (t.numeroPlace != null)
-                      Text('${AppLocalizations.of(context)!.clientProfileSeat} ${t.numeroPlace}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                    if (t.rang != null)
-                      Text(' (${AppLocalizations.of(context)!.clientProfileRow} ${t.rang})', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    if (_nn(t.numeroPlace) != null)
+                      Text('${AppLocalizations.of(context)!.clientProfileSeat} ${_nn(t.numeroPlace)}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    if (_nn(t.rang) != null)
+                      Text(' (${AppLocalizations.of(context)!.clientProfileRow} ${_nn(t.rang)})', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   ],
                 ),
                 if (t.prix != null)
@@ -199,7 +200,7 @@ class _ProfilePageState extends State<ProfilePage>
               ],
             ),
           ),
-          if (t.typePlace != null)
+          if (_nn(t.typePlace) != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
@@ -207,7 +208,7 @@ class _ProfilePageState extends State<ProfilePage>
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                t.typePlace!,
+                _nn(t.typePlace)!,
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _badgeColor(t.typePlace)),
               ),
             ),
@@ -322,7 +323,7 @@ class _ProfilePageState extends State<ProfilePage>
                       : null,
                   height: 130,
                 ),
-                if (firstTicket?.evenementTitre != null)
+                if (_nn(firstTicket?.evenementTitre) != null)
                   Container(
                     height: 130,
                     decoration: BoxDecoration(
@@ -339,7 +340,7 @@ class _ProfilePageState extends State<ProfilePage>
                           Icon(Icons.event, size: 40, color: _badgeColor(firstTicket!.typePlace).withValues(alpha: 0.3)),
                           const SizedBox(height: 6),
                           Text(
-                            firstTicket.evenementTitre ?? '',
+                            _nn(firstTicket.evenementTitre, ''),
                             style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w600,
                               color: _badgeColor(firstTicket.typePlace),
@@ -383,7 +384,7 @@ class _ProfilePageState extends State<ProfilePage>
                         children: [
                           Expanded(
                             child: Text(
-                              hasTickets ? firstTicket!.evenementTitre ?? '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}' : '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}',
+                              hasTickets ? _nn(firstTicket!.evenementTitre, '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}') : '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}',
                               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -554,6 +555,9 @@ class _ProfilePageState extends State<ProfilePage>
     }
   }
 
+  String _nn(dynamic v, [String fallback = '—']) =>
+      (v != null && v.toString().isNotEmpty) ? v.toString() : fallback;
+
   Widget _buildTicketCard(Ticket t) {
     final isActive = t.statut == 'VALID' || t.statut == 'DISPONIBLE' || t.statut == 'RESERVEE' || t.statut == 'EN_ATTENTE';
     final accentColor = _cardAccentColor(t.typePlace);
@@ -611,27 +615,29 @@ class _ProfilePageState extends State<ProfilePage>
                         children: [
                           Expanded(
                             child: Text(
-                              t.evenementTitre ?? AppLocalizations.of(context)!.clientProfileEvent,
+                              _nn(t.evenementTitre, AppLocalizations.of(context)!.clientProfileEvent),
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          _buildStatusBadge(t.typePlace ?? 'STANDARD'),
+                          _buildStatusBadge(_nn(t.typePlace, 'STANDARD')),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          const Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
-                          const SizedBox(width: 6),
-                          Text(
-                            _formatDate(t.dateEvenement, t.heureEvenement),
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                          ),
-                        ],
-                      ),
+                      if (_nn(t.dateEvenement) != null) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
+                            const SizedBox(width: 6),
+                            Text(
+                              _formatDate(t.dateEvenement, t.heureEvenement),
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -639,15 +645,17 @@ class _ProfilePageState extends State<ProfilePage>
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Row(
-                          children: [
-            _placementItem(Icons.meeting_room, AppLocalizations.of(context)!.clientProfileRoom, t.salleNom ?? '—'),
-            Container(height: 24, width: 1, color: AppColors.divider),
-            _placementItem(Icons.view_column, AppLocalizations.of(context)!.clientProfileRow, t.rang ?? '—'),
-            Container(height: 24, width: 1, color: AppColors.divider),
-            _placementItem(Icons.event_seat, AppLocalizations.of(context)!.clientProfileSeat, t.numeroPlace ?? '—'),
-                          ],
-                        ),
+                        child: _nn(t.zoneNom) != null
+                            ? _placementItem(Icons.accessibility_new, 'Zone', _nn(t.zoneNom)!)
+                            : Row(
+                                children: [
+                                  _placementItem(Icons.meeting_room, AppLocalizations.of(context)!.clientProfileRoom, _nn(t.salleNom)),
+                                  Container(height: 24, width: 1, color: AppColors.divider),
+                                  _placementItem(Icons.view_column, AppLocalizations.of(context)!.clientProfileRow, _nn(t.rang)),
+                                  Container(height: 24, width: 1, color: AppColors.divider),
+                                  _placementItem(Icons.event_seat, AppLocalizations.of(context)!.clientProfileSeat, _nn(t.numeroPlace)),
+                                ],
+                              ),
                       ),
                       const SizedBox(height: 14),
                     ],

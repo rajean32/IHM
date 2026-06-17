@@ -2642,4 +2642,40 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get commonAdd => 'Add';
+
+  @override
+  String get clientHomeDateRange => 'Plage de dates';
+
+  @override
+  String get clientHomePriceRange => 'Fourchette de prix';
+
+  @override
+  String get clientHomeMin => 'Min';
+
+  @override
+  String get clientHomeMax => 'Max';
+
+  @override
+  String get clientHomeDetailTitle => 'Détails de l\'événement';
+
+  @override
+  String get clientSavedEventsEmpty => 'Aucun événement sauvegardé';
+
+  @override
+  String get clientFavoriteAdded => 'Événement ajouté aux favoris';
+
+  @override
+  String get clientFavoriteRemoved => 'Événement retiré des favoris';
+
+  @override
+  String get clientShareCopied => 'Détails copiés dans le presse-papier';
+
+  @override
+  String get clientPaymentShareText => 'Commande en cours sur Ontik';
+
+  @override
+  String get clientPaymentOrderCopied => 'Informations de commande copiées';
+
+  @override
+  String get clientPaymentEventName => 'Événement';
 }

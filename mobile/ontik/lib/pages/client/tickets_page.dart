@@ -286,23 +286,17 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Row(
-                          children: [
-                            _placementItem(Icons.meeting_room, AppLocalizations.of(context)!.clientTicketRoom, t.salleNom ?? '—'),
-                            Container(
-                              height: 24,
-                              width: 1,
-                              color: AppColors.divider,
-                            ),
-                            _placementItem(Icons.view_column, AppLocalizations.of(context)!.clientTicketRow, t.rang ?? '—'),
-                            Container(
-                              height: 24,
-                              width: 1,
-                              color: AppColors.divider,
-                            ),
-                            _placementItem(Icons.event_seat, AppLocalizations.of(context)!.clientTicketSeat, t.numeroPlace ?? '—'),
-                          ],
-                        ),
+                        child: t.zoneNom != null
+                            ? _placementItem(Icons.accessibility_new, 'Zone', t.zoneNom!)
+                            : Row(
+                                children: [
+                                  _placementItem(Icons.meeting_room, AppLocalizations.of(context)!.clientTicketRoom, t.salleNom ?? '—'),
+                                  Container(height: 24, width: 1, color: AppColors.divider),
+                                  _placementItem(Icons.view_column, AppLocalizations.of(context)!.clientTicketRow, t.rang ?? '—'),
+                                  Container(height: 24, width: 1, color: AppColors.divider),
+                                  _placementItem(Icons.event_seat, AppLocalizations.of(context)!.clientTicketSeat, t.numeroPlace ?? '—'),
+                                ],
+                              ),
                       ),
                       const SizedBox(height: 14),
                     ],

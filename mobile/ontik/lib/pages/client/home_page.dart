@@ -81,14 +81,23 @@ class _HomePageState extends State<HomePage> {
       final params = <String, dynamic>{};
       if (_searchCtrl.text.isNotEmpty) params['q'] = _searchCtrl.text;
       if (_selectedCategorie != null) params['categorie'] = _selectedCategorie;
-      if (_selectedStatut != null) params['statut'] = _selectedStatut;
+      if (_selectedStatut != null && _selectedStatut != 'Tous') params['statut'] = _selectedStatut;
       if (_selectedLieu != null) params['codeLieu'] = _selectedLieu;
       if (_prixMin != null) params['prixMin'] = _prixMin;
       if (_prixMax != null) params['prixMax'] = _prixMax;
-      if (userVille != null && _selectedLieu == null) params['ville'] = userVille;
+      if (_selectedDateRange != null) {
+        params['dateFrom'] = DateFormat('yyyy-MM-dd').format(_selectedDateRange!.start);
+        params['dateTo'] = DateFormat('yyyy-MM-dd').format(_selectedDateRange!.end);
+      }
+      if (userVille != null && _selectedLieu == null && _selectedDateRange == null) params['ville'] = userVille;
+
+      final hasSearchParams = params.containsKey('q') || params.containsKey('prixMin') ||
+          params.containsKey('prixMax') || params.containsKey('dateDebut') ||
+          params.containsKey('codeLieu');
+      final url = hasSearchParams ? '${Endpoints.events}/search' : Endpoints.events;
 
       final resp = await dio.get(
-        Endpoints.events,
+        url,
         queryParameters: params.isNotEmpty ? params : null,
       );
       final data = resp.data['data'] as List? ?? [];
@@ -174,7 +183,7 @@ class _HomePageState extends State<HomePage> {
                   onChanged: (v) => setSheetState(() => _selectedLieu = v),
                 ),
                 const SizedBox(height: 16),
-                const Text('Date Range', style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(AppLocalizations.of(context)!.clientHomeDateRange, style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: () async {
@@ -196,13 +205,13 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Price Range', style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(AppLocalizations.of(context)!.clientHomePriceRange, style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
-                        decoration: const InputDecoration(labelText: 'Min', border: OutlineInputBorder(), isDense: true),
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.clientHomeMin, border: const OutlineInputBorder(), isDense: true),
                         keyboardType: TextInputType.number,
                         onChanged: (v) => _prixMin = double.tryParse(v),
                       ),
@@ -213,7 +222,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Expanded(
                       child: TextField(
-                        decoration: const InputDecoration(labelText: 'Max', border: OutlineInputBorder(), isDense: true),
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.clientHomeMax, border: const OutlineInputBorder(), isDense: true),
                         keyboardType: TextInputType.number,
                         onChanged: (v) => _prixMax = double.tryParse(v),
                       ),

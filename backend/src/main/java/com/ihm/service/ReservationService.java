@@ -293,6 +293,12 @@ public class ReservationService {
             ticket.setCodeTicket(item.getCodeTicket());
             ticket.setPrix(item.getPrix() != null ? item.getPrix() : BigDecimal.ZERO);
 
+            if (item.getIdEvenement() != null) {
+                Evenement event = evenementRepository.findByIdEvenement(item.getIdEvenement())
+                        .orElse(null);
+                ticket.setEvenement(event);
+            }
+
             if (item.getIdZone() != null) {
                 ZoneStanding zone = zoneStandingRepository.findById(item.getIdZone())
                         .orElseThrow(() -> new ResourceNotFoundException("ZoneStanding", "idZone", item.getIdZone()));

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/routes/client_routes.dart';
@@ -8,6 +9,7 @@ import '../../core/services/user_service.dart';
 import '../../core/utils/error_helper.dart';
 import '../../widgets/profile_body.dart';
 import '../../widgets/two_factor_widget.dart';
+import 'saved_events_page.dart';
 import '../../generated/app_localizations.dart';
 
 class ClientProfilePage extends StatefulWidget {
@@ -22,6 +24,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
   bool _is2faEnabled = false;
   int _ticketCount = 0;
   int _notifCount = 0;
+  int _favoriteCount = 0;
   String _nom = '';
   String _prenoms = '';
   String _email = '';
@@ -51,6 +54,8 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
       final tickets = ticketsResp.data['data'] as List? ?? [];
       _ticketCount = tickets.length;
       _notifCount = 0;
+      final prefs = await SharedPreferences.getInstance();
+      _favoriteCount = (prefs.getStringList('event_favorites') ?? []).length;
     } catch (_) {
       _nom = userNom ?? '';
     }
@@ -226,7 +231,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
       badgeColor: const Color(0xFF00796B),
       stats: [
         ProfileStat(AppLocalizations.of(context)!.clientProfileReference, '$_ticketCount', Icons.confirmation_number),
-        ProfileStat(AppLocalizations.of(context)!.clientProfileFavorites, '—', Icons.bookmark),
+        ProfileStat(AppLocalizations.of(context)!.clientProfileFavorites, '$_favoriteCount', Icons.bookmark),
         ProfileStat(AppLocalizations.of(context)!.clientProfileAlerts, '$_notifCount', Icons.notifications),
       ],
       onEditProfile: _showEditInfo,
@@ -235,6 +240,9 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           ProfileMenuItem(AppLocalizations.of(context)!.clientProfilePersonalInfo, Icons.person, onTap: _showEditInfo),
           ProfileMenuItem(AppLocalizations.of(context)!.clientProfileMyReservations, Icons.event, onTap: () {
             Navigator.pushNamed(context, ClientRoutes.profile);
+          }),
+          ProfileMenuItem(AppLocalizations.of(context)!.clientProfileFavorites, Icons.bookmark, onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const SavedEventsPage()));
           }),
           ProfileMenuItem(AppLocalizations.of(context)!.clientProfilePaymentMethods, Icons.payments, onTap: _showPaymentHistory),
         ]),

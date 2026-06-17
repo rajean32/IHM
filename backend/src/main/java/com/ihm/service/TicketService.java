@@ -141,6 +141,12 @@ public class TicketService {
         ticket.setCodeTicket(dto.getCodeTicket());
         ticket.setPrix(dto.getPrix());
 
+        if (dto.getIdEvenement() != null) {
+            Evenement event = evenementRepository.findByIdEvenement(dto.getIdEvenement())
+                    .orElse(null);
+            ticket.setEvenement(event);
+        }
+
         if (dto.getIdZone() != null) {
             ZoneStanding zone = zoneStandingRepository.findById(dto.getIdZone())
                     .orElseThrow(() -> new ResourceNotFoundException("ZoneStanding", "idZone", dto.getIdZone()));
@@ -224,10 +230,10 @@ public class TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", "codeTicket", codeTicket));
 
         List<Concerner> concerners = concernerRepository.findByTicket_CodeTicket(codeTicket);
-        String evenementTitre = "";
-        String placeNumero = ticket.getZoneStanding() != null ? ticket.getZoneStanding().getNom() : "";
-        String rang = "";
-        String typePlace = ticket.getZoneStanding() != null ? "DEBOUT" : "";
+        String evenementTitre = null;
+        String placeNumero = ticket.getZoneStanding() != null ? ticket.getZoneStanding().getNom() : null;
+        String rang = null;
+        String typePlace = ticket.getZoneStanding() != null ? "DEBOUT" : null;
 
         if (ticket.getZoneStanding() != null) {
             evenementTitre = ticket.getZoneStanding().getEvenement().getTitre();
@@ -242,9 +248,13 @@ public class TicketService {
                             concerner.getEvenement().getIdEvenement(), placeNumero)
                     .orElse(null);
             if (config != null) {
-                rang = config.getRange() != null ? config.getRange() : "";
-                typePlace = config.getTypePlace() != null ? config.getTypePlace() : "";
+                rang = config.getRange();
+                typePlace = config.getTypePlace();
             }
+        }
+
+        if ((evenementTitre == null || evenementTitre.isEmpty()) && ticket.getEvenement() != null) {
+            evenementTitre = ticket.getEvenement().getTitre();
         }
 
         String ticketData = qrCodeService.generateTicketData(codeTicket, evenementTitre, placeNumero);
@@ -376,8 +386,10 @@ public class TicketService {
 
         if (ticket.getZoneStanding() != null) {
             dto.setZoneNom(ticket.getZoneStanding().getNom());
+            dto.setNumeroPlace(ticket.getZoneStanding().getNom());
             dto.setIdEvenement(ticket.getZoneStanding().getEvenement().getIdEvenement());
             dto.setEvenementTitre(ticket.getZoneStanding().getEvenement().getTitre());
+            dto.setTypePlace("DEBOUT");
             if (ticket.getZoneStanding().getEvenement().getDateEvenement() != null)
                 dto.setDateEvenement(ticket.getZoneStanding().getEvenement().getDateEvenement().toString());
             if (ticket.getZoneStanding().getEvenement().getHeureEvenement() != null)
@@ -417,6 +429,77 @@ public class TicketService {
             }
         }
 
-        return dto;
+    // Fallback 1: try to get event info via sibling tickets in the same reservation
+    if (dto.getEvenementTitre() == null) {
+        fillFromReservationFallback(dto, ticket);
+    }
+
+    // Fallback 2: use ticket's direct evenement reference
+    if (dto.getEvenementTitre() == null && ticket.getEvenement() != null) {
+        Evenement e = ticket.getEvenement();
+        dto.setIdEvenement(e.getIdEvenement());
+        dto.setEvenementTitre(e.getTitre());
+        if (e.getDateEvenement() != null)
+            dto.setDateEvenement(e.getDateEvenement().toString());
+        if (e.getHeureEvenement() != null)
+            dto.setHeureEvenement(e.getHeureEvenement().toString());
+        dto.setImage(ImageUtils.toDataUrl(e.getImage()));
+        dto.setStatut("VALID");
+    }
+
+    return dto;
+    }
+
+    private void fillFromReservationFallback(TicketDTO dto, Ticket ticket) {
+        List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(ticket.getCodeTicket());
+        for (CorrespondA ca : correspondances) {
+            Reservation reservation = ca.getReservation();
+            List<CorrespondA> siblings = correspondARepository.findByReservation_IdReservation(reservation.getIdReservation());
+            for (CorrespondA sibling : siblings) {
+                if (sibling.getTicket().getCodeTicket().equals(ticket.getCodeTicket())) continue;
+                Ticket siblingTicket = sibling.getTicket();
+
+                if (siblingTicket.getZoneStanding() != null) {
+                    dto.setZoneNom(siblingTicket.getZoneStanding().getNom());
+                    dto.setIdEvenement(siblingTicket.getZoneStanding().getEvenement().getIdEvenement());
+                    dto.setEvenementTitre(siblingTicket.getZoneStanding().getEvenement().getTitre());
+                    if (siblingTicket.getZoneStanding().getEvenement().getDateEvenement() != null)
+                        dto.setDateEvenement(siblingTicket.getZoneStanding().getEvenement().getDateEvenement().toString());
+                    if (siblingTicket.getZoneStanding().getEvenement().getHeureEvenement() != null)
+                        dto.setHeureEvenement(siblingTicket.getZoneStanding().getEvenement().getHeureEvenement().toString());
+                    dto.setImage(ImageUtils.toDataUrl(siblingTicket.getZoneStanding().getEvenement().getImage()));
+                    dto.setStatut("VALID");
+                    return;
+                }
+
+                List<Concerner> siblingConcerners = concernerRepository.findByTicket_CodeTicket(siblingTicket.getCodeTicket());
+                if (!siblingConcerners.isEmpty()) {
+                    Concerner c = siblingConcerners.get(0);
+                    dto.setIdEvenement(c.getEvenement().getIdEvenement());
+                    dto.setEvenementTitre(c.getEvenement().getTitre());
+                    dto.setNumeroPlace(c.getPlace().getNumeroPlace());
+                    if (c.getEvenement().getDateEvenement() != null)
+                        dto.setDateEvenement(c.getEvenement().getDateEvenement().toString());
+                    if (c.getEvenement().getHeureEvenement() != null)
+                        dto.setHeureEvenement(c.getEvenement().getHeureEvenement().toString());
+                    if (c.getPlace().getSalle() != null) {
+                        dto.setSalleNom(c.getPlace().getSalle().getNomSalle());
+                        if (c.getPlace().getSalle().getLieu() != null) {
+                            dto.setLieuNom(c.getPlace().getSalle().getLieu().getNomLieu());
+                        }
+                    }
+                    dto.setImage(ImageUtils.toDataUrl(c.getEvenement().getImage()));
+                    EvenementPlaceConfiguration config = configRepository
+                            .findByEvenement_IdEvenementAndPlace_NumeroPlace(
+                                    c.getEvenement().getIdEvenement(), c.getPlace().getNumeroPlace())
+                            .orElse(null);
+                    if (config != null) {
+                        dto.setRang(config.getRange());
+                        dto.setTypePlace(config.getTypePlace());
+                    }
+                    return;
+                }
+            }
+        }
     }
 }
