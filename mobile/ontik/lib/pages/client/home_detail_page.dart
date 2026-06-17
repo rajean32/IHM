@@ -10,6 +10,7 @@ import '../../core/utils/error_helper.dart';
 import '../../widgets/event_image_widget.dart';
 import '../../core/services/app_config.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class HomeDetailPage extends StatefulWidget {
   final int eventId;
@@ -52,12 +53,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
     if (!mounted) return;
     final loc = AppLocalizations.of(context);
     if (loc == null) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_isFavorited ? loc.clientFavoriteAdded : loc.clientFavoriteRemoved),
-        backgroundColor: AppColors.secondary,
-      ),
-    );
+    AdminToast.show(context, message: _isFavorited ? loc.clientFavoriteAdded : loc.clientFavoriteRemoved, isSuccess: true);
   }
 
   void _shareEvent() {
@@ -69,9 +65,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
         '📍 ${event.lieuNom ?? ''}\n'
         '${AppConstants.currency}${event.prixMin?.toStringAsFixed(0) ?? ''} - ${AppConstants.currency}${event.prixMax?.toStringAsFixed(0) ?? ''}';
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.clientShareCopied), backgroundColor: AppColors.secondary),
-    );
+    AdminToast.show(context, message: AppLocalizations.of(context)!.clientShareCopied, isSuccess: true);
   }
 
   Future<void> _loadDetail() async {

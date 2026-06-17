@@ -6,6 +6,7 @@ import 'package:ontik/core/utils/error_helper.dart';
 import 'package:ontik/models/user_model.dart';
 import 'package:ontik/widgets/admin/admin_error_state.dart';
 import 'package:ontik/widgets/admin/admin_empty_state.dart';
+import 'package:ontik/widgets/admin/admin_toast.dart';
 
 class ActionHistoryPage extends StatefulWidget {
   const ActionHistoryPage({super.key});
@@ -63,15 +64,11 @@ class _ActionHistoryPageState extends State<ActionHistoryPage> {
     try {
       await dio.post(Endpoints.auditLogUndo(entry.idAction!));
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Action annulée'), backgroundColor: AppColors.secondary),
-      );
+      AdminToast.show(context, message: 'Action annulée', isSuccess: true);
       _loadLogs();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
-      );
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
       setState(() => _undoing = false);
     }
   }
@@ -109,7 +106,7 @@ class _ActionHistoryPageState extends State<ActionHistoryPage> {
   Color _actionColor(String action) {
     switch (action) {
       case 'CREATE_USER': return Colors.green;
-      case 'UPDATE_USER': return Colors.blue;
+      case 'UPDATE_USER': return AppColors.primary;
       case 'CHANGE_ROLE': return Colors.orange;
       case 'DEACTIVATE_USER': return Colors.red;
       case 'ACTIVATE_USER': return Colors.green;

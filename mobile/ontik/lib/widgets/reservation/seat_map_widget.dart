@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/assets/app_colors.dart';
 
 class SeatMapPlace {
   final int id;
@@ -21,7 +22,7 @@ class SeatMapPlace {
 enum _SeatState { available, selected, occupied }
 
 Color _seatColor(_SeatState state, String typePlace) {
-  if (state == _SeatState.selected) return const Color(0xFF1565C0);
+  if (state == _SeatState.selected) return AppColors.primary;
   if (state == _SeatState.occupied) return const Color(0xFFBDBDBD);
   switch (typePlace.toUpperCase()) {
     case 'VIP':
@@ -263,7 +264,7 @@ class SeatMapWidget extends StatelessWidget {
               color: color,
               borderRadius: BorderRadius.circular(10),
               border: isSelected
-                  ? Border.all(color: const Color(0xFF1565C0), width: 2)
+                  ? Border.all(color: AppColors.primary, width: 2)
                   : null,
             ),
             child: Stack(

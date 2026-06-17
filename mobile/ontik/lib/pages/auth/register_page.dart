@@ -5,6 +5,7 @@ import '../../core/assets/app_colors.dart';
 import '../../core/routes/auth_routes.dart';
 import '../../core/utils/error_helper.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -88,14 +89,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
     if (_dateDeNaissance == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Date of birth is required'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      AdminToast.show(context, message: 'Date of birth is required', isSuccess: false);
       return;
     }
     FocusScope.of(context).unfocus();
@@ -116,14 +110,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
         'type': _type,
       });
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.authRegisterSuccess),
-          backgroundColor: AppColors.secondary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.authRegisterSuccess, isSuccess: true);
       Navigator.pushReplacementNamed(context, AuthRoutes.login);
     } catch (e) {
       if (!mounted) return;

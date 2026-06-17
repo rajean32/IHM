@@ -8,6 +8,7 @@ import '../../core/utils/error_helper.dart';
 import '../../core/routes/client_routes.dart';
 import '../../models/notification_model.dart';
 import '../../widgets/error_state.dart';
+import '../../widgets/admin/admin_toast.dart';
 import '../../generated/app_localizations.dart';
 
 class NotificationsPage extends StatefulWidget {
@@ -124,20 +125,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
         }
       });
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.notificationsMarkAllRead),
-          backgroundColor: AppColors.secondary,
-        ),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.notificationsMarkAllRead, isSuccess: true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(apiErrorString(e)),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     }
   }
 
@@ -148,7 +139,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
       await NotificationManager.refreshNow();
       if (!mounted) return;
       setState(() => n.isRead = true);
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
+    }
   }
 
   void _onNotificationTap(InAppNotification n) async {
@@ -176,7 +170,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
       await NotificationManager.refreshNow();
       if (!mounted) return;
       setState(() => _notifications.remove(n));
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
+    }
   }
 
   IconData _iconForType(String type) =>

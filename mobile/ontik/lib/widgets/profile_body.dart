@@ -38,7 +38,7 @@ class ProfileBody extends StatelessWidget {
     required this.name,
     required this.email,
     this.badge = 'VIP Member',
-    this.badgeColor = const Color(0xFF9C27B0),
+    this.badgeColor = AppColors.primary,
     this.stats = const [],
     this.menuGroups = const [],
     this.onLogout,
@@ -48,7 +48,7 @@ class ProfileBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFFEF7FF),
+      color: AppColors.surface,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
@@ -89,13 +89,13 @@ class ProfileBody extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: const Color(0xFF673AB7).withValues(alpha: 0.1),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                   child: Text(
                     initials,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF673AB7),
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
@@ -166,7 +166,7 @@ class ProfileBody extends StatelessWidget {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(s.icon, size: 22, color: const Color(0xFF673AB7).withValues(alpha: 0.7)),
+              Icon(s.icon, size: 22, color: AppColors.primary.withValues(alpha: 0.7)),
               const SizedBox(height: 6),
               Text(
                 s.value,
@@ -260,7 +260,7 @@ class ProfileBody extends StatelessWidget {
         icon: const Icon(Icons.logout, size: 18),
         label: Text(AppLocalizations.of(context)!.widgetsProfileLogout),
         style: TextButton.styleFrom(
-          foregroundColor: const Color(0xFFB00020),
+          foregroundColor: AppColors.error,
           padding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),

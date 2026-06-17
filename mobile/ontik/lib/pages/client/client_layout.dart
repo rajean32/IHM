@@ -4,7 +4,7 @@ import '../../core/services/notification_service.dart';
 import '../../widgets/notification_bell.dart';
 import '../../generated/app_localizations.dart';
 import 'home_page.dart';
-import 'tickets_page.dart';
+import '../ticket/ticket_list_page.dart';
 import 'client_profile_page.dart';
 
 class ClientLayout extends StatefulWidget {
@@ -31,11 +31,10 @@ class _ClientLayoutState extends State<ClientLayout> {
     super.dispose();
   }
 
-  // Liste des pages
   final List<Widget> _pages = [
     const HomePage(),
-    const MyTicketsPage(), // Page des tickets
-    const ClientProfilePage(), // Page profil client
+    const TicketListPage(),
+    const ClientProfilePage(),
   ];
 
   @override
@@ -43,12 +42,6 @@ class _ClientLayoutState extends State<ClientLayout> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leading: ModalRoute.of(context)?.canPop == true
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
         title: Row(
           children: [
             Image.asset(

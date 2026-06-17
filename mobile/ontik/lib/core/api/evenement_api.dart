@@ -48,7 +48,7 @@ class EvenementApi {
   }
 
   Future<void> cancelEvent(int id, String motif) async {
-    await dio.put('${Endpoints.events}/$id/cancel', data: {'motifAnnulation': motif});
+    await dio.put('${Endpoints.events}/$id/cancel', data: {'motif': motif});
   }
 
   Future<List<dynamic>> getStandingZones(int eventId) async {
@@ -72,9 +72,7 @@ class EvenementApi {
     await dio.post(Endpoints.eventImage(eventId), data: formData);
   }
 
-  // AJOUTER cette méthode dans EvenementApi
-
-// NOUVELLE MÉTHODE : Événements cinéma
+  // Événements cinéma
   Future<List<dynamic>> getCinemaEvents() async {
     final resp = await dio.get(Endpoints.cinemaEvents);
     return (resp.data['data'] as List?) ?? [];

@@ -2204,6 +2204,18 @@ abstract class AppLocalizations {
   /// **'This action is irreversible'**
   String get settingsIrreversible;
 
+  /// No description provided for @accountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deleted'**
+  String get accountDeleted;
+
+  /// No description provided for @errorOccurred.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred'**
+  String get errorOccurred;
+
   /// No description provided for @settingsDeleteConfirm.
   ///
   /// In en, this message translates to:

@@ -15,6 +15,7 @@ import '../../models/caracteristique_model.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 import 'create_event_page/step_1_general.dart';
 import 'create_event_page/step_2_date_time.dart';
 import 'create_event_page/step_3_location.dart';
@@ -87,8 +88,8 @@ class _CreateEventPageState extends State<CreateEventPage> {
   final List<Map<String, dynamic>> _standingZones = [];
   final _zoneNomCtrl = TextEditingController();
   final _zoneCapaciteCtrl = TextEditingController();
-  final _zonePrixCtrl = TextEditingController();
   bool _zoneCapaciteIllimitee = true;
+  final List<TextEditingController> _zonePriceCtrls = [];
 
   List<Caracteristique> _caracteristiques = [];
   Map<int, TextEditingController> _caracControllers = {};
@@ -121,7 +122,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
     _capaciteLibreCtrl.dispose();
     _zoneNomCtrl.dispose();
     _zoneCapaciteCtrl.dispose();
-    _zonePrixCtrl.dispose();
+    for (final c in _zonePriceCtrls) c.dispose();
     for (final ctrl in _typePriceCtrls.values) ctrl.dispose();
     for (final ctrl in _caracControllers.values) ctrl.dispose();
     super.dispose();
@@ -305,17 +306,20 @@ class _CreateEventPageState extends State<CreateEventPage> {
       _standingZones.add({
         'nom': nom,
         'capacite': _zoneCapaciteIllimitee ? null : (int.tryParse(_zoneCapaciteCtrl.text) ?? 0),
-        'prix': double.tryParse(_zonePrixCtrl.text) ?? 0.0,
+        'prix': 0.0,
       });
+      _zonePriceCtrls.add(TextEditingController(text: '0'));
       _zoneNomCtrl.clear();
       _zoneCapaciteCtrl.clear();
-      _zonePrixCtrl.clear();
       _zoneCapaciteIllimitee = true;
     });
   }
 
   void _removeStandingZone(int index) {
-    setState(() => _standingZones.removeAt(index));
+    setState(() {
+      _standingZones.removeAt(index);
+      _zonePriceCtrls.removeAt(index).dispose();
+    });
   }
 
   List<Map<String, dynamic>> _buildCaracteristiqueValeurs() {
@@ -367,55 +371,39 @@ class _CreateEventPageState extends State<CreateEventPage> {
         final createdData = await _eventService.createEvent(event.toJson());
         final created = Evenement.fromJson(createdData);
         if (mounted && created.idEvenement != null) {
-          if (_typePlacement == 'NUMEROTE' || _typePlacement == 'MIXTE') {
-            try {
-              for (final entry in _typePriceCtrls.entries) {
-                final prixText = entry.value.text;
-                final prix = prixText.isNotEmpty ? double.tryParse(prixText) : null;
-                if (prix != null) {
-                  await _placeService.setTypePricing(created.idEvenement!, entry.key, prix);
-                }
-              }
-              final rowGroups = <String, List<String>>{};
-              for (final entry in _pendingRowAssignments.entries) {
-                rowGroups.putIfAbsent(entry.value, () => []); rowGroups[entry.value]!.add(entry.key);
-              }
-              final placeGroups = <String, List<String>>{};
-              for (final entry in _pendingPlaceAssignments.entries) {
-                placeGroups.putIfAbsent(entry.value, () => []); placeGroups[entry.value]!.add(entry.key);
-              }
-              for (final type in {...rowGroups.keys, ...placeGroups.keys}) {
-                await _placeService.assignTypes(created.idEvenement!, {
-                  'typePlace': type, 'placeIds': placeGroups[type] ?? [], 'rows': rowGroups[type] ?? [],
-                });
-              }
-            } catch (_) {}
+          final typePrices = <String, double>{};
+          for (final entry in _typePriceCtrls.entries) {
+            final prix = double.tryParse(entry.value.text);
+            if (prix != null) typePrices[entry.key] = prix;
           }
-          if (_typePlacement == 'MIXTE') {
-            for (final zone in _standingZones) {
-              try {
-                await _eventService.createStandingZone(created.idEvenement!, {
-                  'nom': zone['nom'],
-                  'capacite': zone['capacite'],
-                  'prix': zone['prix'],
-                });
-              } catch (_) {}
-            }
+          final rowGroups = <String, List<String>>{};
+          for (final entry in _pendingRowAssignments.entries) {
+            rowGroups.putIfAbsent(entry.value, () => []); rowGroups[entry.value]!.add(entry.key);
           }
-          if (_hasNewImage) {
-            try { await _eventService.uploadImage(created.idEvenement!, File(_selectedImagePath!)); } catch (_) {}
+          final placeGroups = <String, List<String>>{};
+          for (final entry in _pendingPlaceAssignments.entries) {
+            placeGroups.putIfAbsent(entry.value, () => []); placeGroups[entry.value]!.add(entry.key);
           }
+          for (int i = 0; i < _standingZones.length && i < _zonePriceCtrls.length; i++) {
+            _standingZones[i]['prix'] = double.tryParse(_zonePriceCtrls[i].text) ?? 0.0;
+          }
+          await _eventService.configureEventAfterCreation(
+            eventId: created.idEvenement!,
+            typePlacement: _typePlacement,
+            typePrices: typePrices,
+            rowAssignments: rowGroups,
+            placeAssignments: placeGroups,
+            standingZones: _standingZones,
+            image: _hasNewImage ? File(_selectedImagePath!) : null,
+          );
         }
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(_isEditing ? AppLocalizations.of(context)!.eventUpdatedMsg : AppLocalizations.of(context)!.eventCreatedMsg),
-        backgroundColor: AppTheme.secondaryColor,
-      ));
+      AdminToast.show(context, message: _isEditing ? AppLocalizations.of(context)!.eventUpdatedMsg : AppLocalizations.of(context)!.eventCreatedMsg, isSuccess: true);
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor));
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -619,14 +607,11 @@ class _CreateEventPageState extends State<CreateEventPage> {
       capaciteIllimitee: _capaciteIllimitee,
       capaciteLibreCtrl: _capaciteLibreCtrl,
       placeTypes: _placeTypes,
-      typePriceCtrls: _typePriceCtrls,
       standingZones: _standingZones,
       zoneNomCtrl: _zoneNomCtrl,
       zoneCapaciteCtrl: _zoneCapaciteCtrl,
-      zonePrixCtrl: _zonePrixCtrl,
       zoneCapaciteIllimitee: _zoneCapaciteIllimitee,
       newPlaceTypeCtrl: _newPlaceTypeCtrl,
-      places: _places,
       onLieuChanged: (v) {
         setState(() => _selectedLieu = v);
         if (v != null) _loadSalles(v);
@@ -658,6 +643,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       placeTypes: _placeTypes,
       typePriceCtrls: _typePriceCtrls,
       standingZones: _standingZones,
+      zonePriceCtrls: _zonePriceCtrls,
       selectedSalle: _selectedSalle,
       places: _places,
       loadingPlaces: _loadingPlaces,
@@ -681,12 +667,18 @@ class _CreateEventPageState extends State<CreateEventPage> {
         if (_selectedPlaceIds.contains(p)) { _selectedPlaceIds.remove(p); } else { _selectedPlaceIds.add(p); }
       }),
       onToggleGridExpanded: (v) => setState(() => _gridExpanded = v),
-      onRemoveStandingZone: (i) => setState(() => _standingZones.removeAt(i)),
+      onRemoveStandingZone: (i) => setState(() {
+        _standingZones.removeAt(i);
+        _zonePriceCtrls.removeAt(i).dispose();
+      }),
       onRefresh: () => setState(() {}),
     );
   }
 
   Widget _buildStep5() {
+    for (int i = 0; i < _standingZones.length && i < _zonePriceCtrls.length; i++) {
+      _standingZones[i]['prix'] = double.tryParse(_zonePriceCtrls[i].text) ?? 0.0;
+    }
     return buildStep5(
       context: context,
       titreCtrl: _titreCtrl,

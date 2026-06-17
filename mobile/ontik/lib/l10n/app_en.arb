@@ -350,6 +350,8 @@
   "settingsLogoutConfirm": "Do you want to log out?",
   "settingsDeleteAccount": "Delete account",
   "settingsIrreversible": "This action is irreversible",
+  "accountDeleted": "Account deleted",
+  "errorOccurred": "An error occurred",
   "settingsDeleteConfirm": "Do you really want to delete your account? This action is irreversible.",
   "settingsNotImplemented": "Feature not yet implemented",
   "settingsConfirm": "Confirm",

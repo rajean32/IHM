@@ -20,6 +20,10 @@ class UserApi {
     await dio.delete('${Endpoints.users}/$code');
   }
 
+  Future<void> selfDelete(String code) async {
+    await dio.delete('${Endpoints.utilisateurs}/$code');
+  }
+
   Future<Map<String, dynamic>> getOrganizerProfile(String code) async {
     final resp = await dio.get(Endpoints.organizerProfile(code));
     return resp.data['data'] as Map<String, dynamic>;

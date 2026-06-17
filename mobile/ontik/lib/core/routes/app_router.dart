@@ -20,6 +20,10 @@ import '../../pages/organizer/reservation_detail_page.dart';
 import '../../pages/admin/admin_layout.dart';
 import '../../pages/shared/notifications_page.dart';
 import '../../pages/shared/settings_page.dart';
+import '../../pages/ticket/ticket_list_page.dart';
+import '../../pages/ticket/free_seating_ticket_page.dart';
+import '../../pages/ticket/numbered_seating_ticket_page.dart';
+import '../../pages/ticket/mixed_seating_ticket_page.dart';
 import 'auth_routes.dart';
 import 'client_routes.dart';
 import 'organizer_routes.dart';
@@ -62,6 +66,8 @@ class AppRouter {
       case ClientRoutes.ticket:
         final a = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(builder: (_) => TicketPage(ticketCode: a['code'] as String));
+      case ClientRoutes.ticketList:
+        return MaterialPageRoute(builder: (_) => const TicketListPage());
       case ClientRoutes.profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage());
       case OrganizerRoutes.layout:
@@ -77,6 +83,12 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => PricingPage(eventId: a['eventId'] as int));
       case OrganizerRoutes.tickets:
         return MaterialPageRoute(builder: (_) => const TicketsPage());
+      case OrganizerRoutes.ticketFreeSeating:
+        return MaterialPageRoute(builder: (_) => const TicketListPage(placementType: 'LIBRE'));
+      case OrganizerRoutes.ticketNumbered:
+        return MaterialPageRoute(builder: (_) => const TicketListPage(placementType: 'NUMEROTE'));
+      case OrganizerRoutes.ticketMixed:
+        return MaterialPageRoute(builder: (_) => const TicketListPage(placementType: 'MIXTE'));
       case OrganizerRoutes.reservations:
         return MaterialPageRoute(builder: (_) => const ReservationsPage());
       case OrganizerRoutes.reservationDetail:
@@ -101,12 +113,16 @@ class AppRouter {
       ClientRoutes.reservation,
       ClientRoutes.payment,
       ClientRoutes.ticket,
+      ClientRoutes.ticketList,
       ClientRoutes.profile,
       OrganizerRoutes.layout,
       OrganizerRoutes.createEvent,
       OrganizerRoutes.scan,
       OrganizerRoutes.pricing,
       OrganizerRoutes.tickets,
+      OrganizerRoutes.ticketFreeSeating,
+      OrganizerRoutes.ticketNumbered,
+      OrganizerRoutes.ticketMixed,
       OrganizerRoutes.reservations,
       OrganizerRoutes.reservationDetail,
       AdminRoutes.layout,

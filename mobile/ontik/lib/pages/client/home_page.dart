@@ -3,7 +3,8 @@ import 'package:intl/intl.dart';
 import '../../models/evenement_model.dart';
 import '../../models/lieu_model.dart';
 import '../../models/categorie_model.dart';
-import '../../widgets/event_image_widget.dart';
+import '../../widgets/event/event_card.dart';
+import '../../widgets/event/event_filter_sheet.dart';
 import '../../core/services/categorie_service.dart';
 import '../../core/services/lieu_service.dart';
 import '../../core/api/dio_config.dart';
@@ -38,35 +39,24 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
   String? _error;
 
-  static const _statusOptions = ['Tous', 'planifie', 'en_cours', 'termine', 'annule'];
-
   @override
   void initState() {
     super.initState();
     _loadFilterData();
     _loadEvents();
-    _scrollCtrl.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
-    _scrollCtrl.removeListener(_onScroll);
     _scrollCtrl.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
-    }
-  }
-
   Future<void> _loadFilterData() async {
     try {
-      final _lieuService = LieuService();
-      final _categorieService = CategorieService();
-      final lieuxData = await _lieuService.getLieux();
-      final catsData = await _categorieService.getCategories();
+      final lieuxData = await LieuService().getLieux();
+      final catsData = await CategorieService().getCategories();
       if (!mounted) return;
       setState(() {
         _lieux = lieuxData.map((e) => Lieu.fromJson(e as Map<String, dynamic>)).toList();
@@ -81,7 +71,7 @@ class _HomePageState extends State<HomePage> {
       final params = <String, dynamic>{};
       if (_searchCtrl.text.isNotEmpty) params['q'] = _searchCtrl.text;
       if (_selectedCategorie != null) params['categorie'] = _selectedCategorie;
-      if (_selectedStatut != null && _selectedStatut != 'Tous') params['statut'] = _selectedStatut;
+      if (_selectedStatut != null) params['statut'] = _selectedStatut;
       if (_selectedLieu != null) params['codeLieu'] = _selectedLieu;
       if (_prixMin != null) params['prixMin'] = _prixMin;
       if (_prixMax != null) params['prixMax'] = _prixMax;
@@ -91,236 +81,83 @@ class _HomePageState extends State<HomePage> {
       }
       if (userVille != null && _selectedLieu == null && _selectedDateRange == null) params['ville'] = userVille;
 
-      final hasSearchParams = params.containsKey('q') || params.containsKey('prixMin') ||
-          params.containsKey('prixMax') || params.containsKey('dateDebut') ||
-          params.containsKey('codeLieu');
-      final url = hasSearchParams ? '${Endpoints.events}/search' : Endpoints.events;
+      final hasSearch = params.containsKey('q') || params.containsKey('prixMin') ||
+          params.containsKey('prixMax') || params.containsKey('codeLieu');
+      final url = hasSearch ? '${Endpoints.events}/search' : Endpoints.events;
 
-      final resp = await dio.get(
-        url,
-        queryParameters: params.isNotEmpty ? params : null,
-      );
+      final resp = await dio.get(url, queryParameters: params.isNotEmpty ? params : null);
       final data = resp.data['data'] as List? ?? [];
       final events = data.map((e) => Evenement.fromJson(e as Map<String, dynamic>)).toList();
       if (!mounted) return;
-      setState(() {
-        _events = events;
-        _isLoading = false;
-        _error = null;
-      });
+      setState(() { _events = events; _isLoading = false; _error = null; });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = apiErrorString(e);
-        _isLoading = false;
-      });
+      setState(() { _error = apiErrorString(e); _isLoading = false; });
     }
   }
 
   void _applyFilters() => _loadEvents();
 
   void _showFilterSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Padding(
-          padding: EdgeInsets.only(
-            left: 24, right: 24, top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(AppLocalizations.of(context)!.clientHomeFilters, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    TextButton(
-                      onPressed: () {
-                        setSheetState(() {
-                          _selectedStatut = null;
-                          _selectedLieu = null;
-                          _selectedDateRange = null;
-                          _prixMin = null;
-                          _prixMax = null;
-                        });
-                      },
-                      child: Text(AppLocalizations.of(context)!.clientHomeReset),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(AppLocalizations.of(context)!.clientHomeStatus, style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: _selectedStatut,
-                  decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
-                  items: _statusOptions.map((s) => DropdownMenuItem(
-                    value: s == 'Tous' ? null : s,
-                    child: Text(s),
-                  )).toList(),
-                  onChanged: (v) => setSheetState(() => _selectedStatut = v),
-                ),
-                const SizedBox(height: 16),
-                Text(AppLocalizations.of(context)!.clientHomeVenue, style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: _selectedLieu,
-                  decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
-                  items: [
-                    DropdownMenuItem<String>(value: null, child: Text(AppLocalizations.of(context)!.clientHomeAllVenues)),
-                    ..._lieux.map((l) => DropdownMenuItem(
-                      value: l.code,
-                      child: Text(l.nomLieu),
-                    )),
-                  ],
-                  onChanged: (v) => setSheetState(() => _selectedLieu = v),
-                ),
-                const SizedBox(height: 16),
-                Text(AppLocalizations.of(context)!.clientHomeDateRange, style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () async {
-                    final range = await showDateRangePicker(
-                      context: ctx,
-                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                      initialDateRange: _selectedDateRange,
-                    );
-                    if (range != null) setSheetState(() => _selectedDateRange = range);
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
-                    child: Text(
-                      _selectedDateRange != null
-                          ? '${_selectedDateRange!.start.toIso8601String().split('T').first} \u2014 ${_selectedDateRange!.end.toIso8601String().split('T').first}'
-                          : AppLocalizations.of(context)!.clientHomeSelectDateRange,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(AppLocalizations.of(context)!.clientHomePriceRange, style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.clientHomeMin, border: const OutlineInputBorder(), isDense: true),
-                        keyboardType: TextInputType.number,
-                        onChanged: (v) => _prixMin = double.tryParse(v),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('\u2014'),
-                    ),
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.clientHomeMax, border: const OutlineInputBorder(), isDense: true),
-                        keyboardType: TextInputType.number,
-                        onChanged: (v) => _prixMax = double.tryParse(v),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _applyFilters();
-                  },
-                  child: Text(AppLocalizations.of(context)!.clientHomeApply),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    EventFilterSheet.show(context,
+      statut: _selectedStatut,
+      lieu: _selectedLieu,
+      dateRange: _selectedDateRange,
+      prixMin: _prixMin,
+      prixMax: _prixMax,
+      lieux: _lieux,
+      onApply: (result) {
+        setState(() {
+          _selectedStatut = result.statut;
+          _selectedLieu = result.lieu;
+          _selectedDateRange = result.dateRange;
+          _prixMin = result.prixMin;
+          _prixMax = result.prixMax;
+        });
+        _applyFilters();
+      },
     );
-  }
-
-  String _formatDate(DateTime? date, String? time) {
-    if (date == null) return '';
-    final formatted = DateFormat('d MMMM yyyy', appLanguage).format(date);
-    if (time != null && time.length >= 5) {
-      return '$formatted \u2022 ${time.substring(0, 5)}';
-    }
-    return formatted;
-  }
-
-  Color _badgeColor(String? label) {
-    switch (label?.toUpperCase()) {
-      case 'VIP':
-        return const Color(0xFF9C27B0);
-      case 'PREMIUM':
-        return const Color(0xFFFF6F00);
-      default:
-        return const Color(0xFF673AB7);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFFEF7FF),
-      child: Column(
-        children: [
-          _buildSearchBar(),
-          _buildCategories(),
-          Expanded(child: _buildContent()),
-        ],
-      ),
+      color: AppColors.surface,
+      child: Column(children: [
+        _buildSearchBar(),
+        _buildCategories(),
+        Expanded(child: _buildContent()),
+      ]),
     );
   }
 
   Widget _buildSearchBar() {
+    final hasFilters = _selectedStatut != null || _selectedLieu != null ||
+        _selectedDateRange != null || _prixMin != null || _prixMax != null;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: AppLocalizations.of(context)!.clientHomeSearchHint,
-                prefixIcon: Icon(Icons.search, color: const Color(0xFF673AB7).withValues(alpha: 0.6)),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.divider.withValues(alpha: 0.5)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.divider.withValues(alpha: 0.5)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF673AB7)),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                isDense: true,
-              ),
-              onSubmitted: (_) => _applyFilters(),
+      child: Row(children: [
+        Expanded(
+          child: TextField(
+            controller: _searchCtrl,
+            decoration: InputDecoration(
+              hintText: AppLocalizations.of(context)!.clientHomeSearchHint,
+              prefixIcon: Icon(Icons.search, color: AppColors.primary.withValues(alpha: 0.6)),
+              filled: true, fillColor: Colors.white,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.divider.withValues(alpha: 0.5))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.divider.withValues(alpha: 0.5))),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.primary)),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12), isDense: true,
             ),
+            onSubmitted: (_) => _applyFilters(),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: Badge(
-              isLabelVisible: _selectedStatut != null || _selectedLieu != null ||
-                  _selectedDateRange != null || _prixMin != null || _prixMax != null,
-              child: Icon(Icons.tune, color: const Color(0xFF673AB7)),
-            ),
-            onPressed: _showFilterSheet,
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          icon: Badge(isLabelVisible: hasFilters, child: Icon(Icons.tune, color: AppColors.primary)),
+          onPressed: _showFilterSheet,
+        ),
+      ]),
     );
   }
 
@@ -330,8 +167,7 @@ class _HomePageState extends State<HomePage> {
       ..._categories.map((c) => {'label': c.nomCategorie, 'code': c.codeCategorie}),
     ];
     return Container(
-      height: 44,
-      margin: const EdgeInsets.only(top: 12),
+      height: 44, margin: const EdgeInsets.only(top: 12),
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -344,20 +180,11 @@ class _HomePageState extends State<HomePage> {
             child: ChoiceChip(
               label: Text(label),
               selected: isSelected,
-              onSelected: (v) {
-                setState(() => _selectedCategorie = v ? code : null);
-                _applyFilters();
-              },
-              selectedColor: const Color(0xFF673AB7),
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
+              onSelected: (v) { setState(() => _selectedCategorie = v ? code : null); _applyFilters(); },
+              selectedColor: AppColors.primary,
+              labelStyle: TextStyle(color: isSelected ? Colors.white : AppColors.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
               backgroundColor: Colors.white,
-              side: BorderSide(
-                color: isSelected ? const Color(0xFF673AB7) : AppColors.divider.withValues(alpha: 0.5),
-              ),
+              side: BorderSide(color: isSelected ? AppColors.primary : AppColors.divider.withValues(alpha: 0.5)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               padding: const EdgeInsets.symmetric(horizontal: 4),
             ),
@@ -370,18 +197,12 @@ class _HomePageState extends State<HomePage> {
   Widget _buildContent() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-            const SizedBox(height: 12),
-            Text(_error!, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadEvents, child: Text(AppLocalizations.of(context)!.clientHomeRetry)),
-          ],
-        ),
-      );
+      return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+        const SizedBox(height: 12), Text(_error!, textAlign: TextAlign.center),
+        const SizedBox(height: 16),
+        ElevatedButton(onPressed: _loadEvents, child: Text(AppLocalizations.of(context)!.clientHomeRetry)),
+      ]));
     }
 
     return RefreshIndicator(
@@ -390,20 +211,19 @@ class _HomePageState extends State<HomePage> {
         controller: _scrollCtrl,
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 80),
         children: [
-          Text(
-            AppLocalizations.of(context)!.clientHomeFeatured,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-          ),
+          Text(AppLocalizations.of(context)!.clientHomeFeatured, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const SizedBox(height: 14),
           if (_events.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 40),
-              child: Center(child: Text(AppLocalizations.of(context)!.clientHomeNoEvents, style: const TextStyle(color: AppColors.textSecondary))),
-            )
+            Padding(padding: const EdgeInsets.only(top: 40), child: Center(child: Text(AppLocalizations.of(context)!.clientHomeNoEvents, style: const TextStyle(color: AppColors.textSecondary))))
           else
             ..._events.map((event) => Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: _buildEventCard(event),
+              child: EventCard(
+                event: event,
+                onTap: event.idEvenement != null
+                    ? () => Navigator.pushNamed(context, ClientRoutes.homeDetail, arguments: {'id': event.idEvenement})
+                    : null,
+              ),
             )),
           if (!_promoDismissed) ...[
             const SizedBox(height: 8),
@@ -414,179 +234,22 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEventCard(Evenement event) {
-    return GestureDetector(
-      onTap: () {
-        if (event.idEvenement != null) {
-          Navigator.pushNamed(context, ClientRoutes.homeDetail, arguments: {'id': event.idEvenement});
-        }
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: event.image != null
-                  ? eventImageWidget(event.image!, fit: BoxFit.cover, width: double.infinity)
-                  : Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFF673AB7).withValues(alpha: 0.7),
-                            const Color(0xFF673AB7).withValues(alpha: 0.3),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(Icons.event, size: 48, color: Colors.white.withValues(alpha: 0.4)),
-                      ),
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          event.titre,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildEventBadge(event),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, size: 14, color: AppColors.textMuted),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          _formatDate(event.dateEvenement, event.heureEvenement),
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on, size: 14, color: AppColors.textMuted),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          event.lieuNom ?? AppLocalizations.of(context)!.clientHomeVenueNotSpecified,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    event.prix != null
-                        ? '${AppLocalizations.of(context)!.clientHomeDetailFrom} ${event.prix!.toStringAsFixed(0)} ${AppConstants.currency}'
-                        : AppLocalizations.of(context)!.clientHomePriceUnavailable,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF673AB7),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEventBadge(Evenement event) {
-    final label = event.categorieNom ?? event.statut ?? AppLocalizations.of(context)!.clientHomeStandard;
-    final color = _badgeColor(label);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color, letterSpacing: 0.3),
-      ),
-    );
-  }
-
   Widget _buildPromoBanner() {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7C4DFF), Color(0xFF448AFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: const LinearGradient(colors: [Color(0xFF7C4DFF), Color(0xFF9C27B0)], begin: Alignment.topLeft, end: Alignment.bottomRight),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 20, 12, 20),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.clientHomePromoTitle,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    AppLocalizations.of(context)!.clientHomePromoSubtitle,
-                    style: const TextStyle(fontSize: 13, color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.white60, size: 20),
-              onPressed: () => setState(() => _promoDismissed = true),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-          ],
-        ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(AppLocalizations.of(context)!.clientHomePromoTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
+            const SizedBox(height: 4),
+            Text(AppLocalizations.of(context)!.clientHomePromoSubtitle, style: const TextStyle(fontSize: 13, color: Colors.white70)),
+          ])),
+          IconButton(icon: const Icon(Icons.close, color: Colors.white60, size: 20), onPressed: () => setState(() => _promoDismissed = true), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+        ]),
       ),
     );
   }

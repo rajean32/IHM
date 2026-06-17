@@ -27,7 +27,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get layoutTitle => 'Ontik - Organisateur';
 
   @override
-  String get profileTitle => 'Profil';
+  String get profileTitle => 'Compte';
 
   @override
   String get overview => 'Aperçu';
@@ -1197,6 +1197,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsIrreversible => 'Cette action est irréversible';
 
   @override
+  String get accountDeleted => 'Compte supprimé';
+
+  @override
+  String get errorOccurred => 'Une erreur est survenue';
+
+  @override
   String get settingsDeleteConfirm =>
       'Voulez-vous vraiment supprimer votre compte ? Cette action est irréversible.';
 
@@ -2244,75 +2250,75 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notificationsTitle => 'Notifications';
 
   @override
-  String get notificationsEmpty => 'No notifications';
+  String get notificationsEmpty => 'Aucune notification';
 
   @override
-  String get notificationsNotConnected => 'User not connected';
+  String get notificationsNotConnected => 'Utilisateur non connecté';
 
   @override
-  String get notificationsMarkAllRead => 'Mark all as read';
+  String get notificationsMarkAllRead => 'Tout marquer comme lu';
 
   @override
-  String get notificationsMarkAllReadShort => 'Read all';
+  String get notificationsMarkAllReadShort => 'Tout lire';
 
   @override
-  String get notificationsFilterAll => 'All';
+  String get notificationsFilterAll => 'Toutes';
 
   @override
-  String get notificationsFilterPayments => 'Payments';
+  String get notificationsFilterPayments => 'Paiements';
 
   @override
-  String get notificationsFilterFailed => 'Failed';
+  String get notificationsFilterFailed => 'Échoué';
 
   @override
-  String get notificationsFilterReservations => 'Reservations';
+  String get notificationsFilterReservations => 'Réservations';
 
   @override
-  String get notificationsFilterCancellations => 'Cancellations';
+  String get notificationsFilterCancellations => 'Annulations';
 
   @override
-  String get notificationsFilterCancelled => 'Cancelled';
+  String get notificationsFilterCancelled => 'Annulé';
 
   @override
-  String get notificationsFilterApproved => 'Approved';
+  String get notificationsFilterApproved => 'Approuvé';
 
   @override
-  String get notificationsFilterUpdated => 'Updated';
+  String get notificationsFilterUpdated => 'Mis à jour';
 
   @override
-  String get notificationsFilterSuspended => 'Suspended';
+  String get notificationsFilterSuspended => 'Suspendu';
 
   @override
-  String get notificationsFilterScanned => 'Scanned';
+  String get notificationsFilterScanned => 'Scanné';
 
   @override
-  String get notificationsFilterReused => 'Reused';
+  String get notificationsFilterReused => 'Réutilisé';
 
   @override
-  String get notificationsFilterRefunded => 'Refunded';
+  String get notificationsFilterRefunded => 'Remboursé';
 
   @override
-  String get notificationsAll => 'All';
+  String get notificationsAll => 'Toutes';
 
   @override
-  String get notificationsUnread => 'Unread';
+  String get notificationsUnread => 'Non lues';
 
   @override
-  String get notificationsRead => 'Read';
+  String get notificationsRead => 'Lues';
 
   @override
-  String get notificationsNoResults => 'No results';
+  String get notificationsNoResults => 'Aucun résultat';
 
   @override
   String get notificationsEmptyFiltered =>
-      'No notifications match the selected filters.\nModify or reset filters to see more results.';
+      'Aucune notification ne correspond aux filtres sélectionnés.\nModifiez ou réinitialisez les filtres pour voir plus de résultats.';
 
   @override
   String get notificationsEmptyGeneral =>
-      'You will be notified here about important updates.\nBook tickets or create events to receive notifications.';
+      'Vous serez notifié ici des mises à jour importantes.\nRéservez des billets ou créez des événements pour recevoir des notifications.';
 
   @override
-  String get notificationsResetFilters => 'Reset filters';
+  String get notificationsResetFilters => 'Réinitialiser les filtres';
 
   @override
   String get pageNotFoundTitle => 'Page not found';
@@ -2509,7 +2515,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get widgetsNotificationBellTooltip => 'Notifications';
 
   @override
-  String get widgetsProfileLogout => 'Logout';
+  String get widgetsProfileLogout => 'Déconnexion';
 
   @override
   String get adminUsersCode => 'Code';

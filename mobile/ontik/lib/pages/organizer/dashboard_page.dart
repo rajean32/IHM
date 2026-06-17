@@ -194,7 +194,7 @@ class _DashboardPageState extends State<DashboardPage> {
             label: AppLocalizations.of(context)!.seatsAvailable,
             value: '${_stats!.placesDisponibles}',
             icon: Icons.event_seat,
-            color: const Color(0xFF7B1FA2),
+            color: AppColors.primary,
           )),
         ]),
       ],

@@ -6,6 +6,8 @@ import '../../core/utils/error_helper.dart';
 import '../../core/services/evenement_service.dart';
 import '../../core/services/place_service.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
+import '../../core/utils/place_utils.dart';
 
 class PricingPage extends StatefulWidget {
   final int eventId;
@@ -113,7 +115,7 @@ class _PricingPageState extends State<PricingPage> {
   }
 
   List<String> get _distinctRangs =>
-      _places.map((p) => p.range).whereType<String>().toSet().toList()..sort();
+      _places.map((p) => p.range).whereType<String>().where((r) => r != '?').toSet().toList()..sort();
 
   Map<String, List<EventPlaceConfig>> get _placesByType {
     final map = <String, List<EventPlaceConfig>>{};
@@ -132,15 +134,11 @@ class _PricingPageState extends State<PricingPage> {
     try {
       await _placeService.applyRowPricing(widget.eventId, rang, typePlace, prix);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.pricingAppliedRow('$rang')), backgroundColor: AppTheme.secondaryColor),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.pricingAppliedRow('$rang'), isSuccess: true);
       _loadPlaces();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
-      );
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -152,15 +150,11 @@ class _PricingPageState extends State<PricingPage> {
     try {
       await _placeService.applyOrganizerTypePricing(widget.eventId, typePlace, prix);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.pricingAppliedType('$typePlace')), backgroundColor: AppTheme.secondaryColor),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.pricingAppliedType('$typePlace'), isSuccess: true);
       _loadPlaces();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
-      );
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -168,9 +162,7 @@ class _PricingPageState extends State<PricingPage> {
 
   Future<void> _assignTypeToSelected() async {
     if (_selectedRows.isEmpty && _selectedPlaceIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.selectMinRowOrSeat), backgroundColor: AppTheme.accentColor),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.selectMinRowOrSeat, isSuccess: false);
       return;
     }
     setState(() => _saving = true);
@@ -183,9 +175,7 @@ class _PricingPageState extends State<PricingPage> {
         'rows': _selectedRows.toList(),
       });
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.typeAssignedMsg('$typeToAssign')), backgroundColor: AppTheme.secondaryColor),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.typeAssignedMsg('$typeToAssign'), isSuccess: true);
       setState(() {
         _selectedRows.clear();
         _selectedPlaceIds.clear();
@@ -193,9 +183,7 @@ class _PricingPageState extends State<PricingPage> {
       _loadPlaces();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
-      );
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -205,15 +193,11 @@ class _PricingPageState extends State<PricingPage> {
     try {
       await _placeService.updatePlaceConfig(widget.eventId, place.numeroPlace, typePlace: typePlace, prix: prix);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.seatUpdatedMsg('${place.numeroPlace}')), backgroundColor: AppTheme.secondaryColor),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.seatUpdatedMsg('${place.numeroPlace}'), isSuccess: true);
       _loadPlaces();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
-      );
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     }
   }
 
@@ -464,7 +448,7 @@ class _PricingPageState extends State<PricingPage> {
               borderRadius: BorderRadius.circular(4),
               border: Border.all(color: selected ? AppTheme.primaryColor : AppTheme.textSecondary.withValues(alpha: 0.3)),
             ),
-            child: Text(p.numeroPlace, style: TextStyle(fontSize: 10, fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
+            child: Text(displayPlace(p.numeroPlace), style: TextStyle(fontSize: 10, fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
           ),
         );
       }).toList(),
@@ -550,7 +534,7 @@ class _PricingPageState extends State<PricingPage> {
   }
 
   Widget _buildSeatGrid() {
-    final rangs = _filteredPlaces.map((p) => p.range).whereType<String>().toSet().toList()..sort();
+    final rangs = _filteredPlaces.map((p) => p.range).whereType<String>().where((r) => r != '?').toSet().toList()..sort();
     if (rangs.isEmpty) {
       return Column(children: _filteredPlaces.map((p) => _buildSeatListTile(p)).toList());
     }
@@ -599,7 +583,7 @@ class _PricingPageState extends State<PricingPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(place.numeroPlace.replaceAll(place.range ?? '', ''),
+            Text(extractSeatNumber(place.numeroPlace),
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
             Text('${place.effectivePrice.toStringAsFixed(0)}${AppConstants.currency}',
                 style: TextStyle(fontSize: 8, color: AppTheme.textSecondary)),
@@ -617,9 +601,9 @@ class _PricingPageState extends State<PricingPage> {
         leading: CircleAvatar(
           radius: 16,
           backgroundColor: (AppConstants.placeTypeColors[place.effectiveType] ?? AppTheme.textSecondary).withValues(alpha: 0.2),
-          child: Text(place.numeroPlace, style: const TextStyle(fontSize: 10)),
+          child: Text(displayPlace(place.numeroPlace), style: const TextStyle(fontSize: 10)),
         ),
-        title: Text('${place.numeroPlace}  ${place.range != null ? '(Rang ${place.range})' : ''}',
+        title: Text('${displayPlace(place.numeroPlace)}  ${place.range != null ? '(Rang ${place.range})' : ''}',
             style: const TextStyle(fontSize: 13)),
         subtitle: Text(
           '${place.effectiveType} • ${place.effectivePrice.toStringAsFixed(2)}${AppConstants.currency}${place.typePlaceOverride != null ? ' (configuré)' : ''}',
@@ -637,7 +621,7 @@ class _PricingPageState extends State<PricingPage> {
         text: (place.prixOverride ?? place.prix)?.toStringAsFixed(2) ?? '');
 
     showDialog(context: context, builder: (ctx) => AlertDialog(
-      title: Text(AppLocalizations.of(context)!.seatDialogTitle('${place.numeroPlace}')),
+      title: Text(AppLocalizations.of(context)!.seatDialogTitle('${displayPlace(place.numeroPlace)}')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -40,6 +40,8 @@ public class EvenementDTO {
     private String lieuVille;
     private Long placesTotal;
     private Long placesDisponibles;
+    private BigDecimal prixMin;
+    private BigDecimal prixMax;
     private List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs;
 
     public EvenementDTO() {}
@@ -90,6 +92,10 @@ public class EvenementDTO {
     public void setPlacesTotal(Long placesTotal) { this.placesTotal = placesTotal; }
     public Long getPlacesDisponibles() { return placesDisponibles; }
     public void setPlacesDisponibles(Long placesDisponibles) { this.placesDisponibles = placesDisponibles; }
+    public BigDecimal getPrixMin() { return prixMin; }
+    public void setPrixMin(BigDecimal prixMin) { this.prixMin = prixMin; }
+    public BigDecimal getPrixMax() { return prixMax; }
+    public void setPrixMax(BigDecimal prixMax) { this.prixMax = prixMax; }
     public List<EvenementCaracteristiqueValeurDTO> getCaracteristiqueValeurs() { return caracteristiqueValeurs; }
     public void setCaracteristiqueValeurs(List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs) { this.caracteristiqueValeurs = caracteristiqueValeurs; }
 

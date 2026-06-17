@@ -7,7 +7,6 @@ import com.ihm.schema.EvenementCaracteristiqueValeurDTO;
 import com.ihm.schema.SalleDTO;
 import com.ihm.repository.*;
 import com.ihm.model.*;
-import com.ihm.model.TypeAgencement;
 import com.ihm.util.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -246,7 +245,18 @@ public class EvenementService {
             List<Place> places = placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle());
             for (Place place : places) {
                 if (!configRepository.existsByEvenement_IdEvenementAndPlace_NumeroPlace(saved.getIdEvenement(), place.getNumeroPlace())) {
-                    String rang = "?";
+                    String rang = place.getRangePlace();
+                    if (rang == null || "?".equals(rang) || rang.isBlank()) {
+                        String np = place.getNumeroPlace();
+                        String[] parts = np.split("-");
+                        if (parts.length >= 2) {
+                            String seatCode = parts[parts.length - 1];
+                            rang = seatCode.replaceAll("\\d+$", "");
+                        } else {
+                            String derived = np.replaceAll("\\d.*$", "");
+                            if (!derived.isEmpty()) rang = derived;
+                        }
+                    }
                     EvenementPlaceConfiguration config = new EvenementPlaceConfiguration();
                     config.setEvenement(saved);
                     config.setPlace(place);
@@ -701,7 +711,7 @@ public class EvenementService {
                     boolean estReservee = reservedPlaces.contains(place.getNumeroPlace());
                     seating.setDisponible("DISPONIBLE".equals(cfg.getStatut()) && !estReservee);
                 } else {
-                    seating.setRang("?");
+                    seating.setRang(place.getRangePlace());
                     seating.setTypePlace("Standard");
                     seating.setPrix(null);
                     seating.setStatut("DISPONIBLE");
@@ -803,6 +813,10 @@ public class EvenementService {
                 dto.setPlacesTotal(total);
                 dto.setPlacesDisponibles(total - reserved);
             }
+        }
+        if (event.getIdEvenement() != null) {
+            dto.setPrixMin(configRepository.findMinPrixByEvenementId(event.getIdEvenement()));
+            dto.setPrixMax(configRepository.findMaxPrixByEvenementId(event.getIdEvenement()));
         }
         return dto;
     }

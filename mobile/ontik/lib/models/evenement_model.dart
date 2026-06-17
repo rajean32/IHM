@@ -45,6 +45,8 @@ class Evenement {
   final DateTime? dateFin;
   final String? heureEvenement;
   final double? prix;
+  final double? prixMin;
+  final double? prixMax;
   final int? capacite;
   final String? image;
   final String? statut;
@@ -70,6 +72,8 @@ class Evenement {
     this.dateFin,
     this.heureEvenement,
     this.prix,
+    this.prixMin,
+    this.prixMax,
     this.capacite,
     this.image,
     this.statut,
@@ -102,6 +106,12 @@ class Evenement {
       heureEvenement: json['heureEvenement'],
       prix: json['prix'] != null
           ? double.tryParse(json['prix'].toString())
+          : null,
+      prixMin: json['prixMin'] != null
+          ? double.tryParse(json['prixMin'].toString())
+          : null,
+      prixMax: json['prixMax'] != null
+          ? double.tryParse(json['prixMax'].toString())
           : null,
       capacite: json['capacite'] != null
           ? int.tryParse(json['capacite'].toString())

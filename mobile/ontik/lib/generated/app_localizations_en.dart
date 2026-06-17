@@ -1188,6 +1188,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsIrreversible => 'This action is irreversible';
 
   @override
+  String get accountDeleted => 'Account deleted';
+
+  @override
+  String get errorOccurred => 'An error occurred';
+
+  @override
   String get settingsDeleteConfirm =>
       'Do you really want to delete your account? This action is irreversible.';
 

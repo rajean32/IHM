@@ -8,6 +8,7 @@ import '../../core/utils/error_helper.dart';
 import '../../models/dashboard_model.dart';
 import '../../widgets/profile_body.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -128,15 +129,11 @@ class _ProfilePageState extends State<ProfilePage> {
                           Navigator.pop(ctx);
                           _loadProfile();
                           if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdated), backgroundColor: AppTheme.secondaryColor),
-                          );
+                          AdminToast.show(context, message: AppLocalizations.of(context)!.profileUpdated, isSuccess: true);
                         } catch (e) {
                           setSheetState(() => saving = false);
                           if (!ctx.mounted) return;
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
-                          );
+                          AdminToast.show(ctx, message: apiErrorString(e), isSuccess: false);
                         }
                       },
                       child: saving
@@ -197,7 +194,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: 12),
                         _revenueStat(snap.data!, AppLocalizations.of(context)!.fillRate, '${snap.data!.fillRate.toStringAsFixed(1)}%', Icons.pie_chart, AppColors.accent),
                         const SizedBox(height: 12),
-                        _revenueStat(snap.data!, AppLocalizations.of(context)!.seatsAvailable, '${snap.data!.placesDisponibles}', Icons.event_seat, const Color(0xFF7B1FA2)),
+                        _revenueStat(snap.data!, AppLocalizations.of(context)!.seatsAvailable, '${snap.data!.placesDisponibles}', Icons.event_seat, AppColors.primary),
                         const SizedBox(height: 16),
                         if (snap.data!.dailySales.isNotEmpty) ...[
                           const Divider(),
@@ -243,6 +240,35 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<void> _deleteAccount() async {
+    final code = userCode ?? '';
+    if (code.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.settingsDeleteAccount),
+        content: Text(AppLocalizations.of(context)!.settingsDeleteConfirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.commonCancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(AppLocalizations.of(context)!.settingsConfirm, style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await UserService().deleteSelfAccount(code);
+      await clearSession();
+      if (!context.mounted) return;
+      Navigator.pushNamedAndRemoveUntil(context, AuthRoutes.splash, (r) => false);
+    } catch (e) {
+      if (!context.mounted) return;
+      AdminToast.show(context, message: AppLocalizations.of(context)!.errorOccurred, isSuccess: false);
+    }
+  }
+
   void _logout() {
     showDialog(
       context: context,
@@ -252,9 +278,11 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(ctx)!.commonCancel)),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.pushNamedAndRemoveUntil(context, '/splash', (r) => false);
+              await clearSession();
+              if (!context.mounted) return;
+              Navigator.pushNamedAndRemoveUntil(context, AuthRoutes.splash, (r) => false);
             },
             child: Text(AppLocalizations.of(ctx)!.commonLogout, style: TextStyle(color: AppColors.error)),
           ),
@@ -274,13 +302,16 @@ class _ProfilePageState extends State<ProfilePage> {
       name: displayName.isNotEmpty ? displayName : (userNom ?? AppLocalizations.of(context)!.profileTitle),
       email: _email.isNotEmpty ? _email : (userCode ?? '—'),
       badge: 'ORGANISATEUR',
-      badgeColor: const Color(0xFF673AB7),
+      badgeColor: AppColors.primary,
       onEditProfile: _showEditInfo,
       menuGroups: [
         ProfileMenuGroup(AppLocalizations.of(context)!.account, [
           ProfileMenuItem(AppLocalizations.of(context)!.personalInfo, Icons.person, onTap: _showEditInfo),
           ProfileMenuItem(AppLocalizations.of(context)!.revenue, Icons.payments, onTap: _showRevenue),
           ProfileMenuItem(AppLocalizations.of(context)!.settingsTitle, Icons.settings, onTap: () => Navigator.pushNamed(context, '/settings')),
+        ]),
+        ProfileMenuGroup(AppLocalizations.of(context)!.settingsSecurity, [
+          ProfileMenuItem(AppLocalizations.of(context)!.settingsDeleteAccount, Icons.delete_forever, onTap: _deleteAccount),
         ]),
       ],
       onLogout: _logout,

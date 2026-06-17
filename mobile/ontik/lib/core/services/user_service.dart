@@ -12,4 +12,5 @@ class UserService {
   Future<Map<String, dynamic>> getUserProfile(String code) => _api.getUserProfile(code);
   Future<void> updateUserProfile(String code, Map<String, dynamic> data) => _api.updateUserProfile(code, data);
   Future<List<dynamic>> getUserPayments(String code) => _api.getUserPayments(code);
+  Future<void> deleteSelfAccount(String code) => _api.selfDelete(code);
 }

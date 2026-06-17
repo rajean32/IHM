@@ -8,6 +8,7 @@ import '../../widgets/event_image_widget.dart';
 import 'create_event_page.dart';
 import '../../core/utils/error_helper.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class EventPage extends StatefulWidget {
   final Function(int eventId)? onViewReservations;
@@ -64,15 +65,11 @@ class _EventPageState extends State<EventPage> {
     try {
       await EvenementService().suspendEvent(event.idEvenement!);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.eventSuspended), backgroundColor: AppColors.accent),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.eventSuspended, isSuccess: true);
       _loadData(showLoader: false);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
-      );
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     }
   }
 
@@ -80,15 +77,11 @@ class _EventPageState extends State<EventPage> {
     try {
       await EvenementService().resumeEvent(event.idEvenement!);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.eventResumed), backgroundColor: AppColors.secondary),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.eventResumed, isSuccess: true);
       _loadData(showLoader: false);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
-      );
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     }
   }
 
@@ -130,15 +123,11 @@ class _EventPageState extends State<EventPage> {
     try {
       await EvenementService().cancelEvent(event.idEvenement!, motifCtrl.text);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.eventCancelled), backgroundColor: AppTheme.errorColor),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.eventCancelled, isSuccess: false);
       _loadData(showLoader: false);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
-      );
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     }
   }
 
@@ -207,6 +196,24 @@ class _EventPageState extends State<EventPage> {
     }
   }
 
+  String _placementLabel(String? type) {
+    switch (type) {
+      case 'LIBRE': case 'DEBOUT_SANS_LIMITE': case 'DEBOUT_AVEC_LIMITE': return 'Libre';
+      case 'NUMEROTE': case 'UNIQUEMENT_ASSIS': return 'Numéroté';
+      case 'MIXTE': case 'ASSIS_DEBOUT': return 'Mixte';
+      default: return type ?? '—';
+    }
+  }
+
+  IconData _placementIcon(String? type) {
+    switch (type) {
+      case 'LIBRE': case 'DEBOUT_SANS_LIMITE': case 'DEBOUT_AVEC_LIMITE': return Icons.people;
+      case 'NUMEROTE': case 'UNIQUEMENT_ASSIS': return Icons.event_seat;
+      case 'MIXTE': case 'ASSIS_DEBOUT': return Icons.swap_horiz;
+      default: return Icons.event;
+    }
+  }
+
   void _showEventInfo(Evenement event) {
     final sk = _eventStatusKey(event);
     final sc = _eventStatusColor(sk);
@@ -241,6 +248,22 @@ class _EventPageState extends State<EventPage> {
         ),
         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(ctx)!.commonClose))],
       ),
+    );
+  }
+
+  Widget _buildPlacementBadge(String? type) {
+    final label = _placementLabel(type);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(_placementIcon(type), size: 10, color: AppColors.primary),
+        const SizedBox(width: 3),
+        Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.primary)),
+      ]),
     );
   }
 
@@ -315,14 +338,18 @@ class _EventPageState extends State<EventPage> {
                                             Expanded(
                                               child: Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(event.titre, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    '${event.dateEvenement?.toIso8601String().split('T').first ?? ''}',
-                                                    style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-                                                  ),
-                                                ],
+                                          children: [
+                                            Row(children: [
+                                              Expanded(child: Text(event.titre, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
+                                              const SizedBox(width: 4),
+                                              _buildPlacementBadge(event.typeAgencement),
+                                            ]),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${event.dateEvenement?.toIso8601String().split('T').first ?? ''}',
+                                              style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                            ),
+                                          ],
                                               ),
                                             ),
                                             Container(

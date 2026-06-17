@@ -2,10 +2,9 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import '../../generated/app_localizations.dart';
 import '../../core/services/app_config.dart';
-import '../../core/api/dio_config.dart';
-import '../../core/routes/auth_routes.dart';
 import '../../core/assets/app_colors.dart';
 import '../../widgets/two_factor_widget.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -93,12 +92,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(l10n.settingsOthersDisconnected),
-                        backgroundColor: AppColors.secondary,
-                      ),
-                    );
+                    AdminToast.show(context, message: l10n.settingsOthersDisconnected, isSuccess: true);
                   },
                   icon: const Icon(Icons.logout, size: 18),
                   label: Text(l10n.settingsDisconnectOthers),
@@ -151,37 +145,6 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 8),
           _securityTile(l10n.settingsPassword2fa, Icons.lock_outline, _showPasswordAnd2FA, l10n.settingsSecured),
           _securityTile(l10n.settingsConnectedDevices, Icons.devices_outlined, _showConnectedDevices),
-          const SizedBox(height: 24),
-          _sectionHeader(Icons.person_outline, l10n.settingsAccount),
-          const SizedBox(height: 8),
-          _actionTile(
-            icon: Icons.logout,
-            title: l10n.commonLogout,
-            destructive: true,
-            onTap: () => _showConfirmDialog(
-              title: l10n.commonLogout,
-              message: l10n.settingsLogoutConfirm,
-              onConfirm: () {
-                clearSession();
-                Navigator.of(context).pushNamedAndRemoveUntil(AuthRoutes.login, (route) => false);
-              },
-            ),
-          ),
-          _actionTile(
-            icon: Icons.delete_forever,
-            title: l10n.settingsDeleteAccount,
-            subtitle: l10n.settingsIrreversible,
-            destructive: true,
-            onTap: () => _showConfirmDialog(
-              title: l10n.settingsDeleteAccount,
-              message: l10n.settingsDeleteConfirm,
-              onConfirm: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.settingsNotImplemented), backgroundColor: AppColors.error),
-                );
-              },
-            ),
-          ),
           const SizedBox(height: 24),
           _sectionHeader(Icons.info_outline, l10n.settingsAbout),
           const SizedBox(height: 8),

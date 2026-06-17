@@ -10,6 +10,7 @@ import '../../core/assets/app_colors.dart';
 import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class DataExportPage extends StatefulWidget {
   const DataExportPage({super.key});
@@ -98,12 +99,7 @@ class _DataExportPageState extends State<DataExportPage> {
     await file.writeAsString(content);
     if (!mounted) return;
     setState(() => _exportMessage = 'Exporté: ${file.path}');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context)!.exportSavedMessage('$filename')),
-        backgroundColor: AppTheme.secondaryColor,
-      ),
-    );
+    AdminToast.show(context, message: AppLocalizations.of(context)!.exportSavedMessage('$filename'), isSuccess: true);
   }
 
   @override

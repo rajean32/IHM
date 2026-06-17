@@ -7,6 +7,7 @@ import '../../models/ticket_model.dart';
 import '../../widgets/error_state.dart';
 import '../../widgets/event_image_widget.dart';
 import '../../core/utils/error_helper.dart';
+import '../../core/utils/place_utils.dart';
 import '../../generated/app_localizations.dart';
 
 class MyTicketsPage extends StatefulWidget {
@@ -135,7 +136,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
       case 'LOGE':
         return const Color(0xFF5C6BC0);
       default:
-        return const Color(0xFF00796B);
+        return AppColors.placeStandard;
     }
   }
 
@@ -294,7 +295,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                                   Container(height: 24, width: 1, color: AppColors.divider),
                                   _placementItem(Icons.view_column, AppLocalizations.of(context)!.clientTicketRow, t.rang ?? '—'),
                                   Container(height: 24, width: 1, color: AppColors.divider),
-                                  _placementItem(Icons.event_seat, AppLocalizations.of(context)!.clientTicketSeat, t.numeroPlace ?? '—'),
+                                  _placementItem(Icons.event_seat, AppLocalizations.of(context)!.clientTicketSeat, displayPlace(t.numeroPlace)),
                                 ],
                               ),
                       ),

@@ -67,12 +67,6 @@ class _OrganizerLayoutState extends State<OrganizerLayout> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leading: ModalRoute.of(context)?.canPop == true
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
         surfaceTintColor: Theme.of(context).colorScheme.surfaceTint,
         scrolledUnderElevation: 1.0,
         centerTitle: false,

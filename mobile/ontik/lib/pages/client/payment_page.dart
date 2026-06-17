@@ -6,11 +6,13 @@ import '../../core/api/dio_config.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
 import '../../core/utils/error_helper.dart';
+import '../../core/utils/place_utils.dart';
 import '../../models/paiement_request_model.dart';
 import '../../widgets/payment_method_selector.dart';
 import '../../widgets/carte_bancaire_form.dart';
 import '../../widgets/code_promo_field.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class PaymentPage extends StatefulWidget {
   final int eventId;
@@ -42,6 +44,11 @@ class _PaymentPageState extends State<PaymentPage> {
   String? _codePromo;
   final bool _estEtudiant = false;
   double _montantFinal = 0;
+  String get _dateCompact {
+    final now = DateTime.now();
+    return '${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}';
+  }
+  String get _seq => (DateTime.now().millisecondsSinceEpoch % 1000).toString().padLeft(3, '0');
 
   @override
   void initState() {
@@ -87,7 +94,7 @@ class _PaymentPageState extends State<PaymentPage> {
       }
 
       final ticketsPayload = widget.tickets.map((seat) => TicketItemModel(
-        codeTicket: 'TKT-${widget.eventId}-${seat['numeroPlace']}-${DateTime.now().millisecondsSinceEpoch}',
+        codeTicket: 'TKT${widget.eventId}${_dateCompact}${_seq}',
         numeroPlace: seat['numeroPlace']!,
         idEvenement: widget.eventId,
         prix: (seat['prix'] as num?)?.toDouble() ?? 0.0,
@@ -124,9 +131,7 @@ class _PaymentPageState extends State<PaymentPage> {
         message = '${AppLocalizations.of(context)!.clientPaymentSuccessReduction} ${reduction.toStringAsFixed(0)} Ar.';
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: AppColors.secondary),
-      );
+      AdminToast.show(context, message: message, isSuccess: true);
 
       Navigator.pushReplacementNamed(context, ClientRoutes.profile);
     } on TimeoutException {
@@ -178,6 +183,11 @@ class _PaymentPageState extends State<PaymentPage> {
           ? (widget.tickets.first['numeroPlace'] as String? ?? '—')
           : '—';
 
+  String get _firstRang =>
+      widget.tickets.isNotEmpty
+          ? (widget.tickets.first['rang'] as String? ?? '—')
+          : '—';
+
   Color _badgeColor(String? typePlace) {
     switch (typePlace?.toUpperCase()) {
       case 'VIP':
@@ -191,7 +201,7 @@ class _PaymentPageState extends State<PaymentPage> {
       case 'LOGE':
         return const Color(0xFF5C6BC0);
       default:
-        return const Color(0xFF00796B);
+        return AppColors.placeStandard;
     }
   }
 
@@ -221,9 +231,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 if (loc == null) return;
                 final text = '${loc.clientPaymentShareText}\n${loc.clientPaymentPrice}: ${AppConstants.currency}${widget.amount.toStringAsFixed(0)}';
                 Clipboard.setData(ClipboardData(text: text));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(loc.clientPaymentOrderCopied), backgroundColor: AppColors.secondary),
-                );
+                AdminToast.show(context, message: loc.clientPaymentOrderCopied, isSuccess: true);
               },
             ),
           ],
@@ -321,9 +329,9 @@ class _PaymentPageState extends State<PaymentPage> {
           const Divider(height: 1, indent: 16, endIndent: 16),
           _summaryRow(AppLocalizations.of(context)!.clientPaymentPrice, _formatAmount(_montantFinal), AppColors.primary, highlight: true),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          _summaryRow(AppLocalizations.of(context)!.clientPaymentRow, '—', AppColors.textSecondary),
+          _summaryRow(AppLocalizations.of(context)!.clientPaymentRow, _firstRang, AppColors.textSecondary),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          _summaryRow(AppLocalizations.of(context)!.clientPaymentSeat, _firstNumeroPlace, AppColors.textSecondary),
+          _summaryRow(AppLocalizations.of(context)!.clientPaymentSeat, displayPlace(_firstNumeroPlace), AppColors.textSecondary),
           if (seatCount > 1) ...[
             const Divider(height: 1, indent: 16, endIndent: 16),
             _summaryRow(AppLocalizations.of(context)!.clientPaymentTickets, '$seatCount places', AppColors.textSecondary),

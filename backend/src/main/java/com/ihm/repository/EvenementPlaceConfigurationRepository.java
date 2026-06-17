@@ -2,6 +2,7 @@ package com.ihm.repository;
 
 import com.ihm.model.EvenementPlaceConfiguration;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.math.BigDecimal;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -38,4 +39,10 @@ public interface EvenementPlaceConfigurationRepository extends JpaRepository<Eve
            "e.typePlace = :typePlace")
     List<EvenementPlaceConfiguration> findByEventAndTypePlace(
             @Param("idEvent") Integer idEvent, @Param("typePlace") String typePlace);
+
+    @Query("SELECT MIN(e.prix) FROM EvenementPlaceConfiguration e WHERE e.evenement.idEvenement = :idEvent AND e.prix > 0")
+    BigDecimal findMinPrixByEvenementId(@Param("idEvent") Integer idEvent);
+
+    @Query("SELECT MAX(e.prix) FROM EvenementPlaceConfiguration e WHERE e.evenement.idEvenement = :idEvent AND e.prix > 0")
+    BigDecimal findMaxPrixByEvenementId(@Param("idEvent") Integer idEvent);
 }

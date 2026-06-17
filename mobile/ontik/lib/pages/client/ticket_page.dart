@@ -8,7 +8,9 @@ import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
+import '../../core/utils/place_utils.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class TicketPage extends StatefulWidget {
   final String ticketCode;
@@ -146,7 +148,7 @@ class _TicketPageState extends State<TicketPage> {
                 const SizedBox(height: 12),
                 const Divider(),
                 _infoRow(AppLocalizations.of(context)!.clientTicketEvent, _qrData!['evenementTitre'] ?? 'N/A'),
-                _infoRow(AppLocalizations.of(context)!.clientTicketSeat, _qrData!['placeNumero'] ?? 'N/A'),
+                _infoRow(AppLocalizations.of(context)!.clientTicketSeat, displayPlace(_qrData!['placeNumero'] as String?) ?? 'N/A'),
                 if (_qrData!['rang'] != null)
                   _infoRow(AppLocalizations.of(context)!.clientTicketRow, _qrData!['rang']),
                 if (_qrData!['typePlace'] != null)
@@ -187,15 +189,11 @@ class _TicketPageState extends State<TicketPage> {
       final file = File('${dir.path}/billet_${widget.ticketCode}.pdf');
       await file.writeAsBytes(data);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${AppLocalizations.of(context)!.clientTicketPdfSaved} ${file.path}'), backgroundColor: AppColors.secondary),
-      );
+      AdminToast.show(context, message: '${AppLocalizations.of(context)!.clientTicketPdfSaved} ${file.path}', isSuccess: true);
     } catch (e) {
       if (!mounted) return;
       final msg = e is DioException ? _describeDioError(e) : e.toString();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${AppLocalizations.of(context)!.clientTicketDownloadFailed} $msg'), backgroundColor: AppColors.error),
-      );
+      AdminToast.show(context, message: '${AppLocalizations.of(context)!.clientTicketDownloadFailed} $msg', isSuccess: false);
     }
   }
 

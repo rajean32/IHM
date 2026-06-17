@@ -31,9 +31,7 @@ public class PlaceService {
     }
 
     private String buildCombinedKey(Salle salle, String rang, String seatNumber) {
-        Lieu lieu = salle.getLieu();
-        String lieuId = lieu != null ? lieu.getCode() : "?";
-        return lieuId + "-" + salle.getNumeroSalle() + "-" + rang + "-" + seatNumber;
+        return salle.getNumeroSalle() + "-" + rang + seatNumber;
     }
 
     // recuperation de toutes les places
@@ -69,7 +67,8 @@ public class PlaceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Salle", "numeroSalle", dto.getNumeroSalle()));
 
         String rawNumero = dto.getNumeroPlace() != null ? dto.getNumeroPlace() : "";
-        String rang = dto.getRange() != null ? dto.getRange() : rawNumero.replaceAll("\\d.*$", "");
+        String rang = (dto.getRange() != null && !dto.getRange().isBlank())
+            ? dto.getRange() : rawNumero.replaceAll("\\d.*$", "");
         String seatNum = rawNumero.replaceAll("^\\D+", "");
         if (rang.isEmpty()) rang = "?";
         if (seatNum.isEmpty()) seatNum = "?";

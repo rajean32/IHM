@@ -7,6 +7,7 @@ import '../../core/assets/app_colors.dart';
 import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class RefundPage extends StatefulWidget {
   const RefundPage({super.key});
@@ -52,7 +53,7 @@ class _RefundPageState extends State<RefundPage> {
       if (!mounted) return;
       setState(() { _reservations = []; _loadingReservations = false; });
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor));
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     }
   }
 
@@ -78,18 +79,11 @@ class _RefundPageState extends State<RefundPage> {
     try {
       final result = await ReservationService().cancelReservation(id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.refundResultMessage('$id', '${result['refundAmount'] ?? 0}', AppConstants.currency)),
-          backgroundColor: AppTheme.secondaryColor,
-        ),
-      );
+      AdminToast.show(context, message: AppLocalizations.of(context)!.refundResultMessage('$id', '${result['refundAmount'] ?? 0}', AppConstants.currency), isSuccess: true);
       if (_selectedEventId != null) _loadReservations(_selectedEventId!);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppTheme.errorColor),
-      );
+      AdminToast.show(context, message: apiErrorString(e), isSuccess: false);
     } finally {
       if (mounted) setState(() => _processingId = -1);
     }

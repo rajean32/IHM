@@ -9,6 +9,7 @@ import 'package:ontik/core/assets/app_colors.dart';
 import 'package:ontik/core/utils/error_helper.dart';
 import 'package:ontik/widgets/profile_body.dart';
 import 'package:ontik/pages/admin/history/action_history_page.dart';
+import 'package:ontik/widgets/admin/admin_toast.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -134,15 +135,11 @@ class _ProfilePageState extends State<ProfilePage> {
                           Navigator.pop(ctx);
                           _loadProfile();
                           if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppLocalizations.of(context)!.adminProfileUpdated), backgroundColor: AppColors.secondary),
-                          );
+                          AdminToast.show(context, message: AppLocalizations.of(context)!.adminProfileUpdated, isSuccess: true);
                         } catch (e) {
                           setSheetState(() => saving = false);
                           if (!ctx.mounted) return;
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
-                          );
+                          AdminToast.show(ctx, message: apiErrorString(e), isSuccess: false);
                         }
                       },
                       child: saving
@@ -201,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage> {
       name: displayName.isNotEmpty ? displayName : (userNom ?? 'Administrateur'),
       email: _email.isNotEmpty ? _email : (userCode ?? '—'),
       badge: 'ADMINISTRATEUR',
-      badgeColor: const Color(0xFF1565C0),
+      badgeColor: AppColors.primary,
       onEditProfile: _showEditInfo,
       menuGroups: [
         ProfileMenuGroup(AppLocalizations.of(context)!.account, [

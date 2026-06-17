@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary - Bleu profond
-  static const primary = Color(0xFF1565C0);
-  static const primaryDark = Color(0xFF0D47A1);
-  static const primaryLight = Color(0xFF42A5F5);
+  // Primary - Violet profond
+  static const primary = Color(0xFF7B1FA2);
+  static const primaryDark = Color(0xFF4A148C);
+  static const primaryLight = Color(0xFFCE93D8);
   
   // Secondary - Vert succès
   static const secondary = Color(0xFF00C853);
@@ -31,10 +31,10 @@ class AppColors {
   
   // Input Fields
   static const fieldFill = Color(0xFFF0F2F5);
-  static const fieldFocused = Color(0xFFE3F2FD);
+  static const fieldFocused = Color(0xFFF3E5F5);
   
   // Status colors
-  static const statusPlanned = Color(0xFF1565C0);
+  static const statusPlanned = primary;
   static const statusValid = Color(0xFF00C853);
   static const statusInProgress = Color(0xFFFF6F00);
   static const statusDone = Color(0xFF6B7280);
@@ -42,7 +42,7 @@ class AppColors {
   static const statusSuspended = Color(0xFFE65100);
   
   // Place type colors
-  static const placeStandard = Color(0xFF1565C0);
+  static const placeStandard = primary;
   static const placeVIP = Color(0xFF9C27B0);
   static const placePremium = Color(0xFFFF6F00);
   static const placeOrchestre = Color(0xFF7B1FA2);
@@ -114,7 +114,7 @@ class AppTheme {
   static const _darkTextMuted = Color(0xFF707088);
   static const _darkDivider = Color(0xFF333350);
   static const _darkBorder = Color(0xFF3A3A55);
-  static const _darkPrimaryLight = Color(0xFF1A3A6A);
+  static const _darkPrimaryLight = Color(0xFF3A1A5E);
 
   static ThemeData get light => ThemeData(
     useMaterial3: true,

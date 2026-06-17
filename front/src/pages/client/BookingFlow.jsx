@@ -161,7 +161,8 @@ export default function BookingFlow() {
       const now = Date.now()
 
       for (const seat of selectedSeats) {
-        const codeTicket = `TKT-${eventId}-${seat.numeroPlace}-${now}`
+        const d = new Date(); const dateCompact = `${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}${String(d.getHours()).padStart(2,'0')}`; const seq = String(Date.now() % 1000).padStart(3, '0')
+        const codeTicket = `TKT${eventId}${dateCompact}${seq}`
         const ticketResp = await create('/api/tickets', {
           codeTicket,
           prix: seat.prix,

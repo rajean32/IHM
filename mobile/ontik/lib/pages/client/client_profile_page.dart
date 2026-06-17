@@ -11,6 +11,7 @@ import '../../widgets/profile_body.dart';
 import '../../widgets/two_factor_widget.dart';
 import 'saved_events_page.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class ClientProfilePage extends StatefulWidget {
   const ClientProfilePage({super.key});
@@ -142,15 +143,11 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                           Navigator.pop(ctx);
                           _loadData();
                           if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppLocalizations.of(context)!.clientProfileUpdated), backgroundColor: AppColors.secondary),
-                          );
+                          AdminToast.show(context, message: AppLocalizations.of(context)!.clientProfileUpdated, isSuccess: true);
                         } catch (e) {
                           setSheetState(() => saving = false);
                           if (!ctx.mounted) return;
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(content: Text(apiErrorString(e)), backgroundColor: AppColors.error),
-                          );
+                          AdminToast.show(ctx, message: apiErrorString(e), isSuccess: false);
                         }
                       },
                       child: saving
@@ -205,9 +202,10 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.commonCancel)),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              clearSession();
+              await clearSession();
+              if (!context.mounted) return;
               Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
             },
             child: Text(AppLocalizations.of(context)!.commonLogout, style: const TextStyle(color: AppColors.error)),
@@ -215,6 +213,35 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         ],
       ),
     );
+  }
+
+  Future<void> _deleteAccount() async {
+    final code = userCode ?? '';
+    if (code.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.settingsDeleteAccount),
+        content: Text(AppLocalizations.of(context)!.settingsDeleteConfirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.commonCancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(AppLocalizations.of(context)!.settingsConfirm, style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await UserService().deleteSelfAccount(code);
+      await clearSession();
+      if (!context.mounted) return;
+      Navigator.pushNamedAndRemoveUntil(context, '/splash', (route) => false);
+    } catch (e) {
+      if (!context.mounted) return;
+      AdminToast.show(context, message: AppLocalizations.of(context)!.errorOccurred, isSuccess: false);
+    }
   }
 
   @override
@@ -228,7 +255,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
       name: displayName.isNotEmpty ? displayName : (userNom ?? AppLocalizations.of(context)!.clientProfileUser),
       email: _email.isNotEmpty ? _email : (userCode ?? '—'),
       badge: 'CLIENT',
-      badgeColor: const Color(0xFF00796B),
+      badgeColor: AppColors.primary,
       stats: [
         ProfileStat(AppLocalizations.of(context)!.clientProfileReference, '$_ticketCount', Icons.confirmation_number),
         ProfileStat(AppLocalizations.of(context)!.clientProfileFavorites, '$_favoriteCount', Icons.bookmark),
@@ -249,6 +276,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         ProfileMenuGroup(AppLocalizations.of(context)!.clientProfileSecurityGroup, [
           ProfileMenuItem(AppLocalizations.of(context)!.clientProfilePassword2FA, Icons.lock, status: AppLocalizations.of(context)!.clientProfileSecure, onTap: _showPasswordAnd2FA),
           ProfileMenuItem(AppLocalizations.of(context)!.clientProfileConnectedDevices, Icons.devices, onTap: () {}),
+          ProfileMenuItem(AppLocalizations.of(context)!.settingsDeleteAccount, Icons.delete_forever, onTap: _deleteAccount),
         ]),
       ],
       onLogout: _logout,

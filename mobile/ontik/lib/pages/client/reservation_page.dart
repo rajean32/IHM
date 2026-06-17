@@ -12,6 +12,7 @@ import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
 import '../../core/services/app_config.dart';
 import '../../generated/app_localizations.dart';
+import '../../widgets/admin/admin_toast.dart';
 
 class ReservationPage extends StatefulWidget {
   final int eventId;
@@ -119,6 +120,7 @@ class _ReservationPageState extends State<ReservationPage> {
           'prix': seat.prix ?? 0.0,
           'numeroPlace': seat.numeroPlace,
           'typePlace': seat.typePlace,
+          'rang': seat.rang,
         });
       }
     });
@@ -163,6 +165,7 @@ class _ReservationPageState extends State<ReservationPage> {
         'prix': seat['prix'],
         'numeroPlace': seat['numeroPlace'],
         'typePlace': seat['typePlace'],
+        'rang': seat['rang'],
       });
     }
     for (final entry in _zoneQuantities.entries) {
@@ -221,9 +224,7 @@ class _ReservationPageState extends State<ReservationPage> {
                   '${_event?.prixMin != null ? "${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)}" : ""}'
                   '${_event?.prixMax != null ? " - ${AppConstants.currency}${event.prixMax!.toStringAsFixed(0)}" : ""}';
               Clipboard.setData(ClipboardData(text: text));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(AppLocalizations.of(context)!.clientShareCopied), backgroundColor: AppColors.secondary),
-              );
+              AdminToast.show(context, message: AppLocalizations.of(context)!.clientShareCopied, isSuccess: true);
             },
           ),
         ],

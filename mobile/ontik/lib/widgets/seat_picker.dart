@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/lieu_model.dart';
 import '../core/assets/app_colors.dart';
 import '../generated/app_localizations.dart';
+import '../core/utils/place_utils.dart';
 
 const _seatAvailableStatuses = {'DISPONIBLE', null};
 
@@ -60,7 +61,7 @@ class _SeatPickerState extends State<SeatPicker> {
     final cats = _categories.toList()..sort();
     final grouped = <String, List<SeatingPlace>>{};
     for (final s in _filteredSeats) {
-      final key = s.rang ?? '?';
+      final key = (s.rang != null && s.rang != '?') ? s.rang! : '?';
       grouped.putIfAbsent(key, () => []);
       grouped[key]!.add(s);
     }
@@ -122,9 +123,9 @@ class _SeatPickerState extends State<SeatPicker> {
                             ),
                           ),
                           child: Center(
-                            child: Text(
-                              seat.numeroPlace.replaceAll(RegExp(r'^[A-Z]*'), ''),
-                              style: TextStyle(
+                              child: Text(
+                                extractSeatNumber(seat.numeroPlace),
+                                style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: sel ? Colors.white : (avail ? color : AppColors.textSecondary),

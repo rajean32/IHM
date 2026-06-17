@@ -3,6 +3,7 @@ import '../core/assets/app_colors.dart';
 import '../core/services/auth_service.dart';
 import '../core/utils/error_helper.dart';
 import '../generated/app_localizations.dart';
+import 'admin/admin_toast.dart';
 
 void showPasswordAnd2FABottomSheet(
   BuildContext context,
@@ -128,21 +129,11 @@ void showPasswordAnd2FABottomSheet(
                     onPressed: () async {
                       if (currentPwdCtrl.text.isEmpty) return;
                       if (newPwdCtrl.text.length < 6) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(
-                            content: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorPasswordLengthError),
-                            backgroundColor: AppColors.error,
-                          ),
-                        );
+                        AdminToast.show(ctx, message: AppLocalizations.of(ctx)!.widgetsTwoFactorPasswordLengthError, isSuccess: false);
                         return;
                       }
                       if (newPwdCtrl.text != confirmPwdCtrl.text) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(
-                            content: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorPasswordMismatchError),
-                            backgroundColor: AppColors.error,
-                          ),
-                        );
+                        AdminToast.show(ctx, message: AppLocalizations.of(ctx)!.widgetsTwoFactorPasswordMismatchError, isSuccess: false);
                         return;
                       }
                       try {
@@ -150,20 +141,10 @@ void showPasswordAnd2FABottomSheet(
                             currentPwdCtrl.text, newPwdCtrl.text);
                         if (!ctx.mounted) return;
                         Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorPasswordChanged),
-                            backgroundColor: AppColors.secondary,
-                          ),
-                        );
+                        AdminToast.show(context, message: AppLocalizations.of(ctx)!.widgetsTwoFactorPasswordChanged, isSuccess: true);
                       } catch (e) {
                         if (!ctx.mounted) return;
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(
-                            content: Text(apiErrorString(e)),
-                            backgroundColor: AppColors.error,
-                          ),
-                        );
+                        AdminToast.show(ctx, message: apiErrorString(e), isSuccess: false);
                       }
                     },
                     child: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorChangePassword),
@@ -269,20 +250,10 @@ void show2faSetupDialog(
                                   if (!ctx.mounted) return;
                                   Navigator.pop(ctx);
                                   onActivated();
-                                  ScaffoldMessenger.of(parentCtx).showSnackBar(
-                                    SnackBar(
-                                      content: Text(AppLocalizations.of(ctx)!.widgetsTwoFactor2faActivated),
-                                      backgroundColor: AppColors.secondary,
-                                    ),
-                                  );
+                                  AdminToast.show(parentCtx, message: AppLocalizations.of(ctx)!.widgetsTwoFactor2faActivated, isSuccess: true);
                                 } else {
                                   setDialogState(() => verifying = false);
-                                  ScaffoldMessenger.of(ctx).showSnackBar(
-                                    SnackBar(
-                                      content: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorIncorrectCode),
-                                      backgroundColor: AppColors.error,
-                                    ),
-                                  );
+                                  AdminToast.show(ctx, message: AppLocalizations.of(ctx)!.widgetsTwoFactorIncorrectCode, isSuccess: false);
                                 }
                               },
                         child: verifying

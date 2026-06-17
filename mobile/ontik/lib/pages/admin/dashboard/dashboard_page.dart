@@ -97,7 +97,7 @@ class _DashboardPageState extends State<DashboardPage> {
           label: 'Revenus',
           value: '${_stats!.totalRevenue} Ar',
           icon: Icons.attach_money,
-          color: const Color(0xFF7B1FA2),
+          color: AppColors.primary,
         ),
         AdminStatCard(
           label: 'Lieux',
@@ -109,7 +109,7 @@ class _DashboardPageState extends State<DashboardPage> {
           label: 'Salles',
           value: '${_stats!.totalSalles}',
           icon: Icons.meeting_room,
-          color: const Color(0xFF0D47A1),
+          color: AppColors.primaryDark,
         ),
       ],
     );
@@ -137,7 +137,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildPieChart() {
     final data = _stats!.eventsByStatus;
-    final colors = [AppColors.primary, AppColors.secondary, AppColors.accent, const Color(0xFF7B1FA2), const Color(0xFF00897B), AppColors.error, Colors.indigo];
+    final colors = [AppColors.primary, AppColors.secondary, AppColors.accent, AppColors.placeOrchestre, const Color(0xFF00897B), AppColors.error, AppColors.primaryDark];
     var i = 0;
     final sections = data.entries.map((e) {
       final c = colors[i % colors.length];

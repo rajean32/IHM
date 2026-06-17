@@ -37,8 +37,9 @@ export default function SeatMap({ eventId, userCode, onReservationComplete }) {
       }
       for (const r in grouped) {
         grouped[r].sort((a, b) => {
-          const na = parseInt(a.numeroPlace.replace(/[A-Za-z]/g, '')) || 0
-          const nb = parseInt(b.numeroPlace.replace(/[A-Za-z]/g, '')) || 0
+          const getSeatNum = (np) => { const p = np.split('-'); return parseInt((p.length > 1 ? p[p.length-1] : np).replace(/[A-Za-z]/g, '')) || 0 }
+          const na = getSeatNum(a.numeroPlace)
+          const nb = getSeatNum(b.numeroPlace)
           return na - nb
         })
       }
@@ -73,7 +74,8 @@ export default function SeatMap({ eventId, userCode, onReservationComplete }) {
     try {
       const tickets = []
       for (const seat of selectedSeats) {
-        const codeTicket = `TKT-${eventId}-${seat.numeroPlace}-${Date.now()}`
+        const d = new Date(); const dc = `${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}${String(d.getHours()).padStart(2,'0')}`; const sq = String(Date.now() % 1000).padStart(3, '0')
+        const codeTicket = `TKT${eventId}${dc}${sq}`
         await create('/api/tickets', {
           codeTicket,
           prix: parseFloat(seat.prix || 0),
@@ -139,9 +141,9 @@ export default function SeatMap({ eventId, userCode, onReservationComplete }) {
                     className={`seat-tile ${isSelected ? 'selected' : ''} ${!seat.disponible ? 'taken' : ''}`}
                     style={{ background: color }}
                     onClick={() => toggleSeat(seat)}
-                    title={`${seat.numeroPlace} - ${seat.typePlace || ''} ${seat.prix ? parseFloat(seat.prix).toFixed(2) + '€' : ''}`}
+                    title={`${seat.numeroPlace.split('-').pop()} - ${seat.typePlace || ''} ${seat.prix ? parseFloat(seat.prix).toFixed(2) + '€' : ''}`}
                   >
-                    {seat.numeroPlace.replace(/[A-Za-z]/g, '')}
+                    {seat.numeroPlace.split('-').pop().replace(/[A-Za-z]/g, '')}
                   </div>
                 )
               })}
@@ -159,7 +161,7 @@ export default function SeatMap({ eventId, userCode, onReservationComplete }) {
           <div className="selected-list">
             {selectedSeats.map(s => (
               <span key={s.numeroPlace} className="selected-badge">
-                {s.numeroPlace} ({parseFloat(s.prix || 0).toFixed(2)}€)
+                {s.numeroPlace.split('-').pop()} ({parseFloat(s.prix || 0).toFixed(2)}€)
                 <button onClick={() => toggleSeat(s)}>&times;</button>
               </span>
             ))}

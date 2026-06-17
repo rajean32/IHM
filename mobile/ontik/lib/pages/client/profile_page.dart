@@ -221,7 +221,7 @@ class _ProfilePageState extends State<ProfilePage>
     switch (type?.toUpperCase()) {
       case 'VIP': return const Color(0xFF9C27B0);
       case 'PREMIUM': return const Color(0xFFFF6F00);
-      default: return const Color(0xFF00796B);
+      default: return AppColors.placeStandard;
     }
   }
 

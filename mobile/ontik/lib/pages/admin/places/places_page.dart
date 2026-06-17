@@ -4,6 +4,7 @@ import 'package:ontik/core/services/place_service.dart';
 import 'package:ontik/models/lieu_model.dart';
 import 'package:ontik/core/assets/app_colors.dart';
 import 'package:ontik/core/utils/error_helper.dart';
+import 'package:ontik/core/utils/place_utils.dart';
 import 'package:ontik/core/api/dio_config.dart';
 import 'package:ontik/core/api/endpoints.dart';
 import 'package:ontik/widgets/admin/admin_search_field.dart';
@@ -102,7 +103,7 @@ class _PlacesPageState extends State<PlacesPage> {
   Map<String, List<Place>> get _placesByRang {
     final map = <String, List<Place>>{};
     for (final p in _filteredPlaces) {
-      final rang = p.range ?? '?';
+      final rang = (p.range != null && p.range != '?') ? p.range! : '?';
       map.putIfAbsent(rang, () => []);
       map[rang]!.add(p);
     }
@@ -114,7 +115,7 @@ class _PlacesPageState extends State<PlacesPage> {
     try {
       for (int i = debut; i <= fin; i++) {
         await dio.post(Endpoints.places, data: {
-          'numeroPlace': '$rang-$i',
+          'numeroPlace': '$rang$i',
           'rang': rang,
           'numeroSalle': _selectedSalle!.numeroSalle,
         });

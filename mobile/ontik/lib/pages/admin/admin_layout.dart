@@ -117,12 +117,6 @@ class _AdminLayoutState extends State<AdminLayout> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leading: ModalRoute.of(context)?.canPop == true
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, size: 22),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
         centerTitle: false,
         title: Row(
           children: [
