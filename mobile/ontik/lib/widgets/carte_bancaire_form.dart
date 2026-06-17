@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/assets/app_colors.dart';
-import '../localization/app_localizations.dart';
+import '../generated/app_localizations.dart';
 
 class CarteBancaireForm extends StatefulWidget {
   final Function(Map<String, String>) onChanged;
@@ -49,15 +49,15 @@ class _CarteBancaireFormState extends State<CarteBancaireForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            tr('widgets.carte_bancaire.title'),
+            AppLocalizations.of(context)!.widgetsCarteBancaireTitle,
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _numeroCtrl,
             decoration: InputDecoration(
-              labelText: tr('widgets.carte_bancaire.card_number'),
-              hintText: tr('widgets.carte_bancaire.card_number_hint'),
+              labelText: AppLocalizations.of(context)!.widgetsCarteBancaireCardNumber,
+              hintText: AppLocalizations.of(context)!.widgetsCarteBancaireCardNumberHint,
               border: OutlineInputBorder(),
               isDense: true,
               prefixIcon: Icon(Icons.credit_card),
@@ -77,8 +77,8 @@ class _CarteBancaireFormState extends State<CarteBancaireForm> {
                 child: TextFormField(
                   controller: _expirationCtrl,
                   decoration: InputDecoration(
-                    labelText: tr('widgets.carte_bancaire.expiry'),
-                    hintText: tr('widgets.carte_bancaire.expiry_hint'),
+                    labelText: AppLocalizations.of(context)!.widgetsCarteBancaireExpiry,
+                    hintText: AppLocalizations.of(context)!.widgetsCarteBancaireExpiryHint,
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -96,8 +96,8 @@ class _CarteBancaireFormState extends State<CarteBancaireForm> {
                 child: TextFormField(
                   controller: _cvvCtrl,
                   decoration: InputDecoration(
-                    labelText: tr('widgets.carte_bancaire.cvv'),
-                    hintText: tr('widgets.carte_bancaire.cvv_hint'),
+                    labelText: AppLocalizations.of(context)!.widgetsCarteBancaireCvv,
+                    hintText: AppLocalizations.of(context)!.widgetsCarteBancaireCvvHint,
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -116,8 +116,8 @@ class _CarteBancaireFormState extends State<CarteBancaireForm> {
           TextFormField(
             controller: _nomCtrl,
             decoration: InputDecoration(
-              labelText: tr('widgets.carte_bancaire.cardholder_name'),
-              hintText: tr('widgets.carte_bancaire.cardholder_name_hint'),
+              labelText: AppLocalizations.of(context)!.widgetsCarteBancaireCardholderName,
+              hintText: AppLocalizations.of(context)!.widgetsCarteBancaireCardholderNameHint,
               border: OutlineInputBorder(),
               isDense: true,
             ),

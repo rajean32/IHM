@@ -8,7 +8,7 @@ import '../../core/utils/error_helper.dart';
 import '../../core/routes/client_routes.dart';
 import '../../models/notification_model.dart';
 import '../../widgets/error_state.dart';
-import '../../localization/app_localizations.dart';
+import '../../generated/app_localizations.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -39,19 +39,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
     'REFUND_PROCESSED',
   ];
 
-  static Map<String?, String> get _typeLabels => {
-    null: tr('notifications.filterAll'),
-    'PAYMENT_CONFIRMED': tr('notifications.filterPayments'),
-    'PAYMENT_FAILED': tr('notifications.filterFailed'),
-    'RESERVATION_CONFIRMED': tr('notifications.filterReservations'),
-    'RESERVATION_CANCELLED': tr('notifications.filterCancellations'),
-    'EVENT_CANCELLED': tr('notifications.filterCancelled'),
-    'EVENT_APPROVED': tr('notifications.filterApproved'),
-    'EVENT_UPDATED': tr('notifications.filterUpdated'),
-    'EVENT_SUSPENDED': tr('notifications.filterSuspended'),
-    'TICKET_VALIDATED': tr('notifications.filterScanned'),
-    'TICKET_ALREADY_USED': tr('notifications.filterReused'),
-    'REFUND_PROCESSED': tr('notifications.filterRefunded'),
+  Map<String?, String> _typeLabels(BuildContext context) => {
+    null: AppLocalizations.of(context)!.notificationsFilterAll,
+    'PAYMENT_CONFIRMED': AppLocalizations.of(context)!.notificationsFilterPayments,
+    'PAYMENT_FAILED': AppLocalizations.of(context)!.notificationsFilterFailed,
+    'RESERVATION_CONFIRMED': AppLocalizations.of(context)!.notificationsFilterReservations,
+    'RESERVATION_CANCELLED': AppLocalizations.of(context)!.notificationsFilterCancellations,
+    'EVENT_CANCELLED': AppLocalizations.of(context)!.notificationsFilterCancelled,
+    'EVENT_APPROVED': AppLocalizations.of(context)!.notificationsFilterApproved,
+    'EVENT_UPDATED': AppLocalizations.of(context)!.notificationsFilterUpdated,
+    'EVENT_SUSPENDED': AppLocalizations.of(context)!.notificationsFilterSuspended,
+    'TICKET_VALIDATED': AppLocalizations.of(context)!.notificationsFilterScanned,
+    'TICKET_ALREADY_USED': AppLocalizations.of(context)!.notificationsFilterReused,
+    'REFUND_PROCESSED': AppLocalizations.of(context)!.notificationsFilterRefunded,
   };
 
   static final _typeConfig = <String, _TypeConfig>{
@@ -83,7 +83,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
     if (uid == null) {
       setState(() {
-        _error = tr('notifications.notConnected');
+        _error = AppLocalizations.of(context)!.notificationsNotConnected;
         _loading = false;
       });
       return;
@@ -126,7 +126,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr('notifications.markAllRead')),
+          content: Text(AppLocalizations.of(context)!.notificationsMarkAllRead),
           backgroundColor: AppColors.secondary,
         ),
       );
@@ -208,13 +208,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
-        title: Text(tr('notifications.title')),
+        title: Text(AppLocalizations.of(context)!.notificationsTitle),
         actions: [
           if (unreadCount > 0)
             TextButton.icon(
               onPressed: _markAllRead,
               icon: const Icon(Icons.done_all, size: 18),
-              label: Text(tr('notifications.markAllReadShort')),
+              label: Text(AppLocalizations.of(context)!.notificationsMarkAllReadShort),
             ),
         ],
       ),
@@ -352,7 +352,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Text(tr('notifications.markAllReadShort'), style: const TextStyle(fontSize: 12)),
+            child: Text(AppLocalizations.of(context)!.notificationsMarkAllReadShort, style: const TextStyle(fontSize: 12)),
           ),
         ],
       ),
@@ -364,11 +364,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _buildReadChip(tr('notifications.all'), null),
+          _buildReadChip(AppLocalizations.of(context)!.notificationsAll, null),
           const SizedBox(width: 8),
-          _buildReadChip(tr('notifications.unread'), false),
+          _buildReadChip(AppLocalizations.of(context)!.notificationsUnread, false),
           const SizedBox(width: 8),
-          _buildReadChip(tr('notifications.read'), true),
+          _buildReadChip(AppLocalizations.of(context)!.notificationsRead, true),
           const SizedBox(width: 12),
           SizedBox(
             height: 24,
@@ -385,7 +385,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               padding: const EdgeInsets.only(right: 8),
               child: FilterChip(
                 label: Text(
-                  _typeLabels[t] ?? tr('notifications.filterAll'),
+                  _typeLabels(context)[t] ?? AppLocalizations.of(context)!.notificationsFilterAll,
                   style: TextStyle(
                     fontSize: 12,
                     color: selected ? Colors.white : AppColors.textSecondary,
@@ -451,14 +451,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              hasActiveFilters ? tr('notifications.noResults') : tr('notifications.empty'),
+              hasActiveFilters ? AppLocalizations.of(context)!.notificationsNoResults : AppLocalizations.of(context)!.notificationsEmpty,
               style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 8),
             Text(
               hasActiveFilters
-                  ? tr('notifications.emptyFiltered')
-                  : tr('notifications.emptyGeneral'),
+                  ? AppLocalizations.of(context)!.notificationsEmptyFiltered
+                  : AppLocalizations.of(context)!.notificationsEmptyGeneral,
               style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
               textAlign: TextAlign.center,
             ),
@@ -473,7 +473,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   _load();
                 },
                 icon: const Icon(Icons.refresh, size: 18),
-                label: Text(tr('notifications.resetFilters')),
+                label: Text(AppLocalizations.of(context)!.notificationsResetFilters),
               ),
             ],
           ],

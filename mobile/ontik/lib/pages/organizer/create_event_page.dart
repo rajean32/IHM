@@ -43,6 +43,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }
 
   int _currentStep = 0;
+  int _maxStep = 0;
 
   final _formKey = GlobalKey<FormState>();
   final _titreCtrl = TextEditingController();
@@ -488,7 +489,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
       child: Row(
         children: List.generate(5, (i) {
           final isActive = i == _currentStep;
-          final isDone = i < _currentStep;
+          final isDone = i < _maxStep;
           final canNavigate = () {
             for (int j = 0; j < i; j++) {
               if (!_isStepValid(j)) return false;
@@ -497,7 +498,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
           }();
           return Expanded(
             child: GestureDetector(
-              onTap: canNavigate ? () => setState(() => _currentStep = i) : null,
+              onTap: canNavigate ? () => setState(() { _currentStep = i; if (i > _maxStep) _maxStep = i; }) : null,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 child: Column(
@@ -753,7 +754,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
             ),
             const SizedBox(width: 8),
             FilledButton(
-              onPressed: canProceed ? () => setState(() => _currentStep++) : null,
+              onPressed: canProceed ? () => setState(() { _currentStep++; _maxStep = _currentStep; }) : null,
               child: Text(AppLocalizations.of(context)!.nextButton),
           ),
         ] else

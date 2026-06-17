@@ -11,7 +11,7 @@ import '../../widgets/error_state.dart';
 import '../../widgets/event_image_widget.dart';
 import '../../core/utils/error_helper.dart';
 import '../../core/services/app_config.dart';
-import '../../localization/app_localizations.dart';
+import '../../generated/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -114,7 +114,7 @@ class _ProfilePageState extends State<ProfilePage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${tr('client.profile.reservation')} #${r.idReservation}',
+                              '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}',
                               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                             ),
                             if (r.dateReservation != null)
@@ -130,15 +130,15 @@ class _ProfilePageState extends State<ProfilePage>
                   const SizedBox(height: 20),
                   const Divider(),
                   const SizedBox(height: 12),
-                  Text(tr('client.profile.ticketsTab'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                  Text(AppLocalizations.of(context)!.clientProfileTicketsTab, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                   const SizedBox(height: 8),
                   if (r.tickets != null && r.tickets!.isNotEmpty)
                     ...r.tickets!.map((t) => _buildTicketDetailTile(t))
                   else
-                    Text(tr('client.profile.noTickets'), style: const TextStyle(color: AppColors.textMuted)),
+                    Text(AppLocalizations.of(context)!.clientProfileNoTickets, style: const TextStyle(color: AppColors.textMuted)),
                   const SizedBox(height: 16),
                   if (r.codeTickets != null && r.codeTickets!.isNotEmpty) ...[
-                    Text(tr('client.profile.referenceCodes'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                    Text(AppLocalizations.of(context)!.clientProfileReferenceCodes, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                     const SizedBox(height: 8),
                     ...r.codeTickets!.map((c) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),
@@ -189,9 +189,9 @@ class _ProfilePageState extends State<ProfilePage>
                 Row(
                   children: [
                     if (t.numeroPlace != null)
-                      Text('${tr('client.profile.seat')} ${t.numeroPlace}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      Text('${AppLocalizations.of(context)!.clientProfileSeat} ${t.numeroPlace}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                     if (t.rang != null)
-                      Text(' (${tr('client.profile.row')} ${t.rang})', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      Text(' (${AppLocalizations.of(context)!.clientProfileRow} ${t.rang})', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   ],
                 ),
                 if (t.prix != null)
@@ -228,7 +228,7 @@ class _ProfilePageState extends State<ProfilePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('client.profile.myReservations')),
+        title: Text(AppLocalizations.of(context)!.clientProfileMyReservations),
         automaticallyImplyLeading: false,
         leading: ModalRoute.of(context)?.canPop == true
             ? IconButton(
@@ -240,8 +240,8 @@ class _ProfilePageState extends State<ProfilePage>
         bottom: TabBar(
           controller: _tabController,
           tabs: [
-            Tab(icon: const Icon(Icons.receipt_long), text: tr('client.profile.reservationsTab')),
-            Tab(icon: const Icon(Icons.confirmation_number), text: tr('client.profile.ticketsTab')),
+            Tab(icon: const Icon(Icons.receipt_long), text: AppLocalizations.of(context)!.clientProfileReservationsTab),
+            Tab(icon: const Icon(Icons.confirmation_number), text: AppLocalizations.of(context)!.clientProfileTicketsTab),
           ],
         ),
       ),
@@ -267,9 +267,9 @@ class _ProfilePageState extends State<ProfilePage>
           children: [
             Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.textMuted),
             const SizedBox(height: 16),
-            Text(tr('client.profile.noReservations'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            Text(AppLocalizations.of(context)!.clientProfileNoReservations, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
             const SizedBox(height: 4),
-            Text(tr('client.profile.reservationsWillAppear'),
+            Text(AppLocalizations.of(context)!.clientProfileReservationsWillAppear,
                 style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
           ],
         ),
@@ -367,7 +367,7 @@ class _ProfilePageState extends State<ProfilePage>
                           Icon(Icons.receipt_long, size: 40, color: AppColors.textMuted.withValues(alpha: 0.3)),
                           const SizedBox(height: 6),
                           Text(
-                            '${tr('client.profile.reservation')} #${r.idReservation}',
+                            '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}',
                             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textMuted),
                           ),
                         ],
@@ -383,7 +383,7 @@ class _ProfilePageState extends State<ProfilePage>
                         children: [
                           Expanded(
                             child: Text(
-                              hasTickets ? firstTicket!.evenementTitre ?? '${tr('client.profile.reservation')} #${r.idReservation}' : '${tr('client.profile.reservation')} #${r.idReservation}',
+                              hasTickets ? firstTicket!.evenementTitre ?? '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}' : '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}',
                               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -402,7 +402,7 @@ class _ProfilePageState extends State<ProfilePage>
                           Text(
                             r.dateReservation != null
                                 ? DateFormat('d MMM yyyy', appLanguage).format(r.dateReservation!)
-                                : tr('client.profile.unknownDate'),
+                                : AppLocalizations.of(context)!.clientProfileUnknownDate,
                             style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           ),
                         ],
@@ -413,7 +413,7 @@ class _ProfilePageState extends State<ProfilePage>
                           const Icon(Icons.confirmation_number, size: 14, color: AppColors.textSecondary),
                           const SizedBox(width: 6),
                           Text(
-                            '${r.tickets?.length ?? 0} ${tr('client.profile.ticketsCount')}',
+                            '${r.tickets?.length ?? 0} ${AppLocalizations.of(context)!.clientProfileTicketsCount}',
                             style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           ),
                         ],
@@ -447,7 +447,7 @@ class _ProfilePageState extends State<ProfilePage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(tr('client.profile.reservationReference'),
+                            Text(AppLocalizations.of(context)!.clientProfileReservationReference,
                                 style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                             Text(
                               '#${r.idReservation}',
@@ -503,9 +503,9 @@ class _ProfilePageState extends State<ProfilePage>
           children: [
             Icon(Icons.confirmation_number_outlined, size: 64, color: AppColors.textMuted),
             const SizedBox(height: 16),
-            Text(tr('client.profile.noTickets'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            Text(AppLocalizations.of(context)!.clientProfileNoTickets, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
             const SizedBox(height: 4),
-            Text(tr('client.profile.ticketsWillAppear'),
+            Text(AppLocalizations.of(context)!.clientProfileTicketsWillAppear,
                 style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
           ],
         ),
@@ -611,7 +611,7 @@ class _ProfilePageState extends State<ProfilePage>
                         children: [
                           Expanded(
                             child: Text(
-                              t.evenementTitre ?? tr('client.profile.event'),
+                              t.evenementTitre ?? AppLocalizations.of(context)!.clientProfileEvent,
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -641,11 +641,11 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                         child: Row(
                           children: [
-            _placementItem(Icons.meeting_room, tr('client.profile.room'), t.salleNom ?? '—'),
+            _placementItem(Icons.meeting_room, AppLocalizations.of(context)!.clientProfileRoom, t.salleNom ?? '—'),
             Container(height: 24, width: 1, color: AppColors.divider),
-            _placementItem(Icons.view_column, tr('client.profile.row'), t.rang ?? '—'),
+            _placementItem(Icons.view_column, AppLocalizations.of(context)!.clientProfileRow, t.rang ?? '—'),
             Container(height: 24, width: 1, color: AppColors.divider),
-            _placementItem(Icons.event_seat, tr('client.profile.seat'), t.numeroPlace ?? '—'),
+            _placementItem(Icons.event_seat, AppLocalizations.of(context)!.clientProfileSeat, t.numeroPlace ?? '—'),
                           ],
                         ),
                       ),
@@ -677,7 +677,7 @@ class _ProfilePageState extends State<ProfilePage>
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(tr('client.profile.reference'), style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                          Text(AppLocalizations.of(context)!.clientProfileReference, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                           const SizedBox(height: 2),
                           Text(
                             t.codeTicket,
@@ -708,7 +708,7 @@ class _ProfilePageState extends State<ProfilePage>
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      tr('client.profile.expired'),
+                      AppLocalizations.of(context)!.clientProfileExpired,
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14, letterSpacing: 1.5),
                     ),
                   ),

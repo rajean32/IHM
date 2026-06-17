@@ -7,7 +7,7 @@ import '../../core/routes/client_routes.dart';
 import '../../core/utils/error_helper.dart';
 import '../../widgets/event_image_widget.dart';
 import '../../core/services/app_config.dart';
-import '../../localization/app_localizations.dart';
+import '../../generated/app_localizations.dart';
 
 class HomeDetailPage extends StatefulWidget {
   final int eventId;
@@ -68,7 +68,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
-            tooltip: tr('client.homeDetail.share'),
+            tooltip: AppLocalizations.of(context)!.clientHomeDetailShare,
             onPressed: () {},
           ),
         ],
@@ -84,12 +84,12 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                       const SizedBox(height: 12),
                       Text(_error!, textAlign: TextAlign.center),
                       const SizedBox(height: 16),
-                      ElevatedButton(onPressed: _loadDetail, child: Text(tr('client.homeDetail.retry'))),
+                      ElevatedButton(onPressed: _loadDetail, child: Text(AppLocalizations.of(context)!.clientHomeDetailRetry)),
                     ],
                   ),
                 )
               : _event == null
-                  ? Center(child: Text(tr('client.homeDetail.eventNotFound')))
+                  ? Center(child: Text(AppLocalizations.of(context)!.clientHomeDetailEventNotFound))
                   : _buildContent(),
       bottomNavigationBar: _event != null ? _buildFooter() : null,
     );
@@ -174,7 +174,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                   child: Text(
-                    (event.typeAgencement != null ? event.typeAgencement!.replaceAll('_', ' ') : tr('client.homeDetail.event')).toUpperCase(),
+                    (event.typeAgencement != null ? event.typeAgencement!.replaceAll('_', ' ') : AppLocalizations.of(context)!.clientHomeDetailEvent).toUpperCase(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -218,7 +218,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   const Icon(Icons.calendar_today, size: 20, color: AppColors.primary),
                   const SizedBox(height: 6),
                   Text(
-                    tr('client.homeDetail.date'),
+                    AppLocalizations.of(context)!.clientHomeDetailDate,
                     style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                   const SizedBox(height: 2),
@@ -244,7 +244,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   const Icon(Icons.schedule, size: 20, color: AppColors.primary),
                   const SizedBox(height: 6),
                   Text(
-                    tr('client.homeDetail.time'),
+                    AppLocalizations.of(context)!.clientHomeDetailTime,
                     style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                   const SizedBox(height: 2),
@@ -262,7 +262,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
   }
 
   Widget _buildLocationCard(EventDetail event) {
-    final lieu = event.lieuNom ?? tr('client.homeDetail.venueNotSpecified');
+    final lieu = event.lieuNom ?? AppLocalizations.of(context)!.clientHomeDetailVenueNotSpecified;
     final adresse = event.lieuAdresse ?? '';
     final ville = event.lieuVille ?? '';
     final fullAddress = [adresse, ville].where((s) => s.isNotEmpty).join(', ');
@@ -326,12 +326,12 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            tr('client.homeDetail.about'),
+            AppLocalizations.of(context)!.clientHomeDetailAbout,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
-            event.description ?? tr('client.homeDetail.noDescription'),
+            event.description ?? AppLocalizations.of(context)!.clientHomeDetailNoDescription,
             style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
           ),
           if (event.caracteristiqueValeurs != null && event.caracteristiqueValeurs!.isNotEmpty) ...[
@@ -349,7 +349,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                         style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                         children: [
                           TextSpan(
-                            text: '${c.nomCaracteristique ?? tr("client.homeDetail.characteristic")} : ',
+                            text: '${c.nomCaracteristique ?? AppLocalizations.of(context)!.clientHomeDetailCharacteristic} : ',
                             style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                           ),
                           TextSpan(text: c.valeur),
@@ -373,7 +373,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            tr('client.homeDetail.availableZones'),
+            AppLocalizations.of(context)!.clientHomeDetailAvailableZones,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12),
@@ -405,8 +405,8 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                       const SizedBox(height: 2),
                       Text(
                         zone.capacite != null
-                            ? '${zone.placesDisponibles ?? 0}/${zone.capacite} ${tr('client.homeDetail.placesAvailable')}'
-                            : tr('client.homeDetail.unlimitedSeats'),
+                            ? '${zone.placesDisponibles ?? 0}/${zone.capacite} ${AppLocalizations.of(context)!.clientHomeDetailPlacesAvailable}'
+                            : AppLocalizations.of(context)!.clientHomeDetailUnlimitedSeats,
                         style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                     ],
@@ -435,7 +435,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
         ? (event.prixMin == event.prixMax
             ? '${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)}'
             : '${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)} - ${AppConstants.currency}${event.prixMax!.toStringAsFixed(0)}')
-        : tr('client.homeDetail.priceUnavailable');
+        : AppLocalizations.of(context)!.clientHomeDetailPriceUnavailable;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
@@ -456,7 +456,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(tr('client.homeDetail.from'), style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                Text(AppLocalizations.of(context)!.clientHomeDetailFrom, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                 Text(
                   priceText,
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
@@ -476,7 +476,7 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                         )
                       : null,
                   icon: const Icon(Icons.confirmation_number, size: 20),
-                  label: Text(tr('client.homeDetail.book'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                  label: Text(AppLocalizations.of(context)!.clientHomeDetailBook, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

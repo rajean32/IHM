@@ -7,7 +7,7 @@ import '../../models/ticket_model.dart';
 import '../../widgets/error_state.dart';
 import '../../widgets/event_image_widget.dart';
 import '../../core/utils/error_helper.dart';
-import '../../localization/app_localizations.dart';
+import '../../generated/app_localizations.dart';
 
 class MyTicketsPage extends StatefulWidget {
   const MyTicketsPage({super.key});
@@ -64,9 +64,9 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
           children: [
             Icon(Icons.confirmation_number_outlined, size: 64, color: AppColors.textMuted),
             const SizedBox(height: 16),
-            Text(tr('client.ticket.noTickets'), style: const TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+            Text(AppLocalizations.of(context)!.clientTicketNoTickets, style: const TextStyle(fontSize: 16, color: AppColors.textSecondary)),
             const SizedBox(height: 4),
-            Text(tr('client.ticket.afterPurchase'),
+            Text(AppLocalizations.of(context)!.clientTicketAfterPurchase,
                 style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
           ],
         ),
@@ -93,10 +93,10 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(tr('client.ticket.myTickets'),
+        Text(AppLocalizations.of(context)!.clientTicketMyTickets,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
         const SizedBox(height: 4),
-        Text(tr('client.ticket.manageTickets'),
+        Text(AppLocalizations.of(context)!.clientTicketManageTickets,
             style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
       ],
     );
@@ -253,7 +253,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              t.evenementTitre ?? tr('client.ticket.event'),
+                              t.evenementTitre ?? AppLocalizations.of(context)!.clientTicketEvent,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -288,19 +288,19 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                         ),
                         child: Row(
                           children: [
-                            _placementItem(Icons.meeting_room, tr('client.ticket.room'), t.salleNom ?? '—'),
+                            _placementItem(Icons.meeting_room, AppLocalizations.of(context)!.clientTicketRoom, t.salleNom ?? '—'),
                             Container(
                               height: 24,
                               width: 1,
                               color: AppColors.divider,
                             ),
-                            _placementItem(Icons.view_column, tr('client.ticket.row'), t.rang ?? '—'),
+                            _placementItem(Icons.view_column, AppLocalizations.of(context)!.clientTicketRow, t.rang ?? '—'),
                             Container(
                               height: 24,
                               width: 1,
                               color: AppColors.divider,
                             ),
-                            _placementItem(Icons.event_seat, tr('client.ticket.seat'), t.numeroPlace ?? '—'),
+                            _placementItem(Icons.event_seat, AppLocalizations.of(context)!.clientTicketSeat, t.numeroPlace ?? '—'),
                           ],
                         ),
                       ),
@@ -334,7 +334,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(tr('client.ticket.reference'),
+                          Text(AppLocalizations.of(context)!.clientTicketReference,
                               style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
                           const SizedBox(height: 2),
                           Text(
@@ -372,7 +372,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      tr('client.ticket.expired'),
+                      AppLocalizations.of(context)!.clientTicketExpired,
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,

@@ -8,7 +8,7 @@ import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/utils/error_helper.dart';
-import '../../localization/app_localizations.dart';
+import '../../generated/app_localizations.dart';
 
 class TicketPage extends StatefulWidget {
   final String ticketCode;
@@ -72,7 +72,7 @@ class _TicketPageState extends State<TicketPage> {
                 onPressed: () => Navigator.of(context).pop(),
               )
             : null,
-        title: Text(tr('client.ticket.title')),
+        title: Text(AppLocalizations.of(context)!.clientTicketTitle),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -87,13 +87,13 @@ class _TicketPageState extends State<TicketPage> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadTicket,
-                        child: Text(tr('common.retry')),
+                        child: Text(AppLocalizations.of(context)!.commonRetry),
                       ),
                     ],
                   ),
                 )
               : _qrData == null
-                  ? Center(child: Text(tr('client.ticket.notFound')))
+                  ? Center(child: Text(AppLocalizations.of(context)!.clientTicketNotFound))
                   : _buildTicket(),
     );
   }
@@ -126,7 +126,7 @@ class _TicketPageState extends State<TicketPage> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    isValid ? tr('client.ticket.valid') : tr('client.ticket.invalid'),
+                    isValid ? AppLocalizations.of(context)!.clientTicketValid : AppLocalizations.of(context)!.clientTicketInvalid,
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -137,22 +137,22 @@ class _TicketPageState extends State<TicketPage> {
                 ElevatedButton.icon(
                   onPressed: _downloadPDF,
                   icon: const Icon(Icons.download, size: 18),
-                  label: Text(tr('client.ticket.downloadPDF')),
+                  label: Text(AppLocalizations.of(context)!.clientTicketDownloadPDF),
                 ),
                 const SizedBox(height: 12),
                 const Divider(),
-                _infoRow(tr('client.ticket.event'), _qrData!['evenementTitre'] ?? 'N/A'),
-                _infoRow(tr('client.ticket.seat'), _qrData!['placeNumero'] ?? 'N/A'),
+                _infoRow(AppLocalizations.of(context)!.clientTicketEvent, _qrData!['evenementTitre'] ?? 'N/A'),
+                _infoRow(AppLocalizations.of(context)!.clientTicketSeat, _qrData!['placeNumero'] ?? 'N/A'),
                 if (_qrData!['rang'] != null)
-                  _infoRow(tr('client.ticket.row'), _qrData!['rang']),
+                  _infoRow(AppLocalizations.of(context)!.clientTicketRow, _qrData!['rang']),
                 if (_qrData!['typePlace'] != null)
-                  _infoRow(tr('client.ticket.type'), _qrData!['typePlace']),
+                  _infoRow(AppLocalizations.of(context)!.clientTicketType, _qrData!['typePlace']),
                 if (_qrData!['zoneNom'] != null)
-                  _infoRow(tr('client.ticket.zone'), _qrData!['zoneNom']),
+                  _infoRow(AppLocalizations.of(context)!.clientTicketZone, _qrData!['zoneNom']),
                 if (_qrData!['prix'] != null)
-                  _infoRow(tr('client.ticket.price'), 'Ar ${_qrData!['prix']}'),
+                  _infoRow(AppLocalizations.of(context)!.clientTicketPrice, 'Ar ${_qrData!['prix']}'),
                 if (_qrData!['clientNom'] != null)
-                  _infoRow(tr('client.ticket.holder'), _qrData!['clientNom']),
+                  _infoRow(AppLocalizations.of(context)!.clientTicketHolder, _qrData!['clientNom']),
                 const Divider(),
                 Text(
                   _qrData!['codeTicket'] ?? '',
@@ -177,12 +177,12 @@ class _TicketPageState extends State<TicketPage> {
       await file.writeAsBytes(response.data as List<int>);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${tr('client.ticket.pdfSaved')} ${file.path}'), backgroundColor: AppColors.secondary),
+        SnackBar(content: Text('${AppLocalizations.of(context)!.clientTicketPdfSaved} ${file.path}'), backgroundColor: AppColors.secondary),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${tr('client.ticket.downloadFailed')} $e'), backgroundColor: AppColors.error),
+        SnackBar(content: Text('${AppLocalizations.of(context)!.clientTicketDownloadFailed} $e'), backgroundColor: AppColors.error),
       );
     }
   }

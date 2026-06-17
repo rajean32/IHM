@@ -12,7 +12,7 @@ import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
 import '../../core/utils/error_helper.dart';
 import '../../core/services/app_config.dart';
-import '../../localization/app_localizations.dart';
+import '../../generated/app_localizations.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -131,7 +131,7 @@ class _HomePageState extends State<HomePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(tr('client.home.filters'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(AppLocalizations.of(context)!.clientHomeFilters, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     TextButton(
                       onPressed: () {
                         setSheetState(() {
@@ -142,12 +142,12 @@ class _HomePageState extends State<HomePage> {
                           _prixMax = null;
                         });
                       },
-                      child: Text(tr('client.home.reset')),
+                      child: Text(AppLocalizations.of(context)!.clientHomeReset),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text(tr('client.home.status'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(AppLocalizations.of(context)!.clientHomeStatus, style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _selectedStatut,
@@ -159,13 +159,13 @@ class _HomePageState extends State<HomePage> {
                   onChanged: (v) => setSheetState(() => _selectedStatut = v),
                 ),
                 const SizedBox(height: 16),
-                Text(tr('client.home.venue'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(AppLocalizations.of(context)!.clientHomeVenue, style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _selectedLieu,
                   decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
                   items: [
-                    DropdownMenuItem<String>(value: null, child: Text(tr('client.home.allVenues'))),
+                    DropdownMenuItem<String>(value: null, child: Text(AppLocalizations.of(context)!.clientHomeAllVenues)),
                     ..._lieux.map((l) => DropdownMenuItem(
                       value: l.code,
                       child: Text(l.nomLieu),
@@ -191,7 +191,7 @@ class _HomePageState extends State<HomePage> {
                     child: Text(
                       _selectedDateRange != null
                           ? '${_selectedDateRange!.start.toIso8601String().split('T').first} \u2014 ${_selectedDateRange!.end.toIso8601String().split('T').first}'
-                          : tr('client.home.selectDateRange'),
+                          : AppLocalizations.of(context)!.clientHomeSelectDateRange,
                     ),
                   ),
                 ),
@@ -226,7 +226,7 @@ class _HomePageState extends State<HomePage> {
                     Navigator.pop(ctx);
                     _applyFilters();
                   },
-                  child: Text(tr('client.home.apply')),
+                  child: Text(AppLocalizations.of(context)!.clientHomeApply),
                 ),
               ],
             ),
@@ -279,7 +279,7 @@ class _HomePageState extends State<HomePage> {
             child: TextField(
               controller: _searchCtrl,
               decoration: InputDecoration(
-                hintText: tr('client.home.searchHint'),
+                hintText: AppLocalizations.of(context)!.clientHomeSearchHint,
                 prefixIcon: Icon(Icons.search, color: const Color(0xFF673AB7).withValues(alpha: 0.6)),
                 filled: true,
                 fillColor: Colors.white,
@@ -317,7 +317,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildCategories() {
     final chipData = <Map<String, String?>>[
-      {'label': tr('common.all'), 'code': null},
+      {'label': AppLocalizations.of(context)!.commonAll, 'code': null},
       ..._categories.map((c) => {'label': c.nomCategorie, 'code': c.codeCategorie}),
     ];
     return Container(
@@ -369,7 +369,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
             Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadEvents, child: Text(tr('client.home.retry'))),
+            ElevatedButton(onPressed: _loadEvents, child: Text(AppLocalizations.of(context)!.clientHomeRetry)),
           ],
         ),
       );
@@ -382,14 +382,14 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 80),
         children: [
           Text(
-            tr('client.home.featured'),
+            AppLocalizations.of(context)!.clientHomeFeatured,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 14),
           if (_events.isEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 40),
-              child: Center(child: Text(tr('client.home.noEvents'), style: const TextStyle(color: AppColors.textSecondary))),
+              child: Center(child: Text(AppLocalizations.of(context)!.clientHomeNoEvents, style: const TextStyle(color: AppColors.textSecondary))),
             )
           else
             ..._events.map((event) => Padding(
@@ -491,7 +491,7 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
-                          event.lieuNom ?? tr('client.home.venueNotSpecified'),
+                          event.lieuNom ?? AppLocalizations.of(context)!.clientHomeVenueNotSpecified,
                           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -502,8 +502,8 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 10),
                   Text(
                     event.prix != null
-                        ? '${tr('client.homeDetail.from')} ${event.prix!.toStringAsFixed(0)} ${AppConstants.currency}'
-                        : tr('client.home.priceUnavailable'),
+                        ? '${AppLocalizations.of(context)!.clientHomeDetailFrom} ${event.prix!.toStringAsFixed(0)} ${AppConstants.currency}'
+                        : AppLocalizations.of(context)!.clientHomePriceUnavailable,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -520,7 +520,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildEventBadge(Evenement event) {
-    final label = event.categorieNom ?? event.statut ?? tr('client.home.standard');
+    final label = event.categorieNom ?? event.statut ?? AppLocalizations.of(context)!.clientHomeStandard;
     final color = _badgeColor(label);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -555,7 +555,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tr('client.home.promoTitle'),
+                    AppLocalizations.of(context)!.clientHomePromoTitle,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -564,7 +564,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    tr('client.home.promoSubtitle'),
+                    AppLocalizations.of(context)!.clientHomePromoSubtitle,
                     style: const TextStyle(fontSize: 13, color: Colors.white70),
                   ),
                 ],

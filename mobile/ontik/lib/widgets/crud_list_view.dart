@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/assets/app_colors.dart';
-import '../localization/app_localizations.dart';
+import '../generated/app_localizations.dart';
 
 class CrudItem {
   final String id;
@@ -141,11 +141,11 @@ class _CrudListViewState extends State<CrudListView> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr('widgets.crud.confirm')),
-        content: Text(tr('widgets.crud.delete_confirm')),
+        title: Text(AppLocalizations.of(context)!.widgetsCrudConfirm),
+        content: Text(AppLocalizations.of(context)!.widgetsCrudDeleteConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('widgets.crud.cancel'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('widgets.crud.delete'), style: TextStyle(color: AppTheme.errorColor))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.widgetsCrudCancel)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.widgetsCrudDelete, style: TextStyle(color: AppTheme.errorColor))),
         ],
       ),
     );
@@ -159,11 +159,11 @@ class _CrudListViewState extends State<CrudListView> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr('widgets.crud.bulk_delete_title')),
-        content: Text(tr('widgets.crud.bulk_delete_confirm').replaceFirst('{n}', _selectedIds.length.toString())),
+        title: Text(AppLocalizations.of(context)!.widgetsCrudBulkDeleteTitle),
+        content: Text(AppLocalizations.of(context)!.widgetsCrudBulkDeleteConfirm(_selectedIds.length.toString())),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('widgets.crud.cancel'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('widgets.crud.delete_all'), style: TextStyle(color: AppTheme.errorColor))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.widgetsCrudCancel)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.widgetsCrudDeleteAll, style: TextStyle(color: AppTheme.errorColor))),
         ],
       ),
     );
@@ -218,7 +218,7 @@ class _CrudListViewState extends State<CrudListView> {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: Text(editItem != null ? tr('widgets.crud.edit') : tr('widgets.crud.add'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+                        Expanded(child: Text(editItem != null ? AppLocalizations.of(context)!.widgetsCrudEdit : AppLocalizations.of(context)!.widgetsCrudAdd, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
                         IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close)),
                       ],
                     ),
@@ -253,7 +253,7 @@ class _CrudListViewState extends State<CrudListView> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: Text(editItem != null ? tr('widgets.crud.save') : tr('widgets.crud.add')),
+                      child: Text(editItem != null ? AppLocalizations.of(context)!.widgetsCrudSave : AppLocalizations.of(context)!.widgetsCrudAdd),
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -274,7 +274,7 @@ class _CrudListViewState extends State<CrudListView> {
           decoration: InputDecoration(labelText: field.label, border: const OutlineInputBorder()),
           items: (field.options ?? []).map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
           onChanged: (v) => setSheetState(() => dropdownValues[field.key] = v ?? field.options!.first),
-          validator: field.required ? (v) => v == null ? tr('widgets.crud.required') : null : null,
+          validator: field.required ? (v) => v == null ? AppLocalizations.of(context)!.widgetsCrudRequired : null : null,
         );
       case CrudFieldType.date:
         return InkWell(
@@ -293,7 +293,7 @@ class _CrudListViewState extends State<CrudListView> {
           },
           child: InputDecorator(
             decoration: InputDecoration(labelText: field.label, border: const OutlineInputBorder()),
-            child: Text(ctrl.text.isEmpty ? tr('widgets.crud.select_date') : ctrl.text),
+            child: Text(ctrl.text.isEmpty ? AppLocalizations.of(context)!.widgetsCrudSelectDate : ctrl.text),
           ),
         );
       case CrudFieldType.number:
@@ -301,35 +301,35 @@ class _CrudListViewState extends State<CrudListView> {
           controller: ctrl,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(labelText: field.label, hintText: field.hint, border: const OutlineInputBorder()),
-          validator: field.required ? (v) => v == null || v.isEmpty ? tr('widgets.crud.required') : null : null,
+          validator: field.required ? (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.widgetsCrudRequired : null : null,
         );
       case CrudFieldType.email:
         return TextFormField(
           controller: ctrl,
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(labelText: field.label, hintText: field.hint, border: const OutlineInputBorder()),
-          validator: field.required ? (v) => v == null || v.isEmpty ? tr('widgets.crud.required') : null : null,
+          validator: field.required ? (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.widgetsCrudRequired : null : null,
         );
       case CrudFieldType.phone:
         return TextFormField(
           controller: ctrl,
           keyboardType: TextInputType.phone,
           decoration: InputDecoration(labelText: field.label, hintText: field.hint, border: const OutlineInputBorder()),
-          validator: field.required ? (v) => v == null || v.isEmpty ? tr('widgets.crud.required') : null : null,
+          validator: field.required ? (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.widgetsCrudRequired : null : null,
         );
       case CrudFieldType.password:
         return TextFormField(
           controller: ctrl,
           obscureText: true,
           decoration: InputDecoration(labelText: field.label, border: const OutlineInputBorder()),
-          validator: field.required ? (v) => v == null || v.isEmpty ? tr('widgets.crud.required') : null : null,
+          validator: field.required ? (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.widgetsCrudRequired : null : null,
         );
       case CrudFieldType.multiline:
         return TextFormField(
           controller: ctrl,
           maxLines: 3,
           decoration: InputDecoration(labelText: field.label, border: const OutlineInputBorder()),
-          validator: field.required ? (v) => v == null || v.isEmpty ? tr('widgets.crud.required') : null : null,
+          validator: field.required ? (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.widgetsCrudRequired : null : null,
         );
       case CrudFieldType.boolean:
         return SwitchListTile(
@@ -348,7 +348,7 @@ class _CrudListViewState extends State<CrudListView> {
             filled: field.readOnly,
             fillColor: field.readOnly ? const Color(0xFFF5F5F5) : null,
           ),
-          validator: field.required ? (v) => v == null || v.isEmpty ? tr('widgets.crud.required') : null : null,
+          validator: field.required ? (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.widgetsCrudRequired : null : null,
         );
     }
   }
@@ -365,18 +365,18 @@ class _CrudListViewState extends State<CrudListView> {
           if (_bulkMode)
             IconButton(
               icon: const Icon(Icons.select_all),
-              tooltip: tr('widgets.crud.select_all'),
+              tooltip: AppLocalizations.of(context)!.widgetsCrudSelectAll,
               onPressed: _toggleSelectAll,
             ),
           if (_bulkMode && _selectedIds.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.delete_sweep, color: AppTheme.errorColor),
-              tooltip: tr('widgets.crud.delete_selection'),
+              tooltip: AppLocalizations.of(context)!.widgetsCrudDeleteSelection,
               onPressed: _handleBulkDelete,
             ),
           IconButton(
             icon: Icon(_bulkMode ? Icons.close : Icons.checklist),
-            tooltip: _bulkMode ? tr('widgets.crud.exit_select_mode') : tr('widgets.crud.select_mode'),
+            tooltip: _bulkMode ? AppLocalizations.of(context)!.widgetsCrudExitSelectMode : AppLocalizations.of(context)!.widgetsCrudSelectMode,
             onPressed: () => setState(() { _bulkMode = !_bulkMode; _selectedIds.clear(); }),
           ),
           if (widget.onRefresh != null)
@@ -391,7 +391,7 @@ class _CrudListViewState extends State<CrudListView> {
               TextField(
                 controller: _searchCtrl,
                 decoration: InputDecoration(
-                  hintText: tr('widgets.crud.search'),
+                  hintText: AppLocalizations.of(context)!.widgetsCrudSearch,
                   prefixIcon: Icon(Icons.search),
                   border: OutlineInputBorder(),
                   isDense: true,
@@ -406,7 +406,7 @@ class _CrudListViewState extends State<CrudListView> {
                     scrollDirection: Axis.horizontal,
                     children: [
                       FilterChip(
-                        label: Text(tr('widgets.crud.all')),
+                        label: Text(AppLocalizations.of(context)!.widgetsCrudAll),
                         selected: _activeFilter == null,
                         onSelected: (_) => setState(() => _activeFilter = null),
                       ),
@@ -436,7 +436,7 @@ class _CrudListViewState extends State<CrudListView> {
                         children: [
                           Text(widget.error!, style: const TextStyle(color: AppTheme.errorColor), textAlign: TextAlign.center),
                           const SizedBox(height: 12),
-                          ElevatedButton(onPressed: widget.onRefresh, child: Text(tr('widgets.crud.retry'))),
+                          ElevatedButton(onPressed: widget.onRefresh, child: Text(AppLocalizations.of(context)!.widgetsCrudRetry)),
                         ],
                       ),
                     )
@@ -450,7 +450,7 @@ class _CrudListViewState extends State<CrudListView> {
                                     Icon(Icons.inbox, size: 48, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
                                     const SizedBox(height: 12),
                                     Text(
-                                      widget.emptyMessage ?? tr('widgets.crud.empty'),
+                                      widget.emptyMessage ?? AppLocalizations.of(context)!.widgetsCrudEmpty,
                                       style: const TextStyle(color: AppTheme.textSecondary, fontSize: 16),
                                     ),
                                     if (widget.onAdd != null) ...[
@@ -458,7 +458,7 @@ class _CrudListViewState extends State<CrudListView> {
                                       ElevatedButton.icon(
                                         onPressed: () => _showForm(),
                                         icon: const Icon(Icons.add, size: 18),
-                                        label: Text('${tr('widgets.crud.add')} ${widget.title}'),
+                                        label: Text('${AppLocalizations.of(context)!.widgetsCrudAdd} ${widget.title}'),
                                       ),
                                     ],
                                   ],

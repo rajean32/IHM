@@ -337,13 +337,11 @@ class _EventPageState extends State<EventPage> {
                                             const SizedBox(width: 4),
                                             PopupMenuButton<String>(
                                               onSelected: (v) async {
-                                                if (v == 'info') _showEventInfo(event);
                                                 if (v == 'suspend') _suspendEvent(event);
                                                 if (v == 'resume') _resumeEvent(event);
                                                 if (v == 'cancel') _cancelEvent(event);
                                               },
                                               itemBuilder: (ctx) => [
-                                                PopupMenuItem(value: 'info', child: ListTile(leading: Icon(Icons.info_outline, size: 18), title: Text(AppLocalizations.of(context)!.info, style: TextStyle(fontSize: 13)))),
                                                 if (sk != 'suspended' && sk != 'cancelled')
                                                   PopupMenuItem(value: 'suspend', child: ListTile(leading: Icon(Icons.pause_circle, size: 18, color: AppColors.accent), title: Text(AppLocalizations.of(context)!.suspend, style: TextStyle(fontSize: 13, color: AppColors.accent)))),
                                                 if (sk == 'suspended')

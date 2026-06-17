@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../core/services/auth_service.dart';
-import '../../core/services/user_service.dart';
-import '../../core/api/dio_config.dart';
-import '../../core/routes/auth_routes.dart';
-import '../../core/assets/app_colors.dart';
-import '../../core/utils/error_helper.dart';
-import '../../localization/app_localizations.dart';
-import '../../widgets/profile_body.dart';
-import 'action_history_page.dart';
+import '../../../generated/app_localizations.dart';
+import 'package:ontik/core/services/auth_service.dart';
+import 'package:ontik/core/services/user_service.dart';
+import 'package:ontik/core/api/dio_config.dart';
+import 'package:ontik/core/routes/auth_routes.dart';
+import 'package:ontik/core/routes/shared_routes.dart';
+import 'package:ontik/core/assets/app_colors.dart';
+import 'package:ontik/core/utils/error_helper.dart';
+import 'package:ontik/widgets/profile_body.dart';
+import 'package:ontik/pages/admin/history/action_history_page.dart';
 
-class AdminProfilePage extends StatefulWidget {
-  const AdminProfilePage({super.key});
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
 
   @override
-  State<AdminProfilePage> createState() => _AdminProfilePageState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _AdminProfilePageState extends State<AdminProfilePage> {
+class _ProfilePageState extends State<ProfilePage> {
   bool _loading = true;
   String _nom = '';
   String _prenoms = '';
@@ -86,13 +87,13 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(tr('admin.profile.personalInfo'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  Text(AppLocalizations.of(ctx)!.adminProfilePersonalInfo, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 20),
-                  TextField(controller: nomCtrl, enabled: isEditing, decoration: InputDecoration(labelText: tr('admin.profile.lastName'), border: const OutlineInputBorder())),
+                  TextField(controller: nomCtrl, enabled: isEditing, decoration: InputDecoration(labelText: AppLocalizations.of(ctx)!.adminProfileLastName, border: const OutlineInputBorder())),
                   const SizedBox(height: 12),
-                  TextField(controller: prenomsCtrl, enabled: isEditing, decoration: InputDecoration(labelText: tr('admin.profile.firstName'), border: const OutlineInputBorder())),
+                  TextField(controller: prenomsCtrl, enabled: isEditing, decoration: InputDecoration(labelText: AppLocalizations.of(ctx)!.adminProfileFirstName, border: const OutlineInputBorder())),
                   const SizedBox(height: 12),
-                  TextField(controller: emailCtrl, enabled: isEditing, decoration: InputDecoration(labelText: tr('admin.profile.email'), border: const OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
+                  TextField(controller: emailCtrl, enabled: isEditing, decoration: InputDecoration(labelText: AppLocalizations.of(ctx)!.adminProfileEmail, border: const OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -105,11 +106,11 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                         final confirmed = await showDialog<bool>(
                           context: ctx,
                           builder: (dctx) => AlertDialog(
-                            title: Text(tr('common.confirm')),
-                            content: Text(tr('admin.profile.saveConfirm')),
+                            title: Text(AppLocalizations.of(ctx)!.commonConfirm),
+                            content: Text(AppLocalizations.of(ctx)!.adminProfileSaveConfirm),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text(tr('common.cancel'))),
-                              TextButton(onPressed: () => Navigator.pop(dctx, true), child: Text(tr('common.confirm'))),
+                              TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text(AppLocalizations.of(ctx)!.commonCancel)),
+                              TextButton(onPressed: () => Navigator.pop(dctx, true), child: Text(AppLocalizations.of(ctx)!.commonConfirm)),
                             ],
                           ),
                         );
@@ -134,7 +135,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                           _loadProfile();
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(tr('admin.profile.updated')), backgroundColor: AppColors.secondary),
+                            SnackBar(content: Text(AppLocalizations.of(context)!.adminProfileUpdated), backgroundColor: AppColors.secondary),
                           );
                         } catch (e) {
                           setSheetState(() => saving = false);
@@ -146,7 +147,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                       },
                       child: saving
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text(isEditing ? tr('common.save') : tr('common.edit')),
+                          : Text(isEditing ? AppLocalizations.of(ctx)!.commonSave : AppLocalizations.of(ctx)!.commonEdit),
                     ),
                   ),
                 ],
@@ -161,16 +162,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   void _showActionHistory() {
     Navigator.push(context, MaterialPageRoute(
       builder: (_) => Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leading: ModalRoute.of(context)?.canPop == true
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new),
-                  onPressed: () => Navigator.pop(context),
-                )
-              : null,
-          title: Text(tr('admin.profile.actionHistory')),
-        ),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.adminActionHistory)),
         body: const ActionHistoryPage(),
       ),
     ));
@@ -180,10 +172,10 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr('admin.profile.logout')),
-        content: Text(tr('admin.profile.logoutConfirm')),
+        title: Text(AppLocalizations.of(context)!.commonLogout),
+        content: Text(AppLocalizations.of(context)!.settingsLogoutConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.commonCancel)),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -191,7 +183,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
               if (!context.mounted) return;
               Navigator.pushNamedAndRemoveUntil(context, AuthRoutes.login, (route) => false);
             },
-            child: Text(tr('admin.profile.logout'), style: const TextStyle(color: AppColors.error)),
+            child: Text(AppLocalizations.of(context)!.commonLogout, style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -206,15 +198,16 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
 
     final displayName = '$_prenoms $_nom'.trim();
     return ProfileBody(
-      name: displayName.isNotEmpty ? displayName : (userNom ?? tr('admin.profile.admin')),
+      name: displayName.isNotEmpty ? displayName : (userNom ?? 'Administrateur'),
       email: _email.isNotEmpty ? _email : (userCode ?? '—'),
-      badge: tr('admin.profile.badge'),
+      badge: 'ADMINISTRATEUR',
       badgeColor: const Color(0xFF1565C0),
       onEditProfile: _showEditInfo,
       menuGroups: [
-        ProfileMenuGroup(tr('admin.profile.account'), [
-          ProfileMenuItem(tr('admin.profile.personalInfo'), Icons.person, onTap: _showEditInfo),
-          ProfileMenuItem(tr('admin.profile.actionHistory'), Icons.history, onTap: _showActionHistory),
+        ProfileMenuGroup(AppLocalizations.of(context)!.account, [
+          ProfileMenuItem(AppLocalizations.of(context)!.personalInfo, Icons.person, onTap: _showEditInfo),
+          ProfileMenuItem(AppLocalizations.of(context)!.settingsTitle, Icons.settings, onTap: () => Navigator.pushNamed(context, SharedRoutes.settings)),
+          ProfileMenuItem(AppLocalizations.of(context)!.adminActionHistory, Icons.history, onTap: _showActionHistory),
         ]),
       ],
       onLogout: _logout,

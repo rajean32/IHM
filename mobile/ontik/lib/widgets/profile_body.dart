@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/assets/app_colors.dart';
-import '../localization/app_localizations.dart';
+import '../generated/app_localizations.dart';
 
 class ProfileStat {
   final String label;
@@ -62,7 +62,7 @@ class ProfileBody extends StatelessWidget {
           ...menuGroups.map(_buildMenuGroup),
           if (onLogout != null) ...[
             const SizedBox(height: 8),
-            _buildLogoutButton(),
+            _buildLogoutButton(context),
           ],
           const SizedBox(height: 24),
         ],
@@ -252,13 +252,13 @@ class ProfileBody extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton() {
+  Widget _buildLogoutButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: TextButton.icon(
         onPressed: onLogout,
         icon: const Icon(Icons.logout, size: 18),
-        label: Text(tr('widgets.profile.logout')),
+        label: Text(AppLocalizations.of(context)!.widgetsProfileLogout),
         style: TextButton.styleFrom(
           foregroundColor: const Color(0xFFB00020),
           padding: const EdgeInsets.symmetric(vertical: 12),

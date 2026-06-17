@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/assets/app_colors.dart';
 import '../core/services/auth_service.dart';
 import '../core/utils/error_helper.dart';
-import '../localization/app_localizations.dart';
+import '../generated/app_localizations.dart';
 
 void showPasswordAnd2FABottomSheet(
   BuildContext context,
@@ -34,17 +34,17 @@ void showPasswordAnd2FABottomSheet(
               showDialog(
                 context: ctx,
                 builder: (dctx) => AlertDialog(
-                  title: Text(tr('widgets.two_factor.disable_2fa')),
-                  content: Text(tr('widgets.two_factor.disable_2fa_confirm')),
+                  title: Text(AppLocalizations.of(dctx)!.widgetsTwoFactorDisable2fa),
+                  content: Text(AppLocalizations.of(dctx)!.widgetsTwoFactorDisable2faConfirm),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(dctx), child: Text(tr('widgets.two_factor.cancel'))),
+                    TextButton(onPressed: () => Navigator.pop(dctx), child: Text(AppLocalizations.of(dctx)!.widgetsTwoFactorCancel)),
                     TextButton(
                       onPressed: () {
                         Navigator.pop(dctx);
                         setSheetState(() => twoFactorEnabled = false);
                         on2faChanged(false);
                       },
-                      child: Text(tr('widgets.two_factor.disable'), style: TextStyle(color: Colors.red)),
+                      child: Text(AppLocalizations.of(dctx)!.widgetsTwoFactorDisable, style: TextStyle(color: Colors.red)),
                     ),
                   ],
                 ),
@@ -61,7 +61,7 @@ void showPasswordAnd2FABottomSheet(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tr('widgets.two_factor.password_2fa'),
+                Text(AppLocalizations.of(ctx)!.widgetsTwoFactorPassword2fa,
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
                 Row(
@@ -71,12 +71,12 @@ void showPasswordAnd2FABottomSheet(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(tr('widgets.two_factor.2fa_label'),
+                          Text(AppLocalizations.of(ctx)!.widgetsTwoFactor2faLabel,
                               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                           Text(
                             twoFactorEnabled
-                                ? tr('widgets.two_factor.2fa_enabled_desc')
-                                : tr('widgets.two_factor.2fa_disabled_desc'),
+                                ? AppLocalizations.of(ctx)!.widgetsTwoFactor2faEnabledDesc
+                                : AppLocalizations.of(ctx)!.widgetsTwoFactor2faDisabledDesc,
                             style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
                           ),
                         ],
@@ -92,14 +92,14 @@ void showPasswordAnd2FABottomSheet(
                 const SizedBox(height: 16),
                 const Divider(),
                 const SizedBox(height: 12),
-                Text(tr('widgets.two_factor.change_password_title'),
+                Text(AppLocalizations.of(ctx)!.widgetsTwoFactorChangePasswordTitle,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 16),
                 TextField(
                   controller: currentPwdCtrl,
                   obscureText: true,
                   decoration: InputDecoration(
-                    labelText: tr('widgets.two_factor.current_password'),
+                    labelText: AppLocalizations.of(ctx)!.widgetsTwoFactorCurrentPassword,
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -108,7 +108,7 @@ void showPasswordAnd2FABottomSheet(
                   controller: newPwdCtrl,
                   obscureText: true,
                   decoration: InputDecoration(
-                    labelText: tr('widgets.two_factor.new_password'),
+                    labelText: AppLocalizations.of(ctx)!.widgetsTwoFactorNewPassword,
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -117,7 +117,7 @@ void showPasswordAnd2FABottomSheet(
                   controller: confirmPwdCtrl,
                   obscureText: true,
                   decoration: InputDecoration(
-                    labelText: tr('widgets.two_factor.confirm_password'),
+                    labelText: AppLocalizations.of(ctx)!.widgetsTwoFactorConfirmPassword,
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -130,7 +130,7 @@ void showPasswordAnd2FABottomSheet(
                       if (newPwdCtrl.text.length < 6) {
                         ScaffoldMessenger.of(ctx).showSnackBar(
                           SnackBar(
-                            content: Text(tr('widgets.two_factor.password_length_error')),
+                            content: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorPasswordLengthError),
                             backgroundColor: AppColors.error,
                           ),
                         );
@@ -139,7 +139,7 @@ void showPasswordAnd2FABottomSheet(
                       if (newPwdCtrl.text != confirmPwdCtrl.text) {
                         ScaffoldMessenger.of(ctx).showSnackBar(
                           SnackBar(
-                            content: Text(tr('widgets.two_factor.password_mismatch_error')),
+                            content: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorPasswordMismatchError),
                             backgroundColor: AppColors.error,
                           ),
                         );
@@ -152,7 +152,7 @@ void showPasswordAnd2FABottomSheet(
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(tr('widgets.two_factor.password_changed')),
+                            content: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorPasswordChanged),
                             backgroundColor: AppColors.secondary,
                           ),
                         );
@@ -166,7 +166,7 @@ void showPasswordAnd2FABottomSheet(
                         );
                       }
                     },
-                    child: Text(tr('widgets.two_factor.change_password')),
+                    child: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorChangePassword),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -196,13 +196,13 @@ void show2faSetupDialog(
       return StatefulBuilder(
         builder: (ctx, setDialogState) {
           return AlertDialog(
-            title: Text(tr('widgets.two_factor.activate_2fa')),
+            title: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorActivate2fa),
             content: SizedBox(
               width: double.maxFinite,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(tr('widgets.two_factor.2fa_email_desc')),
+                  Text(AppLocalizations.of(ctx)!.widgetsTwoFactor2faEmailDesc),
                   const SizedBox(height: 16),
                   if (!codeSent) ...[
                     SizedBox(
@@ -226,7 +226,7 @@ void show2faSetupDialog(
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.email_outlined),
-                        label: Text(sending ? tr('widgets.two_factor.sending') : tr('widgets.two_factor.send_code')),
+                        label: Text(sending ? AppLocalizations.of(ctx)!.widgetsTwoFactorSending : AppLocalizations.of(ctx)!.widgetsTwoFactorSendCode),
                       ),
                     ),
                   ],
@@ -241,7 +241,7 @@ void show2faSetupDialog(
                           letterSpacing: 8,
                           fontWeight: FontWeight.w700),
                       decoration: InputDecoration(
-                        hintText: tr('widgets.two_factor.code_hint'),
+                        hintText: AppLocalizations.of(ctx)!.widgetsTwoFactorCodeHint,
                         border: const OutlineInputBorder(),
                         counterText: '',
                         suffixIcon: IconButton(
@@ -271,7 +271,7 @@ void show2faSetupDialog(
                                   onActivated();
                                   ScaffoldMessenger.of(parentCtx).showSnackBar(
                                     SnackBar(
-                                      content: Text(tr('widgets.two_factor.2fa_activated')),
+                                      content: Text(AppLocalizations.of(ctx)!.widgetsTwoFactor2faActivated),
                                       backgroundColor: AppColors.secondary,
                                     ),
                                   );
@@ -279,7 +279,7 @@ void show2faSetupDialog(
                                   setDialogState(() => verifying = false);
                                   ScaffoldMessenger.of(ctx).showSnackBar(
                                     SnackBar(
-                                      content: Text(tr('widgets.two_factor.incorrect_code')),
+                                      content: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorIncorrectCode),
                                       backgroundColor: AppColors.error,
                                     ),
                                   );
@@ -291,7 +291,7 @@ void show2faSetupDialog(
                                 height: 16,
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : Text(tr('widgets.two_factor.verify_activate')),
+                            : Text(AppLocalizations.of(ctx)!.widgetsTwoFactorVerifyActivate),
                       ),
                     ),
                   ],
@@ -301,7 +301,7 @@ void show2faSetupDialog(
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text(tr('widgets.two_factor.cancel')),
+                child: Text(AppLocalizations.of(ctx)!.widgetsTwoFactorCancel),
               ),
             ],
           );

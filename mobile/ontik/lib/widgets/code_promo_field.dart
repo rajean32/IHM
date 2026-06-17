@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/assets/app_colors.dart';
-import '../localization/app_localizations.dart';
+import '../generated/app_localizations.dart';
 
 class CodePromoField extends StatefulWidget {
   final Function(String?) onCodeChanged;
@@ -55,7 +55,7 @@ class _CodePromoFieldState extends State<CodePromoField> {
     setState(() {
       _isLoading = false;
       _isValid = true;
-      _message = tr('widgets.code_promo.applied');
+      _message = AppLocalizations.of(context)!.widgetsCodePromoApplied;
     });
   }
 
@@ -65,7 +65,7 @@ class _CodePromoFieldState extends State<CodePromoField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          tr('widgets.code_promo.label'),
+          AppLocalizations.of(context)!.widgetsCodePromoLabel,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
@@ -75,7 +75,7 @@ class _CodePromoFieldState extends State<CodePromoField> {
               child: TextField(
                 controller: _controller,
                 decoration: InputDecoration(
-                  hintText: tr('widgets.code_promo.hint'),
+                  hintText: AppLocalizations.of(context)!.widgetsCodePromoHint,
                   border: const OutlineInputBorder(),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -112,7 +112,7 @@ class _CodePromoFieldState extends State<CodePromoField> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 minimumSize: const Size(0, 48),
               ),
-              child: Text(tr('widgets.code_promo.apply')),
+              child: Text(AppLocalizations.of(context)!.widgetsCodePromoApply),
             ),
           ],
         ),

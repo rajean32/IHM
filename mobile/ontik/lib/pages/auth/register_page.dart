@@ -4,7 +4,7 @@ import '../../core/services/auth_service.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/auth_routes.dart';
 import '../../core/utils/error_helper.dart';
-import '../../localization/app_localizations.dart';
+import '../../generated/app_localizations.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -118,7 +118,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr('auth.register.success')),
+          content: Text(AppLocalizations.of(context)!.authRegisterSuccess),
           backgroundColor: AppColors.secondary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

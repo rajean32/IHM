@@ -8,7 +8,7 @@ import '../../core/services/user_service.dart';
 import '../../core/utils/error_helper.dart';
 import '../../widgets/profile_body.dart';
 import '../../widgets/two_factor_widget.dart';
-import '../../localization/app_localizations.dart';
+import '../../generated/app_localizations.dart';
 
 class ClientProfilePage extends StatefulWidget {
   const ClientProfilePage({super.key});
@@ -87,15 +87,15 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(tr('client.profile.personalInfo'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  Text(AppLocalizations.of(context)!.clientProfilePersonalInfo, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 20),
-                  TextField(controller: nomCtrl, enabled: isEditing, decoration: InputDecoration(labelText: tr('client.profile.lastName'), border: const OutlineInputBorder())),
+                  TextField(controller: nomCtrl, enabled: isEditing, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.clientProfileLastName, border: const OutlineInputBorder())),
                   const SizedBox(height: 12),
-                  TextField(controller: prenomsCtrl, enabled: isEditing, decoration: InputDecoration(labelText: tr('client.profile.firstName'), border: const OutlineInputBorder())),
+                  TextField(controller: prenomsCtrl, enabled: isEditing, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.clientProfileFirstName, border: const OutlineInputBorder())),
                   const SizedBox(height: 12),
                   TextField(controller: emailCtrl, enabled: isEditing, decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
                   const SizedBox(height: 12),
-                  TextField(controller: telCtrl, enabled: isEditing, decoration: InputDecoration(labelText: tr('client.profile.phone'), border: const OutlineInputBorder()), keyboardType: TextInputType.phone),
+                  TextField(controller: telCtrl, enabled: isEditing, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.clientProfilePhone, border: const OutlineInputBorder()), keyboardType: TextInputType.phone),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -108,11 +108,11 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                         final confirmed = await showDialog<bool>(
                           context: ctx,
                           builder: (dctx) => AlertDialog(
-                            title: Text(tr('client.profile.confirm')),
-                            content: Text(tr('client.profile.confirmSave')),
+                            title: Text(AppLocalizations.of(context)!.clientProfileConfirm),
+                            content: Text(AppLocalizations.of(context)!.clientProfileConfirmSave),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text(tr('common.cancel'))),
-                              TextButton(onPressed: () => Navigator.pop(dctx, true), child: Text(tr('client.profile.confirm'))),
+                              TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text(AppLocalizations.of(context)!.commonCancel)),
+                              TextButton(onPressed: () => Navigator.pop(dctx, true), child: Text(AppLocalizations.of(context)!.clientProfileConfirm)),
                             ],
                           ),
                         );
@@ -138,7 +138,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                           _loadData();
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(tr('client.profile.updated')), backgroundColor: AppColors.secondary),
+                            SnackBar(content: Text(AppLocalizations.of(context)!.clientProfileUpdated), backgroundColor: AppColors.secondary),
                           );
                         } catch (e) {
                           setSheetState(() => saving = false);
@@ -150,7 +150,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                       },
                       child: saving
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text(isEditing ? tr('common.save') : tr('common.edit')),
+                          : Text(isEditing ? AppLocalizations.of(context)!.commonSave : AppLocalizations.of(context)!.commonEdit),
                     ),
                   ),
                 ],
@@ -179,13 +179,13 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr('client.profile.paymentMethods')),
+        title: Text(AppLocalizations.of(context)!.clientProfilePaymentMethods),
         content: SizedBox(
           width: double.maxFinite,
-          child: Text(tr('client.profile.paymentHistoryComing')),
+          child: Text(AppLocalizations.of(context)!.clientProfilePaymentHistoryComing),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('client.profile.close'))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.clientProfileClose)),
         ],
       ),
     );
@@ -195,17 +195,17 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr('common.logout')),
-        content: Text(tr('client.profile.confirmLogout')),
+        title: Text(AppLocalizations.of(context)!.commonLogout),
+        content: Text(AppLocalizations.of(context)!.clientProfileConfirmLogout),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common.cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.commonCancel)),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               clearSession();
               Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
             },
-            child: Text(tr('common.logout'), style: const TextStyle(color: AppColors.error)),
+            child: Text(AppLocalizations.of(context)!.commonLogout, style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -220,27 +220,27 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
 
     final displayName = '$_prenoms $_nom'.trim();
     return ProfileBody(
-      name: displayName.isNotEmpty ? displayName : (userNom ?? tr('client.profile.user')),
+      name: displayName.isNotEmpty ? displayName : (userNom ?? AppLocalizations.of(context)!.clientProfileUser),
       email: _email.isNotEmpty ? _email : (userCode ?? '—'),
       badge: 'CLIENT',
       badgeColor: const Color(0xFF00796B),
       stats: [
-        ProfileStat(tr('client.profile.reference'), '$_ticketCount', Icons.confirmation_number),
-        ProfileStat(tr('client.profile.favorites'), '—', Icons.bookmark),
-        ProfileStat(tr('client.profile.alerts'), '$_notifCount', Icons.notifications),
+        ProfileStat(AppLocalizations.of(context)!.clientProfileReference, '$_ticketCount', Icons.confirmation_number),
+        ProfileStat(AppLocalizations.of(context)!.clientProfileFavorites, '—', Icons.bookmark),
+        ProfileStat(AppLocalizations.of(context)!.clientProfileAlerts, '$_notifCount', Icons.notifications),
       ],
       onEditProfile: _showEditInfo,
       menuGroups: [
-        ProfileMenuGroup(tr('client.profile.accountGroup'), [
-          ProfileMenuItem(tr('client.profile.personalInfo'), Icons.person, onTap: _showEditInfo),
-          ProfileMenuItem(tr('client.profile.myReservations'), Icons.event, onTap: () {
+        ProfileMenuGroup(AppLocalizations.of(context)!.clientProfileAccountGroup, [
+          ProfileMenuItem(AppLocalizations.of(context)!.clientProfilePersonalInfo, Icons.person, onTap: _showEditInfo),
+          ProfileMenuItem(AppLocalizations.of(context)!.clientProfileMyReservations, Icons.event, onTap: () {
             Navigator.pushNamed(context, ClientRoutes.profile);
           }),
-          ProfileMenuItem(tr('client.profile.paymentMethods'), Icons.payments, onTap: _showPaymentHistory),
+          ProfileMenuItem(AppLocalizations.of(context)!.clientProfilePaymentMethods, Icons.payments, onTap: _showPaymentHistory),
         ]),
-        ProfileMenuGroup(tr('client.profile.securityGroup'), [
-          ProfileMenuItem(tr('client.profile.password2FA'), Icons.lock, status: tr('client.profile.secure'), onTap: _showPasswordAnd2FA),
-          ProfileMenuItem(tr('client.profile.connectedDevices'), Icons.devices, onTap: () {}),
+        ProfileMenuGroup(AppLocalizations.of(context)!.clientProfileSecurityGroup, [
+          ProfileMenuItem(AppLocalizations.of(context)!.clientProfilePassword2FA, Icons.lock, status: AppLocalizations.of(context)!.clientProfileSecure, onTap: _showPasswordAnd2FA),
+          ProfileMenuItem(AppLocalizations.of(context)!.clientProfileConnectedDevices, Icons.devices, onTap: () {}),
         ]),
       ],
       onLogout: _logout,

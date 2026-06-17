@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/lieu_model.dart';
 import '../core/assets/app_colors.dart';
-import '../localization/app_localizations.dart';
+import '../generated/app_localizations.dart';
 
 const _seatAvailableStatuses = {'DISPONIBLE', null};
 
@@ -101,7 +101,7 @@ class _SeatPickerState extends State<SeatPicker> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${tr('widgets.seat_picker.row')} $row', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                    Text('${AppLocalizations.of(context)!.widgetsSeatPickerRow} $row', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
                     const SizedBox(height: 4),
                     Wrap(spacing: 4, runSpacing: 4, children: seats.map((seat) {
                       final avail = _seatAvailableStatuses.contains(seat.statut);

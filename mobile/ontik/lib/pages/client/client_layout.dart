@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/services/notification_service.dart';
 import '../../widgets/notification_bell.dart';
-import '../../localization/app_localizations.dart';
+import '../../generated/app_localizations.dart';
 import 'home_page.dart';
 import 'tickets_page.dart';
 import 'client_profile_page.dart';
@@ -83,15 +83,15 @@ class _ClientLayoutState extends State<ClientLayout> {
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.event),
-            label: tr('client.home'),
+            label: AppLocalizations.of(context)!.clientHome,
           ),
           NavigationDestination(
             icon: const Icon(Icons.confirmation_number),
-            label: tr('client.tickets'),
+            label: AppLocalizations.of(context)!.clientTickets,
           ),
           NavigationDestination(
             icon: const Icon(Icons.person),
-            label: tr('client.account'),
+            label: AppLocalizations.of(context)!.clientAccount,
           ),
         ],
       ),

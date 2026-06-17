@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/services/notification_service.dart';
 import '../core/routes/shared_routes.dart';
-import '../localization/app_localizations.dart';
+import '../generated/app_localizations.dart';
 
 class NotificationBell extends StatefulWidget {
   const NotificationBell({super.key});
@@ -49,7 +49,7 @@ class _NotificationBellState extends State<NotificationBell> {
               child: const Icon(Icons.notifications_outlined),
             )
           : const Icon(Icons.notifications_outlined),
-      tooltip: tr('widgets.notification_bell.tooltip'),
+      tooltip: AppLocalizations.of(context)!.widgetsNotificationBellTooltip,
       onPressed: () => Navigator.pushNamed(context, SharedRoutes.notifications),
     );
 

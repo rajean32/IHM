@@ -10,7 +10,7 @@ import '../../widgets/seat_picker.dart';
 import '../../widgets/error_state.dart';
 import '../../core/utils/error_helper.dart';
 import '../../core/services/app_config.dart';
-import '../../localization/app_localizations.dart';
+import '../../generated/app_localizations.dart';
 
 class ReservationPage extends StatefulWidget {
   final int eventId;
@@ -210,7 +210,7 @@ class _ReservationPageState extends State<ReservationPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
-            tooltip: tr('client.reservation.share'),
+            tooltip: AppLocalizations.of(context)!.clientReservationShare,
             onPressed: () {},
           ),
         ],
@@ -220,7 +220,7 @@ class _ReservationPageState extends State<ReservationPage> {
           : _error != null
               ? ErrorState(message: _error!, onRetry: _loadDetail)
               : _event == null
-                  ? Center(child: Text(tr('client.reservation.eventNotFound')))
+                  ? Center(child: Text(AppLocalizations.of(context)!.clientReservationEventNotFound))
                   : Column(
                       children: [
                         _buildEventSummary(),
@@ -297,7 +297,7 @@ class _ReservationPageState extends State<ReservationPage> {
 
   Widget _buildSeatedLayout() {
     if (_availableSeats.isEmpty) {
-      return Center(child: Text(tr('client.reservation.noSeatsAvailable')));
+      return Center(child: Text(AppLocalizations.of(context)!.clientReservationNoSeatsAvailable));
     }
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
@@ -335,7 +335,7 @@ class _ReservationPageState extends State<ReservationPage> {
                 const Icon(Icons.theater_comedy, size: 16, color: Colors.white70),
                 const SizedBox(width: 8),
                 Text(
-                  tr('client.reservation.stage'),
+                  AppLocalizations.of(context)!.clientReservationStage,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -358,8 +358,8 @@ class _ReservationPageState extends State<ReservationPage> {
           // Instruction
           Text(
             _selectedBlockType != null
-                ? '${tr('client.reservation.selectInBlock')} ${_blockLabel(_selectedBlockType!)}'
-                : tr('client.reservation.selectBlock'),
+                ? '${AppLocalizations.of(context)!.clientReservationSelectInBlock} ${_blockLabel(_selectedBlockType!)}'
+                : AppLocalizations.of(context)!.clientReservationSelectBlock,
             style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
             textAlign: TextAlign.center,
           ),
@@ -415,7 +415,7 @@ class _ReservationPageState extends State<ReservationPage> {
             ),
             const SizedBox(height: 2),
             Text(
-              '$count ${tr('client.reservation.places')}',
+              '$count ${AppLocalizations.of(context)!.clientReservationPlaces}',
               style: TextStyle(
                 fontSize: 9,
                 color: isActive ? Colors.white70 : AppColors.textMuted,
@@ -462,7 +462,7 @@ class _ReservationPageState extends State<ReservationPage> {
 
   Widget _buildSeatPickerForBlock() {
     if (_availableSeats.isEmpty) {
-      return Center(child: Text(tr('client.reservation.noSeatsInBlock')));
+      return Center(child: Text(AppLocalizations.of(context)!.clientReservationNoSeatsInBlock));
     }
 
     final filteredSeats = _selectedBlockType != null
@@ -470,7 +470,7 @@ class _ReservationPageState extends State<ReservationPage> {
         : _availableSeats;
 
     if (filteredSeats.isEmpty) {
-      return Center(child: Text(tr('client.reservation.noSeatsInBlock')));
+      return Center(child: Text(AppLocalizations.of(context)!.clientReservationNoSeatsInBlock));
     }
 
     return Column(
@@ -481,7 +481,7 @@ class _ReservationPageState extends State<ReservationPage> {
             Icon(Icons.visibility, size: 18, color: AppColors.textSecondary),
             const SizedBox(width: 6),
             Text(
-              tr('client.reservation.blockView'),
+              AppLocalizations.of(context)!.clientReservationBlockView,
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
             ),
           ],
@@ -508,7 +508,7 @@ class _ReservationPageState extends State<ReservationPage> {
 
   Widget _buildStandingZones() {
     if (_standingZones.isEmpty) {
-      return Center(child: Text(tr('client.reservation.noStandingZones')));
+      return Center(child: Text(AppLocalizations.of(context)!.clientReservationNoStandingZones));
     }
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -533,7 +533,7 @@ class _ReservationPageState extends State<ReservationPage> {
             const Divider(height: 32),
           ],
           if (_standingZones.isNotEmpty) ...[
-            Text(tr('client.reservation.standingZones'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            Text(AppLocalizations.of(context)!.clientReservationStandingZones, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             const SizedBox(height: 10),
             ..._standingZones.map((zone) => _buildZoneCard(zone)).toList(),
           ],
@@ -579,11 +579,11 @@ class _ReservationPageState extends State<ReservationPage> {
                     Text(zone.nom, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                     if (zone.capacite != null)
                       Text(
-                        '$remaining ${tr('client.reservation.remainingSeats')} ${zone.capacite}',
+                        '$remaining ${AppLocalizations.of(context)!.clientReservationRemainingSeats} ${zone.capacite}',
                         style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                       )
                     else
-                      Text(tr('client.reservation.unlimitedSeats'), style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      Text(AppLocalizations.of(context)!.clientReservationUnlimitedSeats, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   ],
                 ),
               ),
@@ -654,15 +654,15 @@ class _ReservationPageState extends State<ReservationPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(tr('client.reservation.selectedSeats'), style: const TextStyle(fontSize: 10, color: AppColors.textMuted, letterSpacing: 0.5)),
+                  Text(AppLocalizations.of(context)!.clientReservationSelectedSeats, style: const TextStyle(fontSize: 10, color: AppColors.textMuted, letterSpacing: 0.5)),
                   const SizedBox(height: 2),
                   Text(
-                    '$_totalItems ${tr('client.reservation.tickets')}',
+                    '$_totalItems ${AppLocalizations.of(context)!.clientReservationTickets}',
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${tr('client.reservation.estimatedTotal')} ${AppConstants.currency}${_totalAmount.toStringAsFixed(0)}',
+                    '${AppLocalizations.of(context)!.clientReservationEstimatedTotal} ${AppConstants.currency}${_totalAmount.toStringAsFixed(0)}',
                     style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
                 ],
@@ -679,7 +679,7 @@ class _ReservationPageState extends State<ReservationPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                 ),
                 child: Text(
-                  tr('client.reservation.confirmSelection'),
+                  AppLocalizations.of(context)!.clientReservationConfirmSelection,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/assets/app_colors.dart';
-import '../localization/app_localizations.dart';
+import '../generated/app_localizations.dart';
 
 enum PaymentMethod {
   mvola('MVOLA', Icons.phone_android),
@@ -42,7 +42,7 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          tr('widgets.payment_method.title'),
+          AppLocalizations.of(context)!.widgetsPaymentMethodTitle,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),

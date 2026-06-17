@@ -2060,6 +2060,24 @@ abstract class AppLocalizations {
   /// **'Logout'**
   String get commonLogout;
 
+  /// No description provided for @commonAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get commonAll;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get commonRetry;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commonDelete;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
@@ -2215,6 +2233,2814 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'App version'**
   String get settingsAppVersion;
+
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ontik'**
+  String get appTitle;
+
+  /// No description provided for @appLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get appLoading;
+
+  /// No description provided for @splashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ontik'**
+  String get splashTitle;
+
+  /// No description provided for @authLoginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get authLoginTitle;
+
+  /// No description provided for @authLoginEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authLoginEmail;
+
+  /// No description provided for @authLoginPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get authLoginPassword;
+
+  /// No description provided for @authLoginSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get authLoginSubmit;
+
+  /// No description provided for @authLoginForgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get authLoginForgotPassword;
+
+  /// No description provided for @authLoginNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
+  String get authLoginNoAccount;
+
+  /// No description provided for @authLoginRegister.
+  ///
+  /// In en, this message translates to:
+  /// **'Register'**
+  String get authLoginRegister;
+
+  /// No description provided for @authLoginWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get authLoginWelcome;
+
+  /// No description provided for @authRegisterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Register'**
+  String get authRegisterTitle;
+
+  /// No description provided for @authRegisterSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get authRegisterSubmit;
+
+  /// No description provided for @authRegisterHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get authRegisterHaveAccount;
+
+  /// No description provided for @authRegisterLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get authRegisterLogin;
+
+  /// No description provided for @authForgotPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password'**
+  String get authForgotPasswordTitle;
+
+  /// No description provided for @authRegisterSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration successful. Please log in.'**
+  String get authRegisterSuccess;
+
+  /// No description provided for @clientHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get clientHome;
+
+  /// No description provided for @clientTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'My Tickets'**
+  String get clientTickets;
+
+  /// No description provided for @clientAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get clientAccount;
+
+  /// No description provided for @clientProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Profile'**
+  String get clientProfileTitle;
+
+  /// No description provided for @clientLayoutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ontik'**
+  String get clientLayoutTitle;
+
+  /// No description provided for @clientHomeFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get clientHomeFilters;
+
+  /// No description provided for @clientHomeReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get clientHomeReset;
+
+  /// No description provided for @clientHomeStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get clientHomeStatus;
+
+  /// No description provided for @clientHomeVenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue'**
+  String get clientHomeVenue;
+
+  /// No description provided for @clientHomeAllVenues.
+  ///
+  /// In en, this message translates to:
+  /// **'All venues'**
+  String get clientHomeAllVenues;
+
+  /// No description provided for @clientHomeSelectDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a range'**
+  String get clientHomeSelectDateRange;
+
+  /// No description provided for @clientHomeApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get clientHomeApply;
+
+  /// No description provided for @clientHomeSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search events...'**
+  String get clientHomeSearchHint;
+
+  /// No description provided for @clientHomeFeatured.
+  ///
+  /// In en, this message translates to:
+  /// **'Featured events'**
+  String get clientHomeFeatured;
+
+  /// No description provided for @clientHomeNoEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'No events found'**
+  String get clientHomeNoEvents;
+
+  /// No description provided for @clientHomeVenueNotSpecified.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue not specified'**
+  String get clientHomeVenueNotSpecified;
+
+  /// No description provided for @clientHomePriceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Price unavailable'**
+  String get clientHomePriceUnavailable;
+
+  /// No description provided for @clientHomeStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get clientHomeStandard;
+
+  /// No description provided for @clientHomePromoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'-20% on your first ticket'**
+  String get clientHomePromoTitle;
+
+  /// No description provided for @clientHomePromoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use code SECURE20 at checkout.'**
+  String get clientHomePromoSubtitle;
+
+  /// No description provided for @clientHomeRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get clientHomeRetry;
+
+  /// No description provided for @clientHomeDetailShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get clientHomeDetailShare;
+
+  /// No description provided for @clientHomeDetailRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get clientHomeDetailRetry;
+
+  /// No description provided for @clientHomeDetailEventNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Event not found'**
+  String get clientHomeDetailEventNotFound;
+
+  /// No description provided for @clientHomeDetailEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'EVENT'**
+  String get clientHomeDetailEvent;
+
+  /// No description provided for @clientHomeDetailDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get clientHomeDetailDate;
+
+  /// No description provided for @clientHomeDetailTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get clientHomeDetailTime;
+
+  /// No description provided for @clientHomeDetailVenueNotSpecified.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue not specified'**
+  String get clientHomeDetailVenueNotSpecified;
+
+  /// No description provided for @clientHomeDetailAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About the event'**
+  String get clientHomeDetailAbout;
+
+  /// No description provided for @clientHomeDetailNoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description available.'**
+  String get clientHomeDetailNoDescription;
+
+  /// No description provided for @clientHomeDetailCharacteristic.
+  ///
+  /// In en, this message translates to:
+  /// **'Characteristic'**
+  String get clientHomeDetailCharacteristic;
+
+  /// No description provided for @clientHomeDetailAvailableZones.
+  ///
+  /// In en, this message translates to:
+  /// **'Available zones'**
+  String get clientHomeDetailAvailableZones;
+
+  /// No description provided for @clientHomeDetailUnlimitedSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited seats'**
+  String get clientHomeDetailUnlimitedSeats;
+
+  /// No description provided for @clientHomeDetailPlacesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'seats available'**
+  String get clientHomeDetailPlacesAvailable;
+
+  /// No description provided for @clientHomeDetailPriceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Price unavailable'**
+  String get clientHomeDetailPriceUnavailable;
+
+  /// No description provided for @clientHomeDetailFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get clientHomeDetailFrom;
+
+  /// No description provided for @clientHomeDetailBook.
+  ///
+  /// In en, this message translates to:
+  /// **'BOOK MY SEAT'**
+  String get clientHomeDetailBook;
+
+  /// No description provided for @clientProfileMyReservations.
+  ///
+  /// In en, this message translates to:
+  /// **'My Reservations'**
+  String get clientProfileMyReservations;
+
+  /// No description provided for @clientProfileReservationsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Reservations'**
+  String get clientProfileReservationsTab;
+
+  /// No description provided for @clientProfileTicketsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Tickets'**
+  String get clientProfileTicketsTab;
+
+  /// No description provided for @clientProfileReferenceCodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference codes'**
+  String get clientProfileReferenceCodes;
+
+  /// No description provided for @clientProfileNoReservations.
+  ///
+  /// In en, this message translates to:
+  /// **'No reservations'**
+  String get clientProfileNoReservations;
+
+  /// No description provided for @clientProfileReservationsWillAppear.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reservations will appear here.'**
+  String get clientProfileReservationsWillAppear;
+
+  /// No description provided for @clientProfileUnknownDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown date'**
+  String get clientProfileUnknownDate;
+
+  /// No description provided for @clientProfileReservationReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Reservation reference'**
+  String get clientProfileReservationReference;
+
+  /// No description provided for @clientProfileNoTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'No tickets'**
+  String get clientProfileNoTickets;
+
+  /// No description provided for @clientProfileTicketsWillAppear.
+  ///
+  /// In en, this message translates to:
+  /// **'Your tickets will appear here after booking.'**
+  String get clientProfileTicketsWillAppear;
+
+  /// No description provided for @clientProfileEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get clientProfileEvent;
+
+  /// No description provided for @clientProfileRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Room'**
+  String get clientProfileRoom;
+
+  /// No description provided for @clientProfileRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Row'**
+  String get clientProfileRow;
+
+  /// No description provided for @clientProfileSeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Seat'**
+  String get clientProfileSeat;
+
+  /// No description provided for @clientProfileReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference'**
+  String get clientProfileReference;
+
+  /// No description provided for @clientProfileExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'EXPIRED'**
+  String get clientProfileExpired;
+
+  /// No description provided for @clientProfileReservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Reservation'**
+  String get clientProfileReservation;
+
+  /// No description provided for @clientProfileTicketsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'ticket(s)'**
+  String get clientProfileTicketsCount;
+
+  /// No description provided for @clientProfilePersonalInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal information'**
+  String get clientProfilePersonalInfo;
+
+  /// No description provided for @clientProfileLastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Last name'**
+  String get clientProfileLastName;
+
+  /// No description provided for @clientProfileFirstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First name'**
+  String get clientProfileFirstName;
+
+  /// No description provided for @clientProfilePhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get clientProfilePhone;
+
+  /// No description provided for @clientProfileConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get clientProfileConfirm;
+
+  /// No description provided for @clientProfileConfirmSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to save the changes?'**
+  String get clientProfileConfirmSave;
+
+  /// No description provided for @clientProfileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Information updated'**
+  String get clientProfileUpdated;
+
+  /// No description provided for @clientProfilePaymentMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment methods'**
+  String get clientProfilePaymentMethods;
+
+  /// No description provided for @clientProfilePaymentHistoryComing.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment history — coming soon.'**
+  String get clientProfilePaymentHistoryComing;
+
+  /// No description provided for @clientProfileClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get clientProfileClose;
+
+  /// No description provided for @clientProfileConfirmLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you really want to log out?'**
+  String get clientProfileConfirmLogout;
+
+  /// No description provided for @clientProfileUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get clientProfileUser;
+
+  /// No description provided for @clientProfileFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get clientProfileFavorites;
+
+  /// No description provided for @clientProfileAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get clientProfileAlerts;
+
+  /// No description provided for @clientProfileAccountGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get clientProfileAccountGroup;
+
+  /// No description provided for @clientProfileSecurityGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get clientProfileSecurityGroup;
+
+  /// No description provided for @clientProfilePassword2FA.
+  ///
+  /// In en, this message translates to:
+  /// **'Password & 2FA'**
+  String get clientProfilePassword2FA;
+
+  /// No description provided for @clientProfileSecure.
+  ///
+  /// In en, this message translates to:
+  /// **'Secured'**
+  String get clientProfileSecure;
+
+  /// No description provided for @clientProfileConnectedDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected devices'**
+  String get clientProfileConnectedDevices;
+
+  /// No description provided for @clientReservationShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get clientReservationShare;
+
+  /// No description provided for @clientReservationEventNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Event not found'**
+  String get clientReservationEventNotFound;
+
+  /// No description provided for @clientReservationNoSeatsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No seats available'**
+  String get clientReservationNoSeatsAvailable;
+
+  /// No description provided for @clientReservationStage.
+  ///
+  /// In en, this message translates to:
+  /// **'STAGE'**
+  String get clientReservationStage;
+
+  /// No description provided for @clientReservationSelectBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a block to see available seats'**
+  String get clientReservationSelectBlock;
+
+  /// No description provided for @clientReservationNoSeatsInBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'No seats available in this block'**
+  String get clientReservationNoSeatsInBlock;
+
+  /// No description provided for @clientReservationBlockView.
+  ///
+  /// In en, this message translates to:
+  /// **'View from block'**
+  String get clientReservationBlockView;
+
+  /// No description provided for @clientReservationNoStandingZones.
+  ///
+  /// In en, this message translates to:
+  /// **'No standing zones available'**
+  String get clientReservationNoStandingZones;
+
+  /// No description provided for @clientReservationStandingZones.
+  ///
+  /// In en, this message translates to:
+  /// **'Standing zones'**
+  String get clientReservationStandingZones;
+
+  /// No description provided for @clientReservationUnlimitedSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited seats'**
+  String get clientReservationUnlimitedSeats;
+
+  /// No description provided for @clientReservationSelectedSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECTED SEATS'**
+  String get clientReservationSelectedSeats;
+
+  /// No description provided for @clientReservationConfirmSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm selection'**
+  String get clientReservationConfirmSelection;
+
+  /// No description provided for @clientReservationSelectInBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your seats in the block'**
+  String get clientReservationSelectInBlock;
+
+  /// No description provided for @clientReservationPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'seats'**
+  String get clientReservationPlaces;
+
+  /// No description provided for @clientReservationRemainingSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'seat(s) remaining out of'**
+  String get clientReservationRemainingSeats;
+
+  /// No description provided for @clientReservationTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'ticket(s)'**
+  String get clientReservationTickets;
+
+  /// No description provided for @clientReservationEstimatedTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'ESTIMATED TOTAL'**
+  String get clientReservationEstimatedTotal;
+
+  /// No description provided for @clientPaymentProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing payment...'**
+  String get clientPaymentProcessing;
+
+  /// No description provided for @clientPaymentPaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get clientPaymentPaymentMethod;
+
+  /// No description provided for @clientPaymentSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get clientPaymentSummary;
+
+  /// No description provided for @clientPaymentVenue.
+  ///
+  /// In en, this message translates to:
+  /// **'VENUE'**
+  String get clientPaymentVenue;
+
+  /// No description provided for @clientPaymentEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get clientPaymentEvent;
+
+  /// No description provided for @clientPaymentPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'PRICE'**
+  String get clientPaymentPrice;
+
+  /// No description provided for @clientPaymentRow.
+  ///
+  /// In en, this message translates to:
+  /// **'ROW'**
+  String get clientPaymentRow;
+
+  /// No description provided for @clientPaymentSeat.
+  ///
+  /// In en, this message translates to:
+  /// **'SEAT'**
+  String get clientPaymentSeat;
+
+  /// No description provided for @clientPaymentTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'TICKETS'**
+  String get clientPaymentTickets;
+
+  /// No description provided for @clientPaymentOrderVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Order verified'**
+  String get clientPaymentOrderVerified;
+
+  /// No description provided for @clientPaymentCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Card'**
+  String get clientPaymentCard;
+
+  /// No description provided for @clientPaymentCardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Visa, Mastercard, AMEX'**
+  String get clientPaymentCardSubtitle;
+
+  /// No description provided for @clientPaymentMvolaSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MVola mobile payment'**
+  String get clientPaymentMvolaSubtitle;
+
+  /// No description provided for @clientPaymentOrangeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange mobile payment'**
+  String get clientPaymentOrangeSubtitle;
+
+  /// No description provided for @clientPaymentAirtelSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Airtel mobile payment'**
+  String get clientPaymentAirtelSubtitle;
+
+  /// No description provided for @clientPaymentTransactionRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction reference'**
+  String get clientPaymentTransactionRef;
+
+  /// No description provided for @clientPaymentPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get clientPaymentPhoneNumber;
+
+  /// No description provided for @clientPaymentFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name'**
+  String get clientPaymentFullName;
+
+  /// No description provided for @clientPaymentSecurityDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment data is end-to-end encrypted. We are PCI-DSS Level 1 certified.'**
+  String get clientPaymentSecurityDisclaimer;
+
+  /// No description provided for @clientPaymentErrorTransactionRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction reference is required'**
+  String get clientPaymentErrorTransactionRef;
+
+  /// No description provided for @clientPaymentErrorPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number is required'**
+  String get clientPaymentErrorPhoneNumber;
+
+  /// No description provided for @clientPaymentErrorCardInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Card information is required'**
+  String get clientPaymentErrorCardInfo;
+
+  /// No description provided for @clientPaymentErrorNotLoggedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'User not logged in'**
+  String get clientPaymentErrorNotLoggedIn;
+
+  /// No description provided for @clientPaymentSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking successful!'**
+  String get clientPaymentSuccess;
+
+  /// No description provided for @clientPaymentErrorTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Server not responding. Check your connection.'**
+  String get clientPaymentErrorTimeout;
+
+  /// No description provided for @clientPaymentErrorSeatTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Seat already booked or unavailable. Please try again.'**
+  String get clientPaymentErrorSeatTaken;
+
+  /// No description provided for @clientPaymentErrorInsufficientFunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient funds for this transaction.'**
+  String get clientPaymentErrorInsufficientFunds;
+
+  /// No description provided for @clientPaymentErrorPromoCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid or expired promo code.'**
+  String get clientPaymentErrorPromoCode;
+
+  /// No description provided for @clientPaymentSuccessReduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking successful! Reduction of'**
+  String get clientPaymentSuccessReduction;
+
+  /// No description provided for @clientPaymentPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay'**
+  String get clientPaymentPay;
+
+  /// No description provided for @clientTicketTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket'**
+  String get clientTicketTitle;
+
+  /// No description provided for @clientTicketNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket not found'**
+  String get clientTicketNotFound;
+
+  /// No description provided for @clientTicketValid.
+  ///
+  /// In en, this message translates to:
+  /// **'VALID'**
+  String get clientTicketValid;
+
+  /// No description provided for @clientTicketInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'INVALID'**
+  String get clientTicketInvalid;
+
+  /// No description provided for @clientTicketDownloadPDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Download PDF'**
+  String get clientTicketDownloadPDF;
+
+  /// No description provided for @clientTicketEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get clientTicketEvent;
+
+  /// No description provided for @clientTicketSeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Seat'**
+  String get clientTicketSeat;
+
+  /// No description provided for @clientTicketRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Row'**
+  String get clientTicketRow;
+
+  /// No description provided for @clientTicketType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get clientTicketType;
+
+  /// No description provided for @clientTicketZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Zone'**
+  String get clientTicketZone;
+
+  /// No description provided for @clientTicketPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get clientTicketPrice;
+
+  /// No description provided for @clientTicketHolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Holder'**
+  String get clientTicketHolder;
+
+  /// No description provided for @clientTicketNoTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'No tickets'**
+  String get clientTicketNoTickets;
+
+  /// No description provided for @clientTicketAfterPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Your tickets will appear here after purchase.'**
+  String get clientTicketAfterPurchase;
+
+  /// No description provided for @clientTicketMyTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'My Tickets'**
+  String get clientTicketMyTickets;
+
+  /// No description provided for @clientTicketManageTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your access and reservations'**
+  String get clientTicketManageTickets;
+
+  /// No description provided for @clientTicketRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Room'**
+  String get clientTicketRoom;
+
+  /// No description provided for @clientTicketPdfSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF saved to'**
+  String get clientTicketPdfSaved;
+
+  /// No description provided for @clientTicketDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed:'**
+  String get clientTicketDownloadFailed;
+
+  /// No description provided for @clientTicketReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference'**
+  String get clientTicketReference;
+
+  /// No description provided for @clientTicketExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'EXPIRED'**
+  String get clientTicketExpired;
+
+  /// No description provided for @adminDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get adminDashboard;
+
+  /// No description provided for @adminUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'Users'**
+  String get adminUsers;
+
+  /// No description provided for @adminEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get adminEvents;
+
+  /// No description provided for @adminCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get adminCategories;
+
+  /// No description provided for @adminVenues.
+  ///
+  /// In en, this message translates to:
+  /// **'Venues'**
+  String get adminVenues;
+
+  /// No description provided for @adminPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Seats'**
+  String get adminPlaces;
+
+  /// No description provided for @adminTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'Tickets'**
+  String get adminTickets;
+
+  /// No description provided for @adminReservations.
+  ///
+  /// In en, this message translates to:
+  /// **'Reservations'**
+  String get adminReservations;
+
+  /// No description provided for @adminPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get adminPayments;
+
+  /// No description provided for @adminAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get adminAccount;
+
+  /// No description provided for @adminLayoutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Panel'**
+  String get adminLayoutTitle;
+
+  /// No description provided for @adminConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration'**
+  String get adminConfig;
+
+  /// No description provided for @adminMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get adminMore;
+
+  /// No description provided for @adminMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get adminMoreOptions;
+
+  /// No description provided for @adminDashboardRecentEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Events'**
+  String get adminDashboardRecentEvents;
+
+  /// No description provided for @adminDashboardAnalytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Analytics'**
+  String get adminDashboardAnalytics;
+
+  /// No description provided for @adminDashboardByStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'By status'**
+  String get adminDashboardByStatus;
+
+  /// No description provided for @adminDashboardByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'By category'**
+  String get adminDashboardByCategory;
+
+  /// No description provided for @adminDashboardStatEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get adminDashboardStatEvents;
+
+  /// No description provided for @adminDashboardStatClients.
+  ///
+  /// In en, this message translates to:
+  /// **'Clients'**
+  String get adminDashboardStatClients;
+
+  /// No description provided for @adminDashboardStatOrganizers.
+  ///
+  /// In en, this message translates to:
+  /// **'Organizers'**
+  String get adminDashboardStatOrganizers;
+
+  /// No description provided for @adminDashboardStatRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue'**
+  String get adminDashboardStatRevenue;
+
+  /// No description provided for @adminDashboardStatVenues.
+  ///
+  /// In en, this message translates to:
+  /// **'Venues'**
+  String get adminDashboardStatVenues;
+
+  /// No description provided for @adminDashboardStatRooms.
+  ///
+  /// In en, this message translates to:
+  /// **'Rooms'**
+  String get adminDashboardStatRooms;
+
+  /// No description provided for @adminEventsInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Information'**
+  String get adminEventsInfo;
+
+  /// No description provided for @adminEventsLogistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Logistics'**
+  String get adminEventsLogistics;
+
+  /// No description provided for @adminEventsCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Capacity'**
+  String get adminEventsCapacity;
+
+  /// No description provided for @adminEventsVenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue'**
+  String get adminEventsVenue;
+
+  /// No description provided for @adminEventsDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get adminEventsDate;
+
+  /// No description provided for @adminEventsTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get adminEventsTime;
+
+  /// No description provided for @adminEventsNoSeatsConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'No seats configured'**
+  String get adminEventsNoSeatsConfigured;
+
+  /// No description provided for @adminEventsFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Features'**
+  String get adminEventsFeatures;
+
+  /// No description provided for @adminEventsActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get adminEventsActions;
+
+  /// No description provided for @adminEventsValidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Validate / Approve'**
+  String get adminEventsValidate;
+
+  /// No description provided for @adminEventsValidated.
+  ///
+  /// In en, this message translates to:
+  /// **'Event validated'**
+  String get adminEventsValidated;
+
+  /// No description provided for @adminEventsReactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Reactivate'**
+  String get adminEventsReactivate;
+
+  /// No description provided for @adminEventsReactivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Event reactivated'**
+  String get adminEventsReactivated;
+
+  /// No description provided for @adminEventsSuspend.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspend'**
+  String get adminEventsSuspend;
+
+  /// No description provided for @adminEventsSuspended.
+  ///
+  /// In en, this message translates to:
+  /// **'Event suspended'**
+  String get adminEventsSuspended;
+
+  /// No description provided for @adminEventsCancelEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Event'**
+  String get adminEventsCancelEvent;
+
+  /// No description provided for @adminEventsCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Event cancelled'**
+  String get adminEventsCancelled;
+
+  /// No description provided for @adminEventsContactOrganizer.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Organizer'**
+  String get adminEventsContactOrganizer;
+
+  /// No description provided for @adminEventsCancelReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation reason *'**
+  String get adminEventsCancelReason;
+
+  /// No description provided for @adminEventsCancelReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mandatory reason'**
+  String get adminEventsCancelReasonHint;
+
+  /// No description provided for @adminEventsContactOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact options:'**
+  String get adminEventsContactOptions;
+
+  /// No description provided for @adminEventsSendEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Send an email'**
+  String get adminEventsSendEmail;
+
+  /// No description provided for @adminEventsEmailNotImplemented.
+  ///
+  /// In en, this message translates to:
+  /// **'Email feature not implemented'**
+  String get adminEventsEmailNotImplemented;
+
+  /// No description provided for @adminEventsInternalChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal chat'**
+  String get adminEventsInternalChat;
+
+  /// No description provided for @adminEventsOpenChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Open chat'**
+  String get adminEventsOpenChat;
+
+  /// No description provided for @adminEventsChatNotImplemented.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat feature not implemented'**
+  String get adminEventsChatNotImplemented;
+
+  /// No description provided for @adminEventsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No events found'**
+  String get adminEventsEmpty;
+
+  /// No description provided for @adminUsersChangeRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Change role'**
+  String get adminUsersChangeRole;
+
+  /// No description provided for @adminUsersRoleOrganizer.
+  ///
+  /// In en, this message translates to:
+  /// **'Organizer'**
+  String get adminUsersRoleOrganizer;
+
+  /// No description provided for @adminUsersRoleClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get adminUsersRoleClient;
+
+  /// No description provided for @adminUsersResetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset password'**
+  String get adminUsersResetPassword;
+
+  /// No description provided for @adminUsersNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get adminUsersNewPassword;
+
+  /// No description provided for @adminUsersNewPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a new password'**
+  String get adminUsersNewPasswordHint;
+
+  /// No description provided for @adminUsersPasswordReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset'**
+  String get adminUsersPasswordReset;
+
+  /// No description provided for @adminUsersDeleteUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete user'**
+  String get adminUsersDeleteUser;
+
+  /// No description provided for @adminUsersManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'User management'**
+  String get adminUsersManagement;
+
+  /// No description provided for @adminUsersAudit.
+  ///
+  /// In en, this message translates to:
+  /// **'Audit'**
+  String get adminUsersAudit;
+
+  /// No description provided for @adminUsersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No users found'**
+  String get adminUsersEmpty;
+
+  /// No description provided for @adminUsersActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get adminUsersActive;
+
+  /// No description provided for @adminUsersInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get adminUsersInactive;
+
+  /// No description provided for @adminUsersNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get adminUsersNew;
+
+  /// No description provided for @adminUsersRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get adminUsersRole;
+
+  /// No description provided for @adminUsersDeactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get adminUsersDeactivate;
+
+  /// No description provided for @adminUsersActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get adminUsersActivate;
+
+  /// No description provided for @adminUsersResetPwd.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset PWD'**
+  String get adminUsersResetPwd;
+
+  /// No description provided for @adminUsersNoActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity'**
+  String get adminUsersNoActivity;
+
+  /// No description provided for @adminCategoriesAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get adminCategoriesAdd;
+
+  /// No description provided for @adminCategoriesCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get adminCategoriesCode;
+
+  /// No description provided for @adminCategoriesCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'CAT01'**
+  String get adminCategoriesCodeHint;
+
+  /// No description provided for @adminCategoriesName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get adminCategoriesName;
+
+  /// No description provided for @adminCategoriesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get adminCategoriesDescription;
+
+  /// No description provided for @adminCategoriesEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit category'**
+  String get adminCategoriesEdit;
+
+  /// No description provided for @adminCategoriesDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category'**
+  String get adminCategoriesDeleteTitle;
+
+  /// No description provided for @adminCategoriesDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Category deleted'**
+  String get adminCategoriesDeleted;
+
+  /// No description provided for @adminCategoriesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories found'**
+  String get adminCategoriesEmpty;
+
+  /// No description provided for @adminCategoriesFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Features'**
+  String get adminCategoriesFeatures;
+
+  /// No description provided for @adminCategoriesRooms.
+  ///
+  /// In en, this message translates to:
+  /// **'Rooms'**
+  String get adminCategoriesRooms;
+
+  /// No description provided for @adminCategoriesConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Config'**
+  String get adminCategoriesConfig;
+
+  /// No description provided for @adminCategoriesAddFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a feature'**
+  String get adminCategoriesAddFeature;
+
+  /// No description provided for @adminCategoriesEditFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit feature'**
+  String get adminCategoriesEditFeature;
+
+  /// No description provided for @adminCategoriesDataType.
+  ///
+  /// In en, this message translates to:
+  /// **'Data type'**
+  String get adminCategoriesDataType;
+
+  /// No description provided for @adminCategoriesDataTypeText.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get adminCategoriesDataTypeText;
+
+  /// No description provided for @adminCategoriesDataTypeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Number'**
+  String get adminCategoriesDataTypeNumber;
+
+  /// No description provided for @adminCategoriesDataTypeDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get adminCategoriesDataTypeDate;
+
+  /// No description provided for @adminCategoriesDataTypeSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Dropdown list'**
+  String get adminCategoriesDataTypeSelect;
+
+  /// No description provided for @adminCategoriesDataTypeBoolean.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes/No'**
+  String get adminCategoriesDataTypeBoolean;
+
+  /// No description provided for @adminCategoriesDisplayOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Display order'**
+  String get adminCategoriesDisplayOrder;
+
+  /// No description provided for @adminCategoriesOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Options (comma separated)'**
+  String get adminCategoriesOptions;
+
+  /// No description provided for @adminCategoriesRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get adminCategoriesRequired;
+
+  /// No description provided for @adminCategoriesNoFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'No features'**
+  String get adminCategoriesNoFeatures;
+
+  /// No description provided for @adminCategoriesCompatibleRoomTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Compatible room types'**
+  String get adminCategoriesCompatibleRoomTypes;
+
+  /// No description provided for @adminCategoriesConfigSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Specific configuration saved'**
+  String get adminCategoriesConfigSaved;
+
+  /// No description provided for @adminCategoriesCinemaConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Cinema room configuration'**
+  String get adminCategoriesCinemaConfig;
+
+  /// No description provided for @adminCategoriesNumRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of rows'**
+  String get adminCategoriesNumRows;
+
+  /// No description provided for @adminCategoriesSeatsPerRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Seats per row'**
+  String get adminCategoriesSeatsPerRow;
+
+  /// No description provided for @adminCategoriesAisles.
+  ///
+  /// In en, this message translates to:
+  /// **'Aisles (ex: B,D)'**
+  String get adminCategoriesAisles;
+
+  /// No description provided for @adminCategoriesAisleWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Aisle width'**
+  String get adminCategoriesAisleWidth;
+
+  /// No description provided for @adminCategoriesFreeSeatingZones.
+  ///
+  /// In en, this message translates to:
+  /// **'Free seating zones'**
+  String get adminCategoriesFreeSeatingZones;
+
+  /// No description provided for @adminCategoriesNoZones.
+  ///
+  /// In en, this message translates to:
+  /// **'No zones configured'**
+  String get adminCategoriesNoZones;
+
+  /// No description provided for @adminCategoriesAddZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a zone'**
+  String get adminCategoriesAddZone;
+
+  /// No description provided for @adminCategoriesMaxCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Max capacity'**
+  String get adminCategoriesMaxCapacity;
+
+  /// No description provided for @adminCategoriesTicketPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket price'**
+  String get adminCategoriesTicketPrice;
+
+  /// No description provided for @adminCategoriesStandsBlocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Stand blocks'**
+  String get adminCategoriesStandsBlocks;
+
+  /// No description provided for @adminCategoriesNoBlocks.
+  ///
+  /// In en, this message translates to:
+  /// **'No blocks configured'**
+  String get adminCategoriesNoBlocks;
+
+  /// No description provided for @adminCategoriesAddBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a block'**
+  String get adminCategoriesAddBlock;
+
+  /// No description provided for @adminCategoriesBlockType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type (ex: Stand A)'**
+  String get adminCategoriesBlockType;
+
+  /// No description provided for @adminCategoriesNumSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of seats'**
+  String get adminCategoriesNumSeats;
+
+  /// No description provided for @adminCategoriesPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get adminCategoriesPrice;
+
+  /// No description provided for @adminCategoriesType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get adminCategoriesType;
+
+  /// No description provided for @adminCategoriesNoSpecificConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'No specific configuration available for this category'**
+  String get adminCategoriesNoSpecificConfig;
+
+  /// No description provided for @adminVenuesRoomsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Rooms —'**
+  String get adminVenuesRoomsFor;
+
+  /// No description provided for @adminVenuesNoRooms.
+  ///
+  /// In en, this message translates to:
+  /// **'No rooms for this venue'**
+  String get adminVenuesNoRooms;
+
+  /// No description provided for @adminVenuesAddRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a room'**
+  String get adminVenuesAddRoom;
+
+  /// No description provided for @adminVenuesManageSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage seats'**
+  String get adminVenuesManageSeats;
+
+  /// No description provided for @adminVenuesRoomName.
+  ///
+  /// In en, this message translates to:
+  /// **'Room name'**
+  String get adminVenuesRoomName;
+
+  /// No description provided for @adminVenuesVenueCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue code'**
+  String get adminVenuesVenueCode;
+
+  /// No description provided for @adminVenuesName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get adminVenuesName;
+
+  /// No description provided for @adminVenuesAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get adminVenuesAddress;
+
+  /// No description provided for @adminVenuesCity.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get adminVenuesCity;
+
+  /// No description provided for @adminVenuesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No venues found'**
+  String get adminVenuesEmpty;
+
+  /// No description provided for @adminVenuesSelectRoomType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select rooms compatible with'**
+  String get adminVenuesSelectRoomType;
+
+  /// No description provided for @adminPlacesRoomDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Room deleted'**
+  String get adminPlacesRoomDeleted;
+
+  /// No description provided for @adminPlacesSeatDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Seat deleted'**
+  String get adminPlacesSeatDeleted;
+
+  /// No description provided for @adminPlacesEditSeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit seat'**
+  String get adminPlacesEditSeat;
+
+  /// No description provided for @adminPlacesSeatNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Seat number'**
+  String get adminPlacesSeatNumber;
+
+  /// No description provided for @adminPlacesRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Row'**
+  String get adminPlacesRow;
+
+  /// No description provided for @adminPlacesEditRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit room'**
+  String get adminPlacesEditRoom;
+
+  /// No description provided for @adminPlacesAddRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a room'**
+  String get adminPlacesAddRoom;
+
+  /// No description provided for @adminPlacesParentVenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent venue'**
+  String get adminPlacesParentVenue;
+
+  /// No description provided for @adminPlacesRoomsAndSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Rooms & Seats'**
+  String get adminPlacesRoomsAndSeats;
+
+  /// No description provided for @adminPlacesSearchRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Search a room...'**
+  String get adminPlacesSearchRoom;
+
+  /// No description provided for @adminPlacesFilterByVenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by venue'**
+  String get adminPlacesFilterByVenue;
+
+  /// No description provided for @adminPlacesAllVenues.
+  ///
+  /// In en, this message translates to:
+  /// **'All venues'**
+  String get adminPlacesAllVenues;
+
+  /// No description provided for @adminPlacesNoRooms.
+  ///
+  /// In en, this message translates to:
+  /// **'No rooms found'**
+  String get adminPlacesNoRooms;
+
+  /// No description provided for @adminPlacesManageSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage seats'**
+  String get adminPlacesManageSeats;
+
+  /// No description provided for @adminPlacesMultiSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi select'**
+  String get adminPlacesMultiSelect;
+
+  /// No description provided for @adminPlacesBatchGeneration.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch generation'**
+  String get adminPlacesBatchGeneration;
+
+  /// No description provided for @adminPlacesRowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'B'**
+  String get adminPlacesRowHint;
+
+  /// No description provided for @adminPlacesStartNum.
+  ///
+  /// In en, this message translates to:
+  /// **'Start #'**
+  String get adminPlacesStartNum;
+
+  /// No description provided for @adminPlacesEndNum.
+  ///
+  /// In en, this message translates to:
+  /// **'End #'**
+  String get adminPlacesEndNum;
+
+  /// No description provided for @adminPlacesGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get adminPlacesGenerate;
+
+  /// No description provided for @adminPlacesSearchSeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Search a seat...'**
+  String get adminPlacesSearchSeat;
+
+  /// No description provided for @adminPlacesNoSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'No seats for this room'**
+  String get adminPlacesNoSeats;
+
+  /// No description provided for @adminPlacesNoSeatsMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No seats match your search'**
+  String get adminPlacesNoSeatsMatch;
+
+  /// No description provided for @adminPlacesDeselect.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect'**
+  String get adminPlacesDeselect;
+
+  /// No description provided for @adminPlacesSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get adminPlacesSelect;
+
+  /// No description provided for @adminPlacesBulkDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Bulk delete'**
+  String get adminPlacesBulkDelete;
+
+  /// No description provided for @adminTicketsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tickets found'**
+  String get adminTicketsEmpty;
+
+  /// No description provided for @adminReservationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No reservations found'**
+  String get adminReservationsEmpty;
+
+  /// No description provided for @adminPaymentsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments found'**
+  String get adminPaymentsEmpty;
+
+  /// No description provided for @adminProfilePersonalInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal information'**
+  String get adminProfilePersonalInfo;
+
+  /// No description provided for @adminProfileLastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Last name'**
+  String get adminProfileLastName;
+
+  /// No description provided for @adminProfileFirstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First name'**
+  String get adminProfileFirstName;
+
+  /// No description provided for @adminProfileSaveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to save the changes?'**
+  String get adminProfileSaveConfirm;
+
+  /// No description provided for @adminProfileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Information updated'**
+  String get adminProfileUpdated;
+
+  /// No description provided for @adminProfileActionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Action history'**
+  String get adminProfileActionHistory;
+
+  /// No description provided for @adminProfileLogoutConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you really want to log out?'**
+  String get adminProfileLogoutConfirm;
+
+  /// No description provided for @adminActionHistoryUndoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo action'**
+  String get adminActionHistoryUndoAction;
+
+  /// No description provided for @adminActionHistoryYesUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, undo'**
+  String get adminActionHistoryYesUndo;
+
+  /// No description provided for @adminActionHistoryActionUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'Action undone'**
+  String get adminActionHistoryActionUndone;
+
+  /// No description provided for @adminActionHistoryCreateUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User creation'**
+  String get adminActionHistoryCreateUser;
+
+  /// No description provided for @adminActionHistoryUpdateUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User update'**
+  String get adminActionHistoryUpdateUser;
+
+  /// No description provided for @adminActionHistoryChangeRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role change'**
+  String get adminActionHistoryChangeRole;
+
+  /// No description provided for @adminActionHistoryDeactivateUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User deactivation'**
+  String get adminActionHistoryDeactivateUser;
+
+  /// No description provided for @adminActionHistoryActivateUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User activation'**
+  String get adminActionHistoryActivateUser;
+
+  /// No description provided for @adminActionHistoryResetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset'**
+  String get adminActionHistoryResetPassword;
+
+  /// No description provided for @adminActionHistoryDeleteUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User deletion'**
+  String get adminActionHistoryDeleteUser;
+
+  /// No description provided for @adminActionHistoryPaymentMade.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment made'**
+  String get adminActionHistoryPaymentMade;
+
+  /// No description provided for @adminActionHistoryRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get adminActionHistoryRefund;
+
+  /// No description provided for @adminActionHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Action history'**
+  String get adminActionHistoryTitle;
+
+  /// No description provided for @adminActionHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No actions recorded'**
+  String get adminActionHistoryEmpty;
+
+  /// No description provided for @adminActionHistoryReverted.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverted'**
+  String get adminActionHistoryReverted;
+
+  /// No description provided for @adminActionHistoryUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get adminActionHistoryUndo;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications'**
+  String get notificationsEmpty;
+
+  /// No description provided for @notificationsNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'User not connected'**
+  String get notificationsNotConnected;
+
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get notificationsMarkAllRead;
+
+  /// No description provided for @notificationsMarkAllReadShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Read all'**
+  String get notificationsMarkAllReadShort;
+
+  /// No description provided for @notificationsFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get notificationsFilterAll;
+
+  /// No description provided for @notificationsFilterPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get notificationsFilterPayments;
+
+  /// No description provided for @notificationsFilterFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get notificationsFilterFailed;
+
+  /// No description provided for @notificationsFilterReservations.
+  ///
+  /// In en, this message translates to:
+  /// **'Reservations'**
+  String get notificationsFilterReservations;
+
+  /// No description provided for @notificationsFilterCancellations.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellations'**
+  String get notificationsFilterCancellations;
+
+  /// No description provided for @notificationsFilterCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get notificationsFilterCancelled;
+
+  /// No description provided for @notificationsFilterApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get notificationsFilterApproved;
+
+  /// No description provided for @notificationsFilterUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get notificationsFilterUpdated;
+
+  /// No description provided for @notificationsFilterSuspended.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspended'**
+  String get notificationsFilterSuspended;
+
+  /// No description provided for @notificationsFilterScanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned'**
+  String get notificationsFilterScanned;
+
+  /// No description provided for @notificationsFilterReused.
+  ///
+  /// In en, this message translates to:
+  /// **'Reused'**
+  String get notificationsFilterReused;
+
+  /// No description provided for @notificationsFilterRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get notificationsFilterRefunded;
+
+  /// No description provided for @notificationsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get notificationsAll;
+
+  /// No description provided for @notificationsUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get notificationsUnread;
+
+  /// No description provided for @notificationsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get notificationsRead;
+
+  /// No description provided for @notificationsNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results'**
+  String get notificationsNoResults;
+
+  /// No description provided for @notificationsEmptyFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications match the selected filters.\nModify or reset filters to see more results.'**
+  String get notificationsEmptyFiltered;
+
+  /// No description provided for @notificationsEmptyGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'You will be notified here about important updates.\nBook tickets or create events to receive notifications.'**
+  String get notificationsEmptyGeneral;
+
+  /// No description provided for @notificationsResetFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset filters'**
+  String get notificationsResetFilters;
+
+  /// No description provided for @pageNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Page not found'**
+  String get pageNotFoundTitle;
+
+  /// No description provided for @pageNotFoundHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get pageNotFoundHome;
+
+  /// No description provided for @widgetsErrorRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get widgetsErrorRetry;
+
+  /// No description provided for @widgetsSeatPickerRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Row'**
+  String get widgetsSeatPickerRow;
+
+  /// No description provided for @widgetsCrudConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get widgetsCrudConfirm;
+
+  /// No description provided for @widgetsCrudDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this item?'**
+  String get widgetsCrudDeleteConfirm;
+
+  /// No description provided for @widgetsCrudCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get widgetsCrudCancel;
+
+  /// No description provided for @widgetsCrudDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get widgetsCrudDelete;
+
+  /// No description provided for @widgetsCrudBulkDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bulk delete'**
+  String get widgetsCrudBulkDeleteTitle;
+
+  /// No description provided for @widgetsCrudBulkDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {n} item(s)?'**
+  String widgetsCrudBulkDeleteConfirm(Object n);
+
+  /// No description provided for @widgetsCrudDeleteAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all'**
+  String get widgetsCrudDeleteAll;
+
+  /// No description provided for @widgetsCrudEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get widgetsCrudEdit;
+
+  /// No description provided for @widgetsCrudAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get widgetsCrudAdd;
+
+  /// No description provided for @widgetsCrudSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get widgetsCrudSave;
+
+  /// No description provided for @widgetsCrudRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get widgetsCrudRequired;
+
+  /// No description provided for @widgetsCrudSelectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a date'**
+  String get widgetsCrudSelectDate;
+
+  /// No description provided for @widgetsCrudSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get widgetsCrudSelectAll;
+
+  /// No description provided for @widgetsCrudDeleteSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete selection'**
+  String get widgetsCrudDeleteSelection;
+
+  /// No description provided for @widgetsCrudExitSelectMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit select mode'**
+  String get widgetsCrudExitSelectMode;
+
+  /// No description provided for @widgetsCrudSelectMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Select mode'**
+  String get widgetsCrudSelectMode;
+
+  /// No description provided for @widgetsCrudSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search...'**
+  String get widgetsCrudSearch;
+
+  /// No description provided for @widgetsCrudAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get widgetsCrudAll;
+
+  /// No description provided for @widgetsCrudRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get widgetsCrudRetry;
+
+  /// No description provided for @widgetsCrudEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No items'**
+  String get widgetsCrudEmpty;
+
+  /// No description provided for @widgetsCodePromoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Promo code'**
+  String get widgetsCodePromoLabel;
+
+  /// No description provided for @widgetsCodePromoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your promo code'**
+  String get widgetsCodePromoHint;
+
+  /// No description provided for @widgetsCodePromoApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get widgetsCodePromoApply;
+
+  /// No description provided for @widgetsCodePromoApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Promo code applied!'**
+  String get widgetsCodePromoApplied;
+
+  /// No description provided for @widgetsCarteBancaireTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank card information'**
+  String get widgetsCarteBancaireTitle;
+
+  /// No description provided for @widgetsCarteBancaireCardNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Card number'**
+  String get widgetsCarteBancaireCardNumber;
+
+  /// No description provided for @widgetsCarteBancaireCardNumberHint.
+  ///
+  /// In en, this message translates to:
+  /// **'1234 5678 9012 3456'**
+  String get widgetsCarteBancaireCardNumberHint;
+
+  /// No description provided for @widgetsCarteBancaireExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry date'**
+  String get widgetsCarteBancaireExpiry;
+
+  /// No description provided for @widgetsCarteBancaireExpiryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'MM/YY'**
+  String get widgetsCarteBancaireExpiryHint;
+
+  /// No description provided for @widgetsCarteBancaireCvv.
+  ///
+  /// In en, this message translates to:
+  /// **'CVV'**
+  String get widgetsCarteBancaireCvv;
+
+  /// No description provided for @widgetsCarteBancaireCvvHint.
+  ///
+  /// In en, this message translates to:
+  /// **'123'**
+  String get widgetsCarteBancaireCvvHint;
+
+  /// No description provided for @widgetsCarteBancaireCardholderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Cardholder name'**
+  String get widgetsCarteBancaireCardholderName;
+
+  /// No description provided for @widgetsCarteBancaireCardholderNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'JOHN DOE'**
+  String get widgetsCarteBancaireCardholderNameHint;
+
+  /// No description provided for @widgetsPaymentMethodTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get widgetsPaymentMethodTitle;
+
+  /// No description provided for @widgetsTwoFactorDisable2fa.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable 2FA'**
+  String get widgetsTwoFactorDisable2fa;
+
+  /// No description provided for @widgetsTwoFactorDisable2faConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to disable two-factor authentication?'**
+  String get widgetsTwoFactorDisable2faConfirm;
+
+  /// No description provided for @widgetsTwoFactorCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get widgetsTwoFactorCancel;
+
+  /// No description provided for @widgetsTwoFactorDisable.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable'**
+  String get widgetsTwoFactorDisable;
+
+  /// No description provided for @widgetsTwoFactorPassword2fa.
+  ///
+  /// In en, this message translates to:
+  /// **'Password & 2FA'**
+  String get widgetsTwoFactorPassword2fa;
+
+  /// No description provided for @widgetsTwoFactor2faLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-factor authentication'**
+  String get widgetsTwoFactor2faLabel;
+
+  /// No description provided for @widgetsTwoFactor2faEnabledDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code sent by email'**
+  String get widgetsTwoFactor2faEnabledDesc;
+
+  /// No description provided for @widgetsTwoFactor2faDisabledDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable to secure your account'**
+  String get widgetsTwoFactor2faDisabledDesc;
+
+  /// No description provided for @widgetsTwoFactorChangePasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get widgetsTwoFactorChangePasswordTitle;
+
+  /// No description provided for @widgetsTwoFactorCurrentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get widgetsTwoFactorCurrentPassword;
+
+  /// No description provided for @widgetsTwoFactorNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get widgetsTwoFactorNewPassword;
+
+  /// No description provided for @widgetsTwoFactorConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get widgetsTwoFactorConfirmPassword;
+
+  /// No description provided for @widgetsTwoFactorPasswordLengthError.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get widgetsTwoFactorPasswordLengthError;
+
+  /// No description provided for @widgetsTwoFactorPasswordMismatchError.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get widgetsTwoFactorPasswordMismatchError;
+
+  /// No description provided for @widgetsTwoFactorPasswordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed'**
+  String get widgetsTwoFactorPasswordChanged;
+
+  /// No description provided for @widgetsTwoFactorChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get widgetsTwoFactorChangePassword;
+
+  /// No description provided for @widgetsTwoFactorActivate2fa.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable 2FA'**
+  String get widgetsTwoFactorActivate2fa;
+
+  /// No description provided for @widgetsTwoFactor2faEmailDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'A 6-digit code will be sent to your email address.'**
+  String get widgetsTwoFactor2faEmailDesc;
+
+  /// No description provided for @widgetsTwoFactorSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending...'**
+  String get widgetsTwoFactorSending;
+
+  /// No description provided for @widgetsTwoFactorSendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get widgetsTwoFactorSendCode;
+
+  /// No description provided for @widgetsTwoFactorCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'000000'**
+  String get widgetsTwoFactorCodeHint;
+
+  /// No description provided for @widgetsTwoFactor2faActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'2FA enabled'**
+  String get widgetsTwoFactor2faActivated;
+
+  /// No description provided for @widgetsTwoFactorIncorrectCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect code'**
+  String get widgetsTwoFactorIncorrectCode;
+
+  /// No description provided for @widgetsTwoFactorVerifyActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify & activate'**
+  String get widgetsTwoFactorVerifyActivate;
+
+  /// No description provided for @widgetsNotificationBellTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get widgetsNotificationBellTooltip;
+
+  /// No description provided for @widgetsProfileLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get widgetsProfileLogout;
+
+  /// No description provided for @adminUsersCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get adminUsersCode;
+
+  /// No description provided for @adminUsersTel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get adminUsersTel;
+
+  /// No description provided for @adminEventsReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get adminEventsReason;
+
+  /// No description provided for @adminEventsReserved.
+  ///
+  /// In en, this message translates to:
+  /// **'reserved'**
+  String get adminEventsReserved;
+
+  /// No description provided for @adminEventsTo.
+  ///
+  /// In en, this message translates to:
+  /// **'to'**
+  String get adminEventsTo;
+
+  /// No description provided for @commonNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get commonNone;
+
+  /// No description provided for @commonDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get commonDetails;
+
+  /// No description provided for @commonNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data'**
+  String get commonNoData;
+
+  /// No description provided for @adminActionHistoryRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get adminActionHistoryRetry;
+
+  /// No description provided for @adminActionHistoryActions.
+  ///
+  /// In en, this message translates to:
+  /// **'actions'**
+  String get adminActionHistoryActions;
+
+  /// No description provided for @adminActionHistoryNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get adminActionHistoryNo;
+
+  /// No description provided for @adminActionHistoryOn.
+  ///
+  /// In en, this message translates to:
+  /// **'on'**
+  String get adminActionHistoryOn;
+
+  /// No description provided for @adminActionHistoryUndoConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get adminActionHistoryUndoConfirm;
+
+  /// No description provided for @adminActionHistoryUndoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo action'**
+  String get adminActionHistoryUndoTitle;
+
+  /// No description provided for @adminActionHistoryUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'Action undone'**
+  String get adminActionHistoryUndone;
+
+  /// No description provided for @adminPaymentsReservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Reservation'**
+  String get adminPaymentsReservation;
+
+  /// No description provided for @adminPaymentsAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get adminPaymentsAmount;
+
+  /// No description provided for @adminPaymentsMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get adminPaymentsMethod;
+
+  /// No description provided for @adminPaymentsDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get adminPaymentsDate;
+
+  /// No description provided for @adminPaymentsStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get adminPaymentsStatus;
+
+  /// No description provided for @adminTicketsPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Place'**
+  String get adminTicketsPlace;
+
+  /// No description provided for @adminTicketsEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get adminTicketsEvent;
+
+  /// No description provided for @adminReservationsItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get adminReservationsItem;
+
+  /// No description provided for @adminReservationsClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get adminReservationsClient;
+
+  /// No description provided for @adminReservationsTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'Tickets'**
+  String get adminReservationsTickets;
+
+  /// No description provided for @adminProfileEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get adminProfileEmail;
+
+  /// No description provided for @adminProfileLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get adminProfileLogout;
+
+  /// No description provided for @adminProfileAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin'**
+  String get adminProfileAdmin;
+
+  /// No description provided for @adminProfileBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Badge'**
+  String get adminProfileBadge;
+
+  /// No description provided for @adminProfileAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get adminProfileAccount;
+
+  /// No description provided for @adminCategoriesFeatureName.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature name'**
+  String get adminCategoriesFeatureName;
+
+  /// No description provided for @adminCategoriesTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get adminCategoriesTypeLabel;
+
+  /// No description provided for @adminCategoriesOrderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get adminCategoriesOrderLabel;
+
+  /// No description provided for @adminCategoriesFeaturesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Features'**
+  String get adminCategoriesFeaturesTitle;
+
+  /// No description provided for @adminCategoriesConfigFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Config for'**
+  String get adminCategoriesConfigFor;
+
+  /// No description provided for @adminCategoriesZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Zone'**
+  String get adminCategoriesZone;
+
+  /// No description provided for @adminCategoriesSelectRooms.
+  ///
+  /// In en, this message translates to:
+  /// **'Select rooms'**
+  String get adminCategoriesSelectRooms;
+
+  /// No description provided for @adminCategoriesCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Capacity'**
+  String get adminCategoriesCapacity;
+
+  /// No description provided for @adminCategoriesEditZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit zone'**
+  String get adminCategoriesEditZone;
+
+  /// No description provided for @adminCategoriesEditBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit block'**
+  String get adminCategoriesEditBlock;
+
+  /// No description provided for @adminCategoriesBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Block'**
+  String get adminCategoriesBlock;
+
+  /// No description provided for @adminVenuesRoomType.
+  ///
+  /// In en, this message translates to:
+  /// **'Room type'**
+  String get adminVenuesRoomType;
+
+  /// No description provided for @adminActionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get adminActionHistory;
+
+  /// No description provided for @commonAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get commonAdd;
 }
 
 class _AppLocalizationsDelegate
