@@ -13,6 +13,8 @@ import com.ihm.repository.ReservationRepository;
 import com.ihm.repository.TicketRepository;
 import com.ihm.model.*;
 import com.ihm.service.ReservationService;
+
+import org.springframework.transaction.annotation.Transactional;
 import com.ihm.service.TicketService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -126,6 +128,7 @@ public class ReservationController {
 
     // Feature 15: Historique d'achat client complet (réservations + tickets)
     @GetMapping("/reservations/client/{code}/history")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getClientHistory(@PathVariable String code) {
         log.info("GET /api/reservations/client/{}/history", code);
         List<Reservation> reservations = reservationRepository.findByClientWithTickets(code);

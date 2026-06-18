@@ -87,6 +87,7 @@ class _TicketListPageState extends State<TicketListPage> {
   }
 
   String? _detectPlacement(Ticket t) {
+    if (t.zoneNom != null && t.typePlace == 'DEBOUT') return 'LIBRE';
     if (t.zoneNom != null) return 'MIXTE';
     if (t.numeroPlace != null && t.rang != null) return 'NUMEROTE';
     return 'LIBRE';
@@ -161,11 +162,11 @@ class _TicketListPageState extends State<TicketListPage> {
     if (_tickets.isEmpty) {
       return Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.confirmation_number_outlined, size: 64, color: AppColors.textMuted),
+          Icon(Icons.confirmation_number_outlined, size: 64, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
-          Text(AppLocalizations.of(context)!.clientTicketNoTickets, style: const TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+          Text(AppLocalizations.of(context)!.clientTicketNoTickets, style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8))),
           const SizedBox(height: 4),
-          Text(AppLocalizations.of(context)!.clientTicketAfterPurchase, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+          Text(AppLocalizations.of(context)!.clientTicketAfterPurchase, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
         ]),
       );
     }
@@ -179,7 +180,7 @@ class _TicketListPageState extends State<TicketListPage> {
           if (filtered.isEmpty)
             SliverFillRemaining(
               child: Center(child: Text(AppLocalizations.of(context)!.clientTicketNoTickets,
-                  style: TextStyle(color: AppColors.textSecondary))),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))),
             )
           else
             SliverList(delegate: SliverChildBuilderDelegate((ctx, i) {
@@ -224,10 +225,10 @@ class _TicketListPageState extends State<TicketListPage> {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
-              label: Text(label, style: TextStyle(fontSize: 12, color: selected ? Colors.white : null)),
+              label: Text(label, style: TextStyle(fontSize: 12, color: selected ? Theme.of(context).colorScheme.onPrimary : null)),
               selected: selected,
               onSelected: (_) => setState(() => _placementFilter = p),
-              selectedColor: AppColors.primary,
+              selectedColor: Theme.of(context).colorScheme.primary,
             ),
           );
         }).toList()),
@@ -244,10 +245,10 @@ class _TicketListPageState extends State<TicketListPage> {
       child: Stack(children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.ticketBorder),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
+            border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
+            boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             ClipRRect(
@@ -267,7 +268,7 @@ class _TicketListPageState extends State<TicketListPage> {
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Expanded(
                     child: Text(t.evenementTitre ?? AppLocalizations.of(context)!.clientTicketEvent,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                         maxLines: 2, overflow: TextOverflow.ellipsis),
                   ),
                   const SizedBox(width: 8),
@@ -275,22 +276,22 @@ class _TicketListPageState extends State<TicketListPage> {
                 ]),
                 const SizedBox(height: 8),
                 Row(children: [
-                  Icon(Icons.calendar_today, size: 13, color: AppColors.textSecondary),
+                  Icon(Icons.calendar_today, size: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                   const SizedBox(width: 4),
                   Text(_formatDate(t.dateEvenement, t.heureEvenement),
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                 ]),
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(8)),
                   child: placement == 'LIBRE'
-                      ? _infoItem(Icons.accessibility_new, 'Entrée libre', t.zoneNom ?? 'Générale')
+                      ? Row(children: [_infoItem(Icons.accessibility_new, 'Entrée libre', t.zoneNom ?? 'Générale')])
                       : Row(children: [
                           _infoItem(Icons.meeting_room, AppLocalizations.of(context)!.clientTicketRoom, t.salleNom ?? '—'),
-                          Container(height: 20, width: 1, color: AppColors.divider),
-                          _infoItem(Icons.view_column, AppLocalizations.of(context)!.clientTicketRow, t.rang ?? '—'),
-                          Container(height: 20, width: 1, color: AppColors.divider),
+                            Container(height: 20, width: 1, color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
+                            _infoItem(Icons.view_column, AppLocalizations.of(context)!.clientTicketRow, t.rang ?? '—'),
+                            Container(height: 20, width: 1, color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
                           _infoItem(Icons.event_seat, AppLocalizations.of(context)!.clientTicketSeat, displayPlace(t.numeroPlace)),
                         ]),
                 ),
@@ -301,18 +302,18 @@ class _TicketListPageState extends State<TicketListPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.ticketQrBg,
+                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(11), bottomRight: Radius.circular(11)),
               ),
               child: Row(children: [
                 Icon(Icons.qr_code, size: 28, color: _badgeColor(t.typePlace)),
                 const SizedBox(width: 10),
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(AppLocalizations.of(context)!.clientTicketReference, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
-                  Text(t.codeTicket, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary, fontFamily: 'monospace')),
+                  Text(AppLocalizations.of(context)!.clientTicketReference, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
+                  Text(t.codeTicket, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface, fontFamily: 'monospace')),
                 ]),
                 const Spacer(),
-                const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+                Icon(Icons.chevron_right, size: 20, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
               ]),
             ),
           ]),
@@ -336,27 +337,29 @@ class _TicketListPageState extends State<TicketListPage> {
   }
 
   Widget _buildPlacementBadge(String? placement) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(_placementIcon(placement), size: 12, color: AppColors.primary),
+        Icon(_placementIcon(placement), size: 12, color: theme.colorScheme.primary),
         const SizedBox(width: 4),
-        Text(_placementLabel(placement), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary)),
+        Text(_placementLabel(placement), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: theme.colorScheme.primary)),
       ]),
     );
   }
 
   Widget _infoItem(IconData icon, String label, String value) {
+    final theme = Theme.of(context);
     return Expanded(
       child: Column(children: [
-        Icon(icon, size: 14, color: AppColors.textMuted),
+        Icon(icon, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(fontSize: 9, color: AppColors.textMuted)),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+        Text(label, style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface)),
       ]),
     );
   }

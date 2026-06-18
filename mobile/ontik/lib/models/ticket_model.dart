@@ -13,6 +13,9 @@ class Ticket {
   final String? statut;
   final String? zoneNom;
   final String? image;
+  final String? dateReservation;
+  final String? datePublication;
+  final String? qrCodeBase64;
 
   Ticket({
     required this.codeTicket,
@@ -29,6 +32,9 @@ class Ticket {
     this.statut,
     this.zoneNom,
     this.image,
+    this.dateReservation,
+    this.datePublication,
+    this.qrCodeBase64,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
@@ -47,6 +53,9 @@ class Ticket {
       statut: json['statut'],
       zoneNom: json['zoneNom'],
       image: json['image'],
+      dateReservation: json['dateReservation'],
+      datePublication: json['datePublication'],
+      qrCodeBase64: json['qrCodeBase64'],
     );
   }
 

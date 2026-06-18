@@ -44,7 +44,10 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
   Future<void> _checkFavorite() async {
     final prefs = await SharedPreferences.getInstance();
     final favorites = prefs.getStringList('event_favorites') ?? [];
-    if (mounted) setState(() => _isFavorited = favorites.contains(widget.eventId.toString()));
+    if (mounted)
+      setState(
+        () => _isFavorited = favorites.contains(widget.eventId.toString()),
+      );
   }
 
   Future<void> _toggleFavorite() async {
@@ -61,19 +64,30 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
     if (!mounted) return;
     final loc = AppLocalizations.of(context);
     if (loc == null) return;
-    AdminToast.show(context, message: _isFavorited ? loc.clientFavoriteAdded : loc.clientFavoriteRemoved, isSuccess: true);
+    AdminToast.show(
+      context,
+      message: _isFavorited
+          ? loc.clientFavoriteAdded
+          : loc.clientFavoriteRemoved,
+      isSuccess: true,
+    );
   }
 
   void _shareEvent() {
     final event = _event;
     if (event == null) return;
-    final text = '${event.titre}\n'
+    final text =
+        '${event.titre}\n'
         '${DateFormat('d MMMM yyyy', appLanguage).format(event.dateEvenement ?? DateTime.now())}'
         '${event.heureEvenement != null ? ' à ${event.heureEvenement!.substring(0, 5)}' : ''}\n'
         '📍 ${event.lieuNom ?? ''}\n'
         '${AppConstants.currency}${event.prixMin?.toStringAsFixed(0) ?? ''} - ${AppConstants.currency}${event.prixMax?.toStringAsFixed(0) ?? ''}';
     Clipboard.setData(ClipboardData(text: text));
-    AdminToast.show(context, message: AppLocalizations.of(context)!.clientShareCopied, isSuccess: true);
+    AdminToast.show(
+      context,
+      message: AppLocalizations.of(context)!.clientShareCopied,
+      isSuccess: true,
+    );
   }
 
   Future<void> _loadAnnonces() async {
@@ -149,21 +163,34 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                      const SizedBox(height: 12),
-                      Text(_error!, textAlign: TextAlign.center),
-                      const SizedBox(height: 16),
-                      ElevatedButton(onPressed: _loadDetail, child: Text(AppLocalizations.of(context)!.clientHomeDetailRetry)),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: AppColors.error,
                   ),
-                )
-              : _event == null
-                  ? Center(child: Text(AppLocalizations.of(context)!.clientHomeDetailEventNotFound))
-                  : _buildContent(),
+                  const SizedBox(height: 12),
+                  Text(_error!, textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadDetail,
+                    child: Text(
+                      AppLocalizations.of(context)!.clientHomeDetailRetry,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : _event == null
+          ? Center(
+              child: Text(
+                AppLocalizations.of(context)!.clientHomeDetailEventNotFound,
+              ),
+            )
+          : _buildContent(),
       bottomNavigationBar: _event != null ? _buildFooter() : null,
     );
   }
@@ -178,10 +205,14 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
           _buildHeroBanner(event),
           _buildLogisticsRow(event),
           _buildLocationCard(event),
+          if (event.organisateurNom != null ||
+              event.codeOrganisateur.isNotEmpty)
+            _buildOrganisateurSection(event),
           _buildAboutSection(event),
-          if (event.standingZones != null && event.standingZones!.isNotEmpty) _buildStandingZones(event),
+          // if (event.standingZones != null && event.standingZones!.isNotEmpty) _buildStandingZones(event),
           if (_annonces.isNotEmpty) _buildAnnoncesSection(),
-          _buildAvisSection(event),
+          if (_avis.isNotEmpty || _avisMoyenne['nombreAvis'] > 0)
+            _buildAvisSection(event),
           const SizedBox(height: 24),
         ],
       ),
@@ -205,7 +236,11 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 24),
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -213,12 +248,19 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   children: [
                     const Text(
                       'Événement annulé',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       motif,
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -239,7 +281,12 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
             bottomRight: Radius.circular(20),
           ),
           child: event.image != null
-              ? eventImageWidget(event.image, height: 260, width: double.infinity, fit: BoxFit.cover)
+              ? eventImageWidget(
+                  event.image,
+                  height: 260,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                )
               : Container(
                   height: 260,
                   width: double.infinity,
@@ -255,7 +302,11 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                     ),
                   ),
                   child: Center(
-                    child: Icon(Icons.event, size: 80, color: Colors.white.withValues(alpha: 0.3)),
+                    child: Icon(
+                      Icons.event,
+                      size: 80,
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
                   ),
                 ),
         ),
@@ -287,13 +338,19 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.accent,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                  child: Text(
-                    (event.typeAgencement != null ? event.typeAgencement!.replaceAll('_', ' ') : AppLocalizations.of(context)!.clientHomeDetailEvent).toUpperCase(),
+                child: Text(
+                  (event.typeAgencement != null
+                          ? event.typeAgencement!.replaceAll('_', ' ')
+                          : AppLocalizations.of(context)!.clientHomeDetailEvent)
+                      .toUpperCase(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -334,7 +391,11 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.calendar_today, size: 20, color: AppColors.primary),
+                  const Icon(
+                    Icons.calendar_today,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(height: 6),
                   Text(
                     AppLocalizations.of(context)!.clientHomeDetailDate,
@@ -343,7 +404,11 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   const SizedBox(height: 2),
                   Text(
                     _formatDate(event.dateEvenement),
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -360,7 +425,11 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.schedule, size: 20, color: AppColors.primary),
+                  const Icon(
+                    Icons.schedule,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(height: 6),
                   Text(
                     AppLocalizations.of(context)!.clientHomeDetailTime,
@@ -369,7 +438,11 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   const SizedBox(height: 2),
                   Text(
                     event.heureEvenement ?? '—',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ],
               ),
@@ -381,7 +454,9 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
   }
 
   Widget _buildLocationCard(EventDetail event) {
-    final lieu = event.lieuNom ?? AppLocalizations.of(context)!.clientHomeDetailVenueNotSpecified;
+    final lieu =
+        event.lieuNom ??
+        AppLocalizations.of(context)!.clientHomeDetailVenueNotSpecified;
     final adresse = event.lieuAdresse ?? '';
     final ville = event.lieuVille ?? '';
     final fullAddress = [adresse, ville].where((s) => s.isNotEmpty).join(', ');
@@ -406,7 +481,11 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.location_on, color: AppColors.primary, size: 22),
+                child: const Icon(
+                  Icons.location_on,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -415,14 +494,21 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                   children: [
                     Text(
                       lieu,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     if (fullAddress.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
                           fullAddress,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -438,6 +524,87 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
     );
   }
 
+  Widget _buildOrganisateurSection(EventDetail event) {
+    final label = event.typeAgencement != null
+        ? event.typeAgencement!.replaceAll('_', ' ').toUpperCase()
+        : '';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.ticketBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.person,
+                color: AppColors.primary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.clientHomeDetailOrganizer,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    event.organisateurNom ?? event.codeOrganisateur,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  if (label.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAboutSection(EventDetail event) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -446,39 +613,62 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
         children: [
           Text(
             AppLocalizations.of(context)!.clientHomeDetailAbout,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            event.description ?? AppLocalizations.of(context)!.clientHomeDetailNoDescription,
-            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
+            event.description ??
+                AppLocalizations.of(context)!.clientHomeDetailNoDescription,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
           ),
-          if (event.caracteristiqueValeurs != null && event.caracteristiqueValeurs!.isNotEmpty) ...[
+          if (event.caracteristiqueValeurs != null &&
+              event.caracteristiqueValeurs!.isNotEmpty) ...[
             const SizedBox(height: 16),
-            ...event.caracteristiqueValeurs!.map((c) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.fiber_manual_record, size: 8, color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                        children: [
-                          TextSpan(
-                            text: '${c.nomCaracteristique ?? AppLocalizations.of(context)!.clientHomeDetailCharacteristic} : ',
-                            style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            ...event.caracteristiqueValeurs!.map(
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.fiber_manual_record,
+                      size: 8,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
                           ),
-                          TextSpan(text: c.valeur),
-                        ],
+                          children: [
+                            TextSpan(
+                              text:
+                                  '${c.nomCaracteristique ?? AppLocalizations.of(context)!.clientHomeDetailCharacteristic} : ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            TextSpan(text: c.valeur),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            )),
+            ),
           ],
         ],
       ),
@@ -491,88 +681,185 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppLocalizations.of(context)!.clientHomeDetailAvailableZones,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          Row(
+            children: [
+              Text(
+                AppLocalizations.of(context)!.clientHomeDetailAvailableZones,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${event.standingZones!.length} zone${event.standingZones!.length > 1 ? 's' : ''}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           ...event.standingZones!.map((zone) {
             final cap = zone.capacite;
+            final disp = zone.placesDisponibles ?? 0;
             final ratio = cap != null && cap > 0
-                ? ((cap - (zone.placesDisponibles ?? 0)) / cap).clamp(0.0, 1.0)
+                ? ((cap - disp) / cap).clamp(0.0, 1.0)
                 : 0.0;
             final fillPercent = (ratio * 100).round();
             final jaugeColor = ratio < 0.5
                 ? AppColors.secondary
-                : (ratio < 0.8 ? Colors.orange : Colors.red);
+                : (ratio < 0.8 ? Colors.orange : AppColors.error);
+            final isNearFull = ratio >= 0.8;
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.ticketBorder),
+                border: Border.all(
+                  color: isNearFull
+                      ? AppColors.error.withValues(alpha: 0.3)
+                      : AppColors.ticketBorder,
+                  width: isNearFull ? 1.5 : 1,
+                ),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.accessibility_new, color: AppColors.primary, size: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(11),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        Row(
                           children: [
-                            Text(zone.nom, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary)),
-                            const SizedBox(height: 2),
-                            Text(
-                              zone.capacite != null
-                                  ? '${zone.placesDisponibles ?? 0}/${zone.capacite} ${AppLocalizations.of(context)!.clientHomeDetailPlacesAvailable}'
-                                  : AppLocalizations.of(context)!.clientHomeDetailUnlimitedSeats,
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: jaugeColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.accessibility_new,
+                                color: jaugeColor,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          zone.nom,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (isNearFull) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 5,
+                                            vertical: 1,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.error.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'PRESQUE COMPLET',
+                                            style: TextStyle(
+                                              fontSize: 7,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.error,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    cap != null
+                                        ? '$disp/$cap ${AppLocalizations.of(context)!.clientHomeDetailPlacesAvailable}'
+                                        : AppLocalizations.of(
+                                            context,
+                                          )!.clientHomeDetailUnlimitedSeats,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Flexible(
+                              child: Text(
+                                '${AppConstants.currency}${zone.prix.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: jaugeColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      Text(
-                        '${AppConstants.currency}${zone.prix.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
+                        if (cap != null && cap > 0) ...[
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: LinearProgressIndicator(
+                              value: ratio,
+                              backgroundColor: AppColors.divider.withValues(
+                                alpha: 0.3,
+                              ),
+                              valueColor: AlwaysStoppedAnimation(jaugeColor),
+                              minHeight: 10,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              if (isNearFull)
+                                Icon(
+                                  Icons.trending_up,
+                                  size: 12,
+                                  color: jaugeColor,
+                                ),
+                              const Spacer(),
+                              Text(
+                                '$fillPercent% rempli',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: jaugeColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                  if (cap != null && cap > 0) ...[
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: ratio,
-                        backgroundColor: AppColors.divider.withValues(alpha: 0.3),
-                        valueColor: AlwaysStoppedAnimation(jaugeColor),
-                        minHeight: 10,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        '$fillPercent% rempli',
-                        style: TextStyle(fontSize: 11, color: jaugeColor, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
             );
           }),
@@ -584,26 +871,52 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
   Widget _buildAnnoncesSection() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Annonces', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-        const SizedBox(height: 12),
-        ...(_annonces.take(3)).map((a) {
-          final annonce = a as Map<String, dynamic>;
-          return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white, borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.ticketBorder),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Annonces',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(annonce['titre'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              const SizedBox(height: 4),
-              Text(annonce['message'] ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-            ]),
-          );
-        }),
-      ]),
+          ),
+          const SizedBox(height: 12),
+          ...(_annonces.take(3)).map((a) {
+            final annonce = a as Map<String, dynamic>;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.ticketBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    annonce['titre'] ?? '',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    annonce['message'] ?? '',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -612,52 +925,99 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
     final count = (_avisMoyenne['nombreAvis'] as num?)?.toInt() ?? 0;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          const Text('Avis', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          const Spacer(),
-          if (count > 0) ...[
-            ...List.generate(5, (i) => Icon(
-              i < moyenne.round() ? Icons.star : Icons.star_border,
-              size: 18, color: Colors.amber,
-            )),
-            const SizedBox(width: 6),
-            Text('${moyenne.toStringAsFixed(1)} ($count)', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-          ],
-        ]),
-        const SizedBox(height: 12),
-        if (_avis.isEmpty)
-          Text('Aucun avis pour le moment', style: TextStyle(color: AppColors.textMuted))
-        else
-          ...(_avis.take(5)).map((a) {
-            final avis = a as Map<String, dynamic>;
-            final note = (avis['note'] as num?)?.toInt() ?? 0;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.ticketBorder),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Avis',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  ...List.generate(5, (i) => Icon(
-                    i < note ? Icons.star : Icons.star_border,
-                    size: 16, color: Colors.amber,
-                  )),
-                  const Spacer(),
-                  if (avis['dateCreation'] != null)
-                    Text(avis['dateCreation'].toString().substring(0, 10),
-                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-                ]),
-                if (avis['commentaire'] != null && (avis['commentaire'] as String).isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(avis['commentaire'], style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                ],
-              ]),
-            );
-          }),
-      ]),
+              const Spacer(),
+              if (count > 0) ...[
+                ...List.generate(
+                  5,
+                  (i) => Icon(
+                    i < moyenne.round() ? Icons.star : Icons.star_border,
+                    size: 18,
+                    color: Colors.amber,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${moyenne.toStringAsFixed(1)} ($count)',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_avis.isEmpty)
+            Text(
+              'Aucun avis pour le moment',
+              style: TextStyle(color: AppColors.textMuted),
+            )
+          else
+            ...(_avis.take(5)).map((a) {
+              final avis = a as Map<String, dynamic>;
+              final note = (avis['note'] as num?)?.toInt() ?? 0;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.ticketBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        ...List.generate(
+                          5,
+                          (i) => Icon(
+                            i < note ? Icons.star : Icons.star_border,
+                            size: 16,
+                            color: Colors.amber,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (avis['dateCreation'] != null)
+                          Text(
+                            avis['dateCreation'].toString().substring(0, 10),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (avis['commentaire'] != null &&
+                        (avis['commentaire'] as String).isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        avis['commentaire'],
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
     );
   }
 
@@ -666,8 +1026,8 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
     final hasPrice = event.prixMin != null || event.prixMax != null;
     final priceText = hasPrice
         ? (event.prixMin == event.prixMax
-            ? '${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)}'
-            : '${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)} - ${AppConstants.currency}${event.prixMax!.toStringAsFixed(0)}')
+              ? '${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)}'
+              : '${AppConstants.currency}${event.prixMin!.toStringAsFixed(0)} - ${AppConstants.currency}${event.prixMax!.toStringAsFixed(0)}')
         : AppLocalizations.of(context)!.clientHomeDetailPriceUnavailable;
 
     return Container(
@@ -689,10 +1049,20 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(AppLocalizations.of(context)!.clientHomeDetailFrom, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                Text(
+                  AppLocalizations.of(context)!.clientHomeDetailFrom,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                  ),
+                ),
                 Text(
                   priceText,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
@@ -702,14 +1072,28 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
                 height: 48,
                 child: ElevatedButton.icon(
                   onPressed: event.idEvenement != null
-                      ? () => Navigator.pushNamed(
-                          context,
-                          ClientRoutes.reservation,
-                          arguments: {'eventId': event.idEvenement},
-                        )
+                      ? () {
+                          final isStanding =
+                              event.typeAgencement == 'DEBOUT_AVEC_LIMITE' ||
+                              event.typeAgencement == 'DEBOUT_SANS_LIMITE';
+                          Navigator.pushNamed(
+                            context,
+                            isStanding
+                                ? ClientRoutes.reservationLibre
+                                : ClientRoutes.reservation,
+                            arguments: {'eventId': event.idEvenement},
+                          );
+                        }
                       : null,
                   icon: const Icon(Icons.confirmation_number, size: 20),
-                  label: Text(AppLocalizations.of(context)!.clientHomeDetailBook, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                  label: Text(
+                    AppLocalizations.of(context)!.clientHomeDetailBook,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

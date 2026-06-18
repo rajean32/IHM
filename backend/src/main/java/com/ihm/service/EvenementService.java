@@ -285,31 +285,34 @@ public class EvenementService {
             }
         }
 
-        List<Salle> salles = salleRepository.findByLieu_Code(lieu.getCode());
-        for (Salle salle : salles) {
-            List<Place> places = placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle());
-            for (Place place : places) {
-                if (!configRepository.existsByEvenement_IdEvenementAndPlace_NumeroPlace(saved.getIdEvenement(), place.getNumeroPlace())) {
-                    String rang = place.getRangePlace();
-                    if (rang == null || "?".equals(rang) || rang.isBlank()) {
-                        String np = place.getNumeroPlace();
-                        String[] parts = np.split("-");
-                        if (parts.length >= 2) {
-                            String seatCode = parts[parts.length - 1];
-                            rang = seatCode.replaceAll("\\d+$", "");
-                        } else {
-                            String derived = np.replaceAll("\\d.*$", "");
-                            if (!derived.isEmpty()) rang = derived;
+        if (saved.getTypeAgencement() != TypeAgencement.DEBOUT_AVEC_LIMITE
+                && saved.getTypeAgencement() != TypeAgencement.DEBOUT_SANS_LIMITE) {
+            List<Salle> salles = salleRepository.findByLieu_Code(lieu.getCode());
+            for (Salle salle : salles) {
+                List<Place> places = placeRepository.findBySalle_NumeroSalle(salle.getNumeroSalle());
+                for (Place place : places) {
+                    if (!configRepository.existsByEvenement_IdEvenementAndPlace_NumeroPlace(saved.getIdEvenement(), place.getNumeroPlace())) {
+                        String rang = place.getRangePlace();
+                        if (rang == null || "?".equals(rang) || rang.isBlank()) {
+                            String np = place.getNumeroPlace();
+                            String[] parts = np.split("-");
+                            if (parts.length >= 2) {
+                                String seatCode = parts[parts.length - 1];
+                                rang = seatCode.replaceAll("\\d+$", "");
+                            } else {
+                                String derived = np.replaceAll("\\d.*$", "");
+                                if (!derived.isEmpty()) rang = derived;
+                            }
                         }
+                        EvenementPlaceConfiguration config = new EvenementPlaceConfiguration();
+                        config.setEvenement(saved);
+                        config.setPlace(place);
+                        config.setRange(rang);
+                        config.setTypePlace("Standard");
+                        config.setPrix(BigDecimal.ZERO);
+                        config.setStatut("DISPONIBLE");
+                        configRepository.save(config);
                     }
-                    EvenementPlaceConfiguration config = new EvenementPlaceConfiguration();
-                    config.setEvenement(saved);
-                    config.setPlace(place);
-                    config.setRange(rang);
-                    config.setTypePlace("Standard");
-                    config.setPrix(BigDecimal.ZERO);
-                    config.setStatut("DISPONIBLE");
-                    configRepository.save(config);
                 }
             }
         }
@@ -705,6 +708,15 @@ public class EvenementService {
                 if (maxPrice == null || p.compareTo(maxPrice) > 0) maxPrice = p;
             }
         }
+        if (minPrice == null || maxPrice == null) {
+            List<ZoneStanding> standingZones = zoneStandingRepository.findByEvenement_IdEvenement(idEvent);
+            if (!standingZones.isEmpty()) {
+                BigDecimal zoneMin = standingZones.stream().map(ZoneStanding::getPrix).filter(java.util.Objects::nonNull).min(BigDecimal::compareTo).orElse(null);
+                BigDecimal zoneMax = standingZones.stream().map(ZoneStanding::getPrix).filter(java.util.Objects::nonNull).max(BigDecimal::compareTo).orElse(null);
+                if (minPrice == null) minPrice = zoneMin;
+                if (maxPrice == null) maxPrice = zoneMax;
+            }
+        }
         dto.setPrixMin(minPrice);
         dto.setPrixMax(maxPrice);
 
@@ -876,8 +888,17 @@ public class EvenementService {
             }
         }
         if (event.getIdEvenement() != null) {
-            dto.setPrixMin(configRepository.findMinPrixByEvenementId(event.getIdEvenement()));
-            dto.setPrixMax(configRepository.findMaxPrixByEvenementId(event.getIdEvenement()));
+            BigDecimal minP = configRepository.findMinPrixByEvenementId(event.getIdEvenement());
+            BigDecimal maxP = configRepository.findMaxPrixByEvenementId(event.getIdEvenement());
+            if (minP == null || maxP == null || minP.compareTo(BigDecimal.ZERO) <= 0 || maxP.compareTo(BigDecimal.ZERO) <= 0) {
+                List<ZoneStanding> zones = zoneStandingRepository.findByEvenement_IdEvenement(event.getIdEvenement());
+                if (!zones.isEmpty()) {
+                    minP = zones.stream().map(ZoneStanding::getPrix).filter(java.util.Objects::nonNull).min(BigDecimal::compareTo).orElse(null);
+                    maxP = zones.stream().map(ZoneStanding::getPrix).filter(java.util.Objects::nonNull).max(BigDecimal::compareTo).orElse(null);
+                }
+            }
+            dto.setPrixMin(minP);
+            dto.setPrixMax(maxP);
         }
         return dto;
     }

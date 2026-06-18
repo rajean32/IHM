@@ -26,6 +26,9 @@ public class TicketDTO {
     private Integer idZone;
     private String zoneNom;
     private String image;
+    private String dateReservation;
+    private String datePublication;
+    private String qrCodeBase64;
 
     public TicketDTO() {}
 
@@ -57,6 +60,12 @@ public class TicketDTO {
     public void setZoneNom(String zoneNom) { this.zoneNom = zoneNom; }
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
+    public String getDateReservation() { return dateReservation; }
+    public void setDateReservation(String dateReservation) { this.dateReservation = dateReservation; }
+    public String getDatePublication() { return datePublication; }
+    public void setDatePublication(String datePublication) { this.datePublication = datePublication; }
+    public String getQrCodeBase64() { return qrCodeBase64; }
+    public void setQrCodeBase64(String qrCodeBase64) { this.qrCodeBase64 = qrCodeBase64; }
 
     public Integer getIdZone() { return idZone; }
     public void setIdZone(Integer idZone) { this.idZone = idZone; }

@@ -184,8 +184,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextButton.icon(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => CaracteristiquesPage(categorie: cat)));
+              onPressed: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => CaracteristiquesPage(categorie: cat)));
+                _load();
               },
               icon: const Icon(Icons.list_alt, size: 16),
               label: const Text('Caract.', style: TextStyle(fontSize: 11)),

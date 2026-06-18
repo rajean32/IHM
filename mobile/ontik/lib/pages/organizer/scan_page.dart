@@ -189,48 +189,51 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          if (_lastResult != null || _errorMessage != null)
-            _buildResultBanner()
-          else
-            Expanded(
-              child: MobileScanner(
-                controller: _scannerCtrl,
-                onDetect: (capture) {
-                  final barcode = capture.barcodes.firstOrNull;
-                  if (barcode?.rawValue != null) {
-                    _scannerCtrl.stop();
-                    _handleBarcode(barcode!.rawValue!);
-                  }
-                },
-                overlayBuilder: (context, constraints) {
-                  return _buildScanOverlay(constraints);
-                },
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            if (_lastResult != null || _errorMessage != null)
+              _buildResultBanner()
+            else
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: MobileScanner(
+                  controller: _scannerCtrl,
+                  onDetect: (capture) {
+                    final barcode = capture.barcodes.firstOrNull;
+                    if (barcode?.rawValue != null) {
+                      _scannerCtrl.stop();
+                      _handleBarcode(barcode!.rawValue!);
+                    }
+                  },
+                  overlayBuilder: (context, constraints) {
+                    return _buildScanOverlay(constraints);
+                  },
+                ),
               ),
-            ),
-          if (_lastResult != null || _errorMessage != null)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _resetScanner,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(AppLocalizations.of(context)!.scanNext),
-                  ),
-                  if (widget.eventId != null) ...[
-                    const SizedBox(height: 8),
-                    TextButton.icon(
-                      onPressed: () => _scanEventQr(widget.eventId!),
-                      icon: const Icon(Icons.download, size: 18),
-                      label: const Text('Mettre à jour le cache hors-ligne'),
+            if (_lastResult != null || _errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _resetScanner,
+                      icon: const Icon(Icons.refresh),
+                      label: Text(AppLocalizations.of(context)!.scanNext),
                     ),
+                    if (widget.eventId != null) ...[
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () => _scanEventQr(widget.eventId!),
+                        icon: const Icon(Icons.download, size: 18),
+                        label: const Text('Mettre à jour le cache hors-ligne'),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

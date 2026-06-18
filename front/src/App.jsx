@@ -16,6 +16,7 @@ import OrganizerVenueManagement from './pages/organizer/OrganizerVenueManagement
 import ClientLayout from './pages/client/ClientLayout'
 import ClientHome from './pages/client/ClientHome'
 import BookingFlow from './pages/client/BookingFlow'
+import StandingBooking from './pages/client/StandingBooking'
 import MyReservations from './pages/client/MyReservations'
 import SettingsPage from './pages/Settings/SettingsPage'
 
@@ -78,6 +79,7 @@ export default function App() {
         <Route path="/client" element={<RequireAuth roles={['CLIENT']}><ClientLayout /></RequireAuth>}>
           <Route index element={<ClientHome />} />
           <Route path="book/:eventId" element={<BookingFlow />} />
+          <Route path="book-standing/:eventId" element={<StandingBooking />} />
           <Route path="my-reservations" element={<MyReservations />} />
         </Route>
 

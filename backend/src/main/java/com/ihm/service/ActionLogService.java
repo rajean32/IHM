@@ -11,6 +11,7 @@ import com.ihm.repository.UtilisateurRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class ActionLogService {
     }
 
     // enregistrement d'une action
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(String codeUtilisateur, String action, String entityType, String entityId, String details) {
         ActionLog al = new ActionLog(codeUtilisateur, action, entityType, entityId, details);
         actionLogRepository.save(al);
@@ -43,6 +45,7 @@ public class ActionLogService {
     }
 
     // Feature 14: enregistrement d'une tentative frauduleuse (reverted = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logFraud(String codeUtilisateur, String action, String entityType, String entityId, String details) {
         ActionLog al = new ActionLog(codeUtilisateur, action, entityType, entityId, details);
         al.setReverted(true);

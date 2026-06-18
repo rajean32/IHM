@@ -252,7 +252,8 @@
   "client.home.noEvents": "Aucun événement trouvé.",
   "client.home.loading": "Chargement...",
 
-  "client.booking.loading": "Chargement de la réservation...",
+  "client.booking.scene": "SCÈNE",
+    "client.booking.loading": "Chargement de la réservation...",
   "client.booking.eventNotFound": "Événement introuvable.",
   "client.booking.stepSelect": "Sélection des places",
   "client.booking.stepConfirm": "Confirmation",
@@ -311,6 +312,7 @@
   "client.reservations.amount": "Montant",
   "client.reservations.loading": "Chargement de vos réservations...",
   "client.reservations.myTickets": "Mes Tickets",
+  "client.reservations.zone": "Zone",
 
   "settings.title": "Paramètres",
   "settings.preferences": "Préférences",

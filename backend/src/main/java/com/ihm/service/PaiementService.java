@@ -38,6 +38,8 @@ public class PaiementService {
     private final EvenementRepository evenementRepository;
     private final ActionLogService actionLogService;
     private final NotificationService notificationService;
+    private final StandingZoneService standingZoneService;
+    private final ZoneStandingRepository zoneStandingRepository;
 
     public PaiementService(PaiementRepository paiementRepository,
                            ReservationRepository reservationRepository,
@@ -51,7 +53,9 @@ public class PaiementService {
                            PlaceRepository placeRepository,
                            EvenementRepository evenementRepository,
                            ActionLogService actionLogService,
-                           NotificationService notificationService) {
+                           NotificationService notificationService,
+                           StandingZoneService standingZoneService,
+                           ZoneStandingRepository zoneStandingRepository) {
         this.paiementRepository = paiementRepository;
         this.reservationRepository = reservationRepository;
         this.reductionService = reductionService;
@@ -65,6 +69,8 @@ public class PaiementService {
         this.evenementRepository = evenementRepository;
         this.actionLogService = actionLogService;
         this.notificationService = notificationService;
+        this.standingZoneService = standingZoneService;
+        this.zoneStandingRepository = zoneStandingRepository;
     }
 
     public List<PaiementDTO> getAll() {
@@ -216,37 +222,52 @@ public class PaiementService {
 
         List<Ticket> tickets = new ArrayList<>();
         for (PaiementRequestDTO.TicketItem item : request.getTickets()) {
-            EvenementPlaceConfiguration config = configRepository
-                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(item.getIdEvenement(), item.getNumeroPlace())
-                    .orElse(null);
-            
-            if (config != null && !"DISPONIBLE".equals(config.getStatut())) {
-                throw new BadRequestException("La place " + item.getNumeroPlace() + " n'est plus disponible");
-            }
-
             Ticket ticket = new Ticket();
             ticket.setCodeTicket(item.getCodeTicket());
             ticket.setPrix(item.getPrix());
+
+            if (item.getIdEvenement() != null) {
+                Evenement event = evenementRepository.findByIdEvenement(item.getIdEvenement())
+                        .orElse(null);
+                ticket.setEvenement(event);
+            }
+
+            if (item.getIdZone() != null) {
+                ZoneStanding zone = zoneStandingRepository.findById(item.getIdZone())
+                        .orElseThrow(() -> new ResourceNotFoundException("ZoneStanding", "idZone", item.getIdZone()));
+                standingZoneService.incrementReservation(item.getIdZone());
+                ticket.setZoneStanding(zone);
+            }
+
             Ticket saved = ticketRepository.save(ticket);
             tickets.add(saved);
 
-            ConcernerId concernerId = new ConcernerId(item.getIdEvenement(), item.getCodeTicket(), item.getNumeroPlace());
-            Concerner concerner = new Concerner();
-            concerner.setId(concernerId);
-            
-            Evenement event = evenementRepository.findByIdEvenement(item.getIdEvenement())
-                    .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", item.getIdEvenement()));
-            concerner.setEvenement(event);
-            concerner.setTicket(saved);
-            
-            Place place = placeRepository.findByNumeroPlace(item.getNumeroPlace())
-                    .orElseThrow(() -> new ResourceNotFoundException("Place", "numeroPlace", item.getNumeroPlace()));
-            concerner.setPlace(place);
-            concernerRepository.save(concerner);
+            if (item.getIdEvenement() != null && item.getNumeroPlace() != null) {
+                EvenementPlaceConfiguration config = configRepository
+                        .findByEvenement_IdEvenementAndPlace_NumeroPlace(item.getIdEvenement(), item.getNumeroPlace())
+                        .orElse(null);
 
-            if (config != null) {
-                config.setStatut("RESERVEE");
-                configRepository.save(config);
+                if (config != null && !"DISPONIBLE".equals(config.getStatut())) {
+                    throw new BadRequestException("La place " + item.getNumeroPlace() + " n'est plus disponible");
+                }
+
+                Evenement event = evenementRepository.findByIdEvenement(item.getIdEvenement())
+                        .orElseThrow(() -> new ResourceNotFoundException("Evenement", "idEvenement", item.getIdEvenement()));
+                Place place = placeRepository.findByNumeroPlace(item.getNumeroPlace())
+                        .orElseThrow(() -> new ResourceNotFoundException("Place", "numeroPlace", item.getNumeroPlace()));
+
+                ConcernerId concernerId = new ConcernerId(item.getIdEvenement(), item.getCodeTicket(), item.getNumeroPlace());
+                Concerner concerner = new Concerner();
+                concerner.setId(concernerId);
+                concerner.setEvenement(event);
+                concerner.setTicket(saved);
+                concerner.setPlace(place);
+                concernerRepository.save(concerner);
+
+                if (config != null) {
+                    config.setStatut("RESERVEE");
+                    configRepository.save(config);
+                }
             }
         }
 

@@ -39,7 +39,7 @@ class _MixedSeatingTicketPageState extends State<MixedSeatingTicketPage> {
       final qr = await svc.getTicketQRCode(widget.ticketCode);
       final val = await svc.validateTicket(widget.ticketCode);
       if (!mounted) return;
-      final hasSeat = detail['numeroPlace'] != null || qr['placeNumero'] != null;
+      final hasSeat = detail['typePlace'] != 'DEBOUT' && (detail['rang'] != null || qr['rang'] != null);
       setState(() {
         _data = {
           'codeTicket': detail['codeTicket'],

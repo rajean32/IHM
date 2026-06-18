@@ -379,48 +379,51 @@ class _EventPageState extends State<EventPage> {
                                             ),
                                           ]),
                                           const Divider(height: 12),
-                                          Row(children: [
+                                          SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: Row(children: [
                                         if (widget.onViewReservations != null && event.idEvenement != null)
-                                          Expanded(
-                                            child: SizedBox(
-                                              height: 30,
-                                              child: OutlinedButton.icon(
-                                                onPressed: () => widget.onViewReservations!(event.idEvenement!),
-                                                icon: const Icon(Icons.receipt_long, size: 14),
-                                                label: Text(AppLocalizations.of(context)!.reservations, style: TextStyle(fontSize: 10)),
-                                                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
-                                              ),
+                                          OutlinedButton.icon(
+                                            onPressed: () => widget.onViewReservations!(event.idEvenement!),
+                                            icon: const Icon(Icons.receipt_long, size: 12),
+                                            label: Text(AppLocalizations.of(context)!.reservations, style: TextStyle(fontSize: 9)),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                                              minimumSize: const Size(0, 26),
+                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              visualDensity: VisualDensity.compact,
                                             ),
                                           ),
                                         if (widget.onViewReservations != null && event.idEvenement != null)
-                                          const SizedBox(width: 6),
-                                        Expanded(
-                                          child: SizedBox(
-                                            height: 30,
-                                            child: OutlinedButton.icon(
-                                              onPressed: () => _showEventInfo(event),
-                                              icon: const Icon(Icons.info_outline, size: 14),
-                                              label: Text(AppLocalizations.of(context)!.info, style: TextStyle(fontSize: 10)),
-                                              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
+                                          const SizedBox(width: 4),
+                                          OutlinedButton.icon(
+                                            onPressed: () => _showEventInfo(event),
+                                            icon: const Icon(Icons.info_outline, size: 12),
+                                            label: Text(AppLocalizations.of(context)!.info, style: TextStyle(fontSize: 9)),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                                              minimumSize: const Size(0, 26),
+                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              visualDensity: VisualDensity.compact,
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: SizedBox(
-                                            height: 30,
-                                            child: OutlinedButton.icon(
-                                              onPressed: () async {
-                                                await Navigator.push(context, MaterialPageRoute(builder: (_) => CreateEventPage(event: event)));
-                                                _loadData(showLoader: false);
-                                              },
-                                              icon: const Icon(Icons.edit, size: 14),
-                                              label: Text(AppLocalizations.of(context)!.commonEdit, style: TextStyle(fontSize: 10)),
-                                              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
+                                        const SizedBox(width: 4),
+                                          OutlinedButton.icon(
+                                            onPressed: () async {
+                                              await Navigator.push(context, MaterialPageRoute(builder: (_) => CreateEventPage(event: event)));
+                                              _loadData(showLoader: false);
+                                            },
+                                            icon: const Icon(Icons.edit, size: 12),
+                                            label: Text(AppLocalizations.of(context)!.commonEdit, style: TextStyle(fontSize: 9)),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                                              minimumSize: const Size(0, 26),
+                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              visualDensity: VisualDensity.compact,
                                             ),
                                           ),
-                                        ),
                                       ]),
+                                          ),
                                     ],
                                   ),
                                 ),
@@ -431,13 +434,15 @@ class _EventPageState extends State<EventPage> {
                           ),
                   ),
                 ]),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateEventPage()));
-          _loadData(showLoader: false);
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _events.isNotEmpty
+          ? FloatingActionButton(
+              onPressed: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateEventPage()));
+                _loadData(showLoader: false);
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

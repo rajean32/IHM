@@ -252,7 +252,8 @@
   "client.home.noEvents": "No events found.",
   "client.home.loading": "Loading...",
 
-  "client.booking.loading": "Loading booking...",
+  "client.booking.scene": "STAGE",
+    "client.booking.loading": "Loading booking...",
   "client.booking.eventNotFound": "Event not found.",
   "client.booking.stepSelect": "Select seats",
   "client.booking.stepConfirm": "Confirmation",
@@ -311,6 +312,7 @@
   "client.reservations.amount": "Amount",
   "client.reservations.loading": "Loading your reservations...",
   "client.reservations.myTickets": "My Tickets",
+  "client.reservations.zone": "Zone",
 
   "settings.title": "Settings",
   "settings.preferences": "Preferences",

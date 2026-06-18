@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../generated/app_localizations.dart';
-import 'package:ontik/core/assets/app_colors.dart';
 import 'package:ontik/core/routes/shared_routes.dart';
 import 'package:ontik/widgets/notification_bell.dart';
 import 'dashboard/dashboard_page.dart';
@@ -25,6 +24,7 @@ class AdminLayout extends StatefulWidget {
 class _AdminLayoutState extends State<AdminLayout> {
   int _selectedIndex = 0;
   String? _placesSalleFilter;
+  final Map<int, int> _tabRefreshCounters = {};
 
   void _navigateToPlaces(String? salleFilter) {
     setState(() { _placesSalleFilter = salleFilter; _selectedIndex = 6; });
@@ -36,7 +36,10 @@ class _AdminLayoutState extends State<AdminLayout> {
       return;
     }
     if (_selectedIndex == 6) setState(() => _placesSalleFilter = null);
-    setState(() => _selectedIndex = index);
+    setState(() {
+      _selectedIndex = index;
+      _tabRefreshCounters[index] = (_tabRefreshCounters[index] ?? 0) + 1;
+    });
   }
 
   void _showMoreSheet() {
@@ -46,29 +49,31 @@ class _AdminLayoutState extends State<AdminLayout> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textSecondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 6),
+              Container(
+                width: 32, height: 3,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(AppLocalizations.of(context)!.adminMoreOptions, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const Divider(height: 24),
-            _sheetOption(ctx, Icons.location_city, AppLocalizations.of(context)!.adminVenues, () { Navigator.pop(ctx); setState(() => _selectedIndex = 5); }),
-            _sheetOption(ctx, Icons.event_seat, AppLocalizations.of(context)!.adminPlaces, () { Navigator.pop(ctx); setState(() { _placesSalleFilter = null; _selectedIndex = 6; }); }),
-            _sheetOption(ctx, Icons.confirmation_number, AppLocalizations.of(context)!.adminTickets, () { Navigator.pop(ctx); setState(() => _selectedIndex = 7); }),
-            _sheetOption(ctx, Icons.book_online, AppLocalizations.of(context)!.adminReservations, () { Navigator.pop(ctx); setState(() => _selectedIndex = 8); }),
-            _sheetOption(ctx, Icons.payment, AppLocalizations.of(context)!.adminPayments, () { Navigator.pop(ctx); setState(() => _selectedIndex = 9); }),
-            _sheetOption(ctx, Icons.person, AppLocalizations.of(context)!.adminAccount, () { Navigator.pop(ctx); setState(() => _selectedIndex = 10); }),
-            _sheetOption(ctx, Icons.history, AppLocalizations.of(context)!.adminActionHistory, () { Navigator.pop(ctx); setState(() => _selectedIndex = 11); }),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 12),
+              Text(AppLocalizations.of(context)!.adminMoreOptions, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+              const Divider(height: 8),
+              _sheetOption(ctx, Icons.location_city, AppLocalizations.of(context)!.adminVenues, () { Navigator.pop(ctx); setState(() => _selectedIndex = 5); }),
+              _sheetOption(ctx, Icons.event_seat, AppLocalizations.of(context)!.adminPlaces, () { Navigator.pop(ctx); setState(() { _placesSalleFilter = null; _selectedIndex = 6; }); }),
+              _sheetOption(ctx, Icons.confirmation_number, AppLocalizations.of(context)!.adminTickets, () { Navigator.pop(ctx); setState(() => _selectedIndex = 7); }),
+              _sheetOption(ctx, Icons.book_online, AppLocalizations.of(context)!.adminReservations, () { Navigator.pop(ctx); setState(() => _selectedIndex = 8); }),
+              _sheetOption(ctx, Icons.payment, AppLocalizations.of(context)!.adminPayments, () { Navigator.pop(ctx); setState(() => _selectedIndex = 9); }),
+              _sheetOption(ctx, Icons.person, AppLocalizations.of(context)!.adminAccount, () { Navigator.pop(ctx); setState(() => _selectedIndex = 10); }),
+              _sheetOption(ctx, Icons.history, AppLocalizations.of(context)!.adminActionHistory, () { Navigator.pop(ctx); setState(() => _selectedIndex = 11); }),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
@@ -76,9 +81,9 @@ class _AdminLayoutState extends State<AdminLayout> {
 
   Widget _sheetOption(BuildContext ctx, IconData icon, String label, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.primary),
-      title: Text(label),
-      trailing: const Icon(Icons.chevron_right, size: 20),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+      title: Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+      trailing: Icon(Icons.chevron_right, size: 20, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
       onTap: onTap,
     );
   }
@@ -87,11 +92,11 @@ class _AdminLayoutState extends State<AdminLayout> {
     if (_selectedIndex <= 3) {
       return IndexedStack(
         index: _selectedIndex,
-        children: const [
-          DashboardPage(),
-          UsersPage(),
-          EventsPage(),
-          CategoriesPage(),
+        children: [
+          DashboardPage(key: ValueKey('dash_${_tabRefreshCounters[0] ?? 0}')),
+          UsersPage(key: ValueKey('users_${_tabRefreshCounters[1] ?? 0}')),
+          EventsPage(key: ValueKey('events_${_tabRefreshCounters[2] ?? 0}')),
+          CategoriesPage(key: ValueKey('cats_${_tabRefreshCounters[3] ?? 0}')),
         ],
       );
     }

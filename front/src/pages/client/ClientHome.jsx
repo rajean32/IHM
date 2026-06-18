@@ -125,7 +125,10 @@ export default function ClientHome() {
           <div
             key={event.idEvenement}
             className="event-card"
-            onClick={() => navigate(`/client/book/${event.idEvenement}`)}
+            onClick={() => {
+              const isStanding = event.typeAgencement === 'DEBOUT_AVEC_LIMITE' || event.typeAgencement === 'DEBOUT_SANS_LIMITE'
+              navigate(isStanding ? `/client/book-standing/${event.idEvenement}` : `/client/book/${event.idEvenement}`)
+            }}
           >
             {event.image && (
               <img src={event.image} alt={event.titre} />

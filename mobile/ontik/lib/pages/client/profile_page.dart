@@ -93,7 +93,7 @@ class _ProfilePageState extends State<ProfilePage>
                     child: Container(
                       width: 40, height: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.divider,
+                        color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -104,10 +104,10 @@ class _ProfilePageState extends State<ProfilePage>
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.receipt_long, color: AppColors.primary, size: 24),
+                        child: Icon(Icons.receipt_long, color: Theme.of(ctx).colorScheme.primary, size: 24),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -115,13 +115,13 @@ class _ProfilePageState extends State<ProfilePage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                              '${AppLocalizations.of(ctx)!.clientProfileReservation} #${r.idReservation}',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Theme.of(ctx).colorScheme.onSurface),
                             ),
                             if (r.dateReservation != null)
                               Text(
                                 DateFormat('d MMMM yyyy \'à\' HH:mm', appLanguage).format(r.dateReservation!),
-                                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                style: TextStyle(fontSize: 13, color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.6)),
                               ),
                           ],
                         ),
@@ -129,25 +129,25 @@ class _ProfilePageState extends State<ProfilePage>
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Divider(),
+                  Divider(color: Theme.of(ctx).colorScheme.outline.withValues(alpha: 0.3)),
                   const SizedBox(height: 12),
-                  Text(AppLocalizations.of(context)!.clientProfileTicketsTab, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                  Text(AppLocalizations.of(ctx)!.clientProfileTicketsTab, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(ctx).colorScheme.onSurface)),
                   const SizedBox(height: 8),
                   if (r.tickets != null && r.tickets!.isNotEmpty)
                     ...r.tickets!.map((t) => _buildTicketDetailTile(t))
                   else
-                    Text(AppLocalizations.of(context)!.clientProfileNoTickets, style: const TextStyle(color: AppColors.textMuted)),
+                    Text(AppLocalizations.of(ctx)!.clientProfileNoTickets, style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.5))),
                   const SizedBox(height: 16),
                   if (r.codeTickets != null && r.codeTickets!.isNotEmpty) ...[
-                    Text(AppLocalizations.of(context)!.clientProfileReferenceCodes, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                    Text(AppLocalizations.of(ctx)!.clientProfileReferenceCodes, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(ctx).colorScheme.onSurface)),
                     const SizedBox(height: 8),
                     ...r.codeTickets!.map((c) => Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Row(
                         children: [
-                          const Icon(Icons.qr_code, size: 16, color: AppColors.textMuted),
+                          Icon(Icons.qr_code, size: 16, color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.5)),
                           const SizedBox(width: 8),
-                          Text(c, style: const TextStyle(fontSize: 13, fontFamily: 'monospace', color: AppColors.textPrimary)),
+                          Text(c, style: TextStyle(fontSize: 13, fontFamily: 'monospace', color: Theme.of(ctx).colorScheme.onSurface)),
                         ],
                       ),
                     )),
@@ -166,9 +166,9 @@ class _ProfilePageState extends State<ProfilePage>
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
+        border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -185,18 +185,18 @@ class _ProfilePageState extends State<ProfilePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_nn(t.evenementTitre, 'Ticket'), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                Text(_nn(t.evenementTitre, 'Ticket'), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 2),
                 Row(
                   children: [
                     if (_nn(t.numeroPlace) != null)
-                      Text('${AppLocalizations.of(context)!.clientProfileSeat} ${_nn(t.numeroPlace)}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      Text('${AppLocalizations.of(context)!.clientProfileSeat} ${_nn(t.numeroPlace)}', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                     if (_nn(t.rang) != null)
-                      Text(' (${AppLocalizations.of(context)!.clientProfileRow} ${_nn(t.rang)})', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      Text(' (${AppLocalizations.of(context)!.clientProfileRow} ${_nn(t.rang)})', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                   ],
                 ),
                 if (t.prix != null)
-                  Text('Ar ${t.prix!.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondary)),
+                  Text('Ar ${t.prix!.toStringAsFixed(2)}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary)),
               ],
             ),
           ),
@@ -266,12 +266,12 @@ class _ProfilePageState extends State<ProfilePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.textMuted),
+            Icon(Icons.receipt_long_outlined, size: 64, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
             const SizedBox(height: 16),
-            Text(AppLocalizations.of(context)!.clientProfileNoReservations, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            Text(AppLocalizations.of(context)!.clientProfileNoReservations, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8))),
             const SizedBox(height: 4),
             Text(AppLocalizations.of(context)!.clientProfileReservationsWillAppear,
-                style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+                style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
           ],
         ),
       );
@@ -303,12 +303,12 @@ class _ProfilePageState extends State<ProfilePage>
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.ticketBorder),
+              border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -323,7 +323,7 @@ class _ProfilePageState extends State<ProfilePage>
                       : null,
                   height: 130,
                 ),
-                if (_nn(firstTicket?.evenementTitre) != null)
+                if (hasTickets && firstTicket?.evenementTitre != null)
                   Container(
                     height: 130,
                     decoration: BoxDecoration(
@@ -355,7 +355,7 @@ class _ProfilePageState extends State<ProfilePage>
                   Container(
                     height: 130,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(11),
                         topRight: Radius.circular(11),
@@ -365,11 +365,11 @@ class _ProfilePageState extends State<ProfilePage>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.receipt_long, size: 40, color: AppColors.textMuted.withValues(alpha: 0.3)),
+                          Icon(Icons.receipt_long, size: 40, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
                           const SizedBox(height: 6),
                           Text(
                             '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}',
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                           ),
                         ],
                       ),
@@ -385,7 +385,7 @@ class _ProfilePageState extends State<ProfilePage>
                           Expanded(
                             child: Text(
                               hasTickets ? _nn(firstTicket!.evenementTitre, '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}') : '${AppLocalizations.of(context)!.clientProfileReservation} #${r.idReservation}',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -398,24 +398,24 @@ class _ProfilePageState extends State<ProfilePage>
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
+                          Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                           const SizedBox(width: 6),
                           Text(
                             r.dateReservation != null
                                 ? DateFormat('d MMM yyyy', appLanguage).format(r.dateReservation!)
                                 : AppLocalizations.of(context)!.clientProfileUnknownDate,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                           ),
                         ],
                       ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.confirmation_number, size: 14, color: AppColors.textSecondary),
+                          Icon(Icons.confirmation_number, size: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                           const SizedBox(width: 6),
                           Text(
                             '${r.tickets?.length ?? 0} ${AppLocalizations.of(context)!.clientProfileTicketsCount}',
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                           ),
                         ],
                       ),
@@ -427,7 +427,7 @@ class _ProfilePageState extends State<ProfilePage>
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.ticketQrBg,
+                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
                     borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(11),
                       bottomRight: Radius.circular(11),
@@ -438,10 +438,10 @@ class _ProfilePageState extends State<ProfilePage>
                       Container(
                         width: 36, height: 36,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.receipt_long, size: 22, color: AppColors.textMuted),
+                        child: Icon(Icons.receipt_long, size: 22, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -449,19 +449,19 @@ class _ProfilePageState extends State<ProfilePage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(AppLocalizations.of(context)!.clientProfileReservationReference,
-                                style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
                             Text(
                               '#${r.idReservation}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13, fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontFamily: 'monospace',
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+                      Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4), size: 20),
                     ],
                   ),
                 ),
@@ -502,12 +502,12 @@ class _ProfilePageState extends State<ProfilePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.confirmation_number_outlined, size: 64, color: AppColors.textMuted),
+            Icon(Icons.confirmation_number_outlined, size: 64, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
             const SizedBox(height: 16),
-            Text(AppLocalizations.of(context)!.clientProfileNoTickets, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+            Text(AppLocalizations.of(context)!.clientProfileNoTickets, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8))),
             const SizedBox(height: 4),
             Text(AppLocalizations.of(context)!.clientProfileTicketsWillAppear,
-                style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+                style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
           ],
         ),
       );
@@ -574,12 +574,12 @@ class _ProfilePageState extends State<ProfilePage>
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.ticketBorder),
+              border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -616,7 +616,7 @@ class _ProfilePageState extends State<ProfilePage>
                           Expanded(
                             child: Text(
                               _nn(t.evenementTitre, AppLocalizations.of(context)!.clientProfileEvent),
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -629,11 +629,11 @@ class _ProfilePageState extends State<ProfilePage>
                         const SizedBox(height: 10),
                         Row(
                           children: [
-                            const Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
+                            Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                             const SizedBox(width: 6),
                             Text(
                               _formatDate(t.dateEvenement, t.heureEvenement),
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                             ),
                           ],
                         ),
@@ -642,17 +642,17 @@ class _ProfilePageState extends State<ProfilePage>
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: _nn(t.zoneNom) != null
-                            ? _placementItem(Icons.accessibility_new, 'Zone', _nn(t.zoneNom)!)
+                        child: t.zoneNom != null
+                            ? Row(children: [_placementItem(Icons.accessibility_new, 'Zone', t.zoneNom!)])
                             : Row(
                                 children: [
                                   _placementItem(Icons.meeting_room, AppLocalizations.of(context)!.clientProfileRoom, _nn(t.salleNom)),
-                                  Container(height: 24, width: 1, color: AppColors.divider),
+                                  Container(height: 24, width: 1, color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
                                   _placementItem(Icons.view_column, AppLocalizations.of(context)!.clientProfileRow, _nn(t.rang)),
-                                  Container(height: 24, width: 1, color: AppColors.divider),
+                                  Container(height: 24, width: 1, color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
                                   _placementItem(Icons.event_seat, AppLocalizations.of(context)!.clientProfileSeat, _nn(t.numeroPlace)),
                                 ],
                               ),
@@ -665,7 +665,7 @@ class _ProfilePageState extends State<ProfilePage>
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.ticketQrBg,
+                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
                     borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(11),
                       bottomRight: Radius.circular(11),
@@ -676,7 +676,7 @@ class _ProfilePageState extends State<ProfilePage>
                       Container(
                         width: 40, height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(Icons.qr_code, size: 28, color: _badgeColor(t.typePlace)),
@@ -685,44 +685,22 @@ class _ProfilePageState extends State<ProfilePage>
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(AppLocalizations.of(context)!.clientProfileReference, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                          Text(AppLocalizations.of(context)!.clientProfileReference, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
                           const SizedBox(height: 2),
                           Text(
                             t.codeTicket,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary, fontFamily: 'monospace'),
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface, fontFamily: 'monospace'),
                           ),
                         ],
                       ),
                       const Spacer(),
-                      const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+                      Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4), size: 20),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          if (!isActive)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.65),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      AppLocalizations.of(context)!.clientProfileExpired,
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14, letterSpacing: 1.5),
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -732,11 +710,11 @@ class _ProfilePageState extends State<ProfilePage>
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, size: 16, color: AppColors.textMuted),
+          Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+          Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
           const SizedBox(height: 1),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
         ],
       ),
     );

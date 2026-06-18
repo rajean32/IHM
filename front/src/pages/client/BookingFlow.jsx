@@ -50,6 +50,13 @@ export default function BookingFlow() {
         const detail = detailResp?.data || detailResp
         setEvent(detail)
 
+        const agencement = detail?.typeAgencement || ''
+        const isStandingOnly = agencement === 'DEBOUT_AVEC_LIMITE' || agencement === 'DEBOUT_SANS_LIMITE'
+        if (isStandingOnly) {
+          navigate(`/client/book-standing/${eventId}`, { replace: true })
+          return
+        }
+
         const seatsList = Array.isArray(availableResp) ? availableResp
           : availableResp?.data || availableResp?.places || []
         setSeats(seatsList.map(s => ({
@@ -67,11 +74,12 @@ export default function BookingFlow() {
       }
     }
     load()
-  }, [eventId])
+  }, [eventId, navigate])
 
-  const agencement = event?.typeAgencement
+  const agencement = event?.typeAgencement || ''
   const isStandingOnly = agencement === 'DEBOUT_AVEC_LIMITE' || agencement === 'DEBOUT_SANS_LIMITE'
   const isMixed = agencement === 'ASSIS_DEBOUT'
+  const hasStandingZones = standingZones.length > 0
 
   function toggleSeat(seat) {
     if (seat.statut !== 'DISPONIBLE' && !selectedSeats.find(s => s.numeroPlace === seat.numeroPlace)) return
@@ -300,25 +308,28 @@ export default function BookingFlow() {
                 {rows.length === 0 ? (
                   <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('client.booking.noSeats')}</p>
                 ) : (
-                  rows.map(([row, rowSeats]) => (
-                    <div key={row} className="seat-row">
-                      <span className="seat-row-label">{row}</span>
-                      <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
-                        {rowSeats.map(seat => (
-                          <div key={seat.numeroPlace}
-                            className="seat-tile"
-                            style={{
-                              ...getSeatStyle(seat),
-                              borderLeft: `3px solid ${getTypeIndicator(seat.typePlace)}`,
-                            }}
-                            onClick={() => toggleSeat(seat)}
-                            title={`${seat.numeroPlace} · ${seat.typePlace} · ${seat.prix ? seat.prix.toFixed(2) + ' €' : ''} · ${seat.statut}`}>
-                            {seat.numeroPlace}
-                          </div>
-                        ))}
+                  <div className="seat-map-inner">
+                    <div className="stage-indicator">{t('client.booking.scene') || 'SCÈNE'}</div>
+                    {rows.map(([row, rowSeats]) => (
+                      <div key={row} className="seat-row">
+                        <span className="seat-row-label">{row}</span>
+                        <div className="seat-row-seats">
+                          {rowSeats.map(seat => (
+                            <div key={seat.numeroPlace}
+                              className="seat-tile"
+                              style={{
+                                ...getSeatStyle(seat),
+                                borderLeft: `3px solid ${getTypeIndicator(seat.typePlace)}`,
+                              }}
+                              onClick={() => toggleSeat(seat)}
+                              title={`${seat.numeroPlace} · ${seat.typePlace} · ${seat.prix ? seat.prix.toFixed(2) + ' €' : ''} · ${seat.statut}`}>
+                              {seat.numeroPlace}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </div>
 
@@ -339,9 +350,9 @@ export default function BookingFlow() {
             </>
           )}
 
-          {standingZones.length > 0 && (
-            <div className="standing-zones" style={{ marginTop: isStandingOnly ? 0 : '1.5rem' }}>
-              {!isStandingOnly && <h4 style={{ marginBottom: '0.75rem', color: 'var(--text)' }}>{t('client.booking.standingZones')}</h4>}
+          {hasStandingZones && !isStandingOnly && (
+            <div className="standing-zones" style={{ marginTop: '1.5rem' }}>
+              <h4 style={{ marginBottom: '0.75rem', color: 'var(--text)' }}>{t('client.booking.standingZones')}</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {standingZones.map(zone => {
                   const qty = selectedZones[zone.idZone] || 0

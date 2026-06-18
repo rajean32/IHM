@@ -224,24 +224,24 @@ class _DashboardPageState extends State<DashboardPage> {
         elevation: 0,
         color: Colors.transparent,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
           child: Column(
             children: [
-              Icon(icon, size: 24, color: color),
-              const SizedBox(height: 8),
+              Icon(icon, size: 22, color: color),
+              const SizedBox(height: 4),
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : color,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 1),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   color: isDark ? Colors.white70 : AppTheme.textSecondary,
                 ),
               ),

@@ -6,6 +6,7 @@ import '../../pages/auth/forgot_password_page.dart';
 import '../../pages/client/home_page.dart';
 import '../../pages/client/home_detail_page.dart';
 import '../../pages/client/reservation_page.dart';
+import '../../pages/client/reservation_libre_page.dart';
 import '../../pages/client/payment_page.dart';
 import '../../pages/client/ticket_page.dart';
 import '../../pages/client/profile_page.dart';
@@ -58,6 +59,9 @@ class AppRouter {
       case ClientRoutes.reservation:
         final a = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(builder: (_) => ReservationPage(eventId: a['eventId'] as int));
+      case ClientRoutes.reservationLibre:
+        final a = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(builder: (_) => ReservationLibrePage(eventId: a['eventId'] as int));
       case ClientRoutes.payment:
         final a = settings.arguments as Map<String, dynamic>;
         return MaterialPageRoute(builder: (_) => PaymentPage(
@@ -121,6 +125,7 @@ class AppRouter {
       ClientRoutes.home,
       ClientRoutes.homeDetail,
       ClientRoutes.reservation,
+      ClientRoutes.reservationLibre,
       ClientRoutes.payment,
       ClientRoutes.ticket,
       ClientRoutes.ticketList,

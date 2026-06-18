@@ -119,9 +119,9 @@ class _DashboardPageState extends State<DashboardPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Analytiques',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
         ),
         const SizedBox(height: 16),
         Row(
@@ -152,7 +152,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }).toList();
 
     if (sections.isEmpty) {
-      return Card(child: SizedBox(height: 180, child: Center(child: Text('Aucune donnée', style: TextStyle(color: AppColors.textMuted)))));
+      return Card(child: SizedBox(height: 180, child: Center(child: Text('Aucune donnée', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))))));
     }
 
     return Card(
@@ -160,7 +160,7 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            const Text('Par statut', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            Text('Par statut', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 8),
             SizedBox(height: 150, child: PieChart(PieChartData(sections: sections, centerSpaceRadius: 20))),
           ],
@@ -172,13 +172,13 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildBarChart() {
     final data = _stats!.eventsByCategorie;
     if (data.isEmpty) {
-      return Card(child: SizedBox(height: 180, child: Center(child: Text('Aucune donnée', style: TextStyle(color: AppColors.textMuted)))));
+      return Card(child: SizedBox(height: 180, child: Center(child: Text('Aucune donnée', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))))));
     }
 
     final groups = data.entries.map((e) {
       return BarChartGroupData(
         x: data.keys.toList().indexOf(e.key),
-        barRods: [BarChartRodData(toY: e.value.toDouble(), color: AppColors.primary, width: 16)],
+        barRods: [BarChartRodData(toY: e.value.toDouble(), color: Theme.of(context).colorScheme.primary, width: 16)],
       );
     }).toList();
 
@@ -187,7 +187,7 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            const Text('Par catégorie', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            Text('Par catégorie', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 8),
             SizedBox(
               height: 150,
@@ -222,10 +222,10 @@ class _DashboardPageState extends State<DashboardPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Événements récents', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text('Événements récents', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 12),
         if (events.isEmpty)
-          const AdminEmptyState(icon: Icons.event_busy, message: 'Aucun événement récent')
+          AdminEmptyState(icon: Icons.event_busy, message: 'Aucun événement récent')
         else
           ...events.map(_buildEventRow),
       ],
@@ -233,14 +233,14 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildEventRow(Evenement event) {
-    final statusColor = AppConstants.statutColors[event.statut] ?? AppColors.textMuted;
+    final statusColor = AppConstants.statutColors[event.statut] ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
     final dateStr = event.dateEvenement != null ? DateFormat('dd/MM/yyyy').format(event.dateEvenement!) : '';
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: const Icon(Icons.event, color: AppColors.primary),
-        title: Text(event.titre, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-        subtitle: Text(dateStr, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        leading: Icon(Icons.event, color: Theme.of(context).colorScheme.primary),
+        title: Text(event.titre, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Theme.of(context).colorScheme.onSurface)),
+        subtitle: Text(dateStr, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(

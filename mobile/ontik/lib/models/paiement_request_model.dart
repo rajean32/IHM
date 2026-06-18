@@ -41,12 +41,14 @@ class TicketItemModel {
   final String numeroPlace;
   final int idEvenement;
   final double prix;
+  final int? idZone;
 
   TicketItemModel({
     required this.codeTicket,
     required this.numeroPlace,
     required this.idEvenement,
     required this.prix,
+    this.idZone,
   });
 
   Map<String, dynamic> toJson() {
@@ -55,6 +57,7 @@ class TicketItemModel {
       'numeroPlace': numeroPlace,
       'idEvenement': idEvenement,
       'prix': prix,
+      if (idZone != null) 'idZone': idZone,
     };
   }
 }

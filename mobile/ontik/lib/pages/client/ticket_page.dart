@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -110,61 +111,82 @@ class _TicketPageState extends State<TicketPage> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.ticketBorder.withValues(alpha: 0.5)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isValid ? AppColors.secondary : AppColors.error,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    isValid ? AppLocalizations.of(context)!.clientTicketValid : AppLocalizations.of(context)!.clientTicketInvalid,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isValid ? AppColors.secondary : AppColors.error,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(isValid ? Icons.check_circle : Icons.cancel, size: 16, color: Colors.white),
+                          const SizedBox(width: 6),
+                          Text(
+                            isValid ? AppLocalizations.of(context)!.clientTicketValid : AppLocalizations.of(context)!.clientTicketInvalid,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (_qrData!['qrCodeBase64'] != null)
+                      _buildQRCode(_qrData!['qrCodeBase64'] as String),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: _downloadPDF,
+                      icon: const Icon(Icons.download, size: 18),
+                      label: Text(AppLocalizations.of(context)!.clientTicketDownloadPDF),
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(),
+                    _infoRow(AppLocalizations.of(context)!.clientTicketEvent, _qrData!['evenementTitre'] ?? 'N/A'),
+                    _infoRow(AppLocalizations.of(context)!.clientTicketSeat, displayPlace(_qrData!['placeNumero'] as String?) ?? 'N/A'),
+                    if (_qrData!['rang'] != null)
+                      _infoRow(AppLocalizations.of(context)!.clientTicketRow, _qrData!['rang']),
+                    if (_qrData!['typePlace'] != null)
+                      _infoRow(AppLocalizations.of(context)!.clientTicketType, _qrData!['typePlace']),
+                    if (_qrData!['zoneNom'] != null)
+                      _infoRow(AppLocalizations.of(context)!.clientTicketZone, _qrData!['zoneNom']),
+                    if (_qrData!['prix'] != null)
+                      _infoRow(AppLocalizations.of(context)!.clientTicketPrice, 'Ar ${_qrData!['prix']}'),
+                    if (_qrData!['clientNom'] != null)
+                      _infoRow(AppLocalizations.of(context)!.clientTicketHolder, _qrData!['clientNom']),
+                    const Divider(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _qrData!['codeTicket'] ?? '',
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontFamily: 'monospace', fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
-                if (_qrData!['qrCodeBase64'] != null)
-                  _buildQRCode(_qrData!['qrCodeBase64'] as String),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: _downloadPDF,
-                  icon: const Icon(Icons.download, size: 18),
-                  label: Text(AppLocalizations.of(context)!.clientTicketDownloadPDF),
-                ),
-                const SizedBox(height: 12),
-                const Divider(),
-                _infoRow(AppLocalizations.of(context)!.clientTicketEvent, _qrData!['evenementTitre'] ?? 'N/A'),
-                _infoRow(AppLocalizations.of(context)!.clientTicketSeat, displayPlace(_qrData!['placeNumero'] as String?) ?? 'N/A'),
-                if (_qrData!['rang'] != null)
-                  _infoRow(AppLocalizations.of(context)!.clientTicketRow, _qrData!['rang']),
-                if (_qrData!['typePlace'] != null)
-                  _infoRow(AppLocalizations.of(context)!.clientTicketType, _qrData!['typePlace']),
-                if (_qrData!['zoneNom'] != null)
-                  _infoRow(AppLocalizations.of(context)!.clientTicketZone, _qrData!['zoneNom']),
-                if (_qrData!['prix'] != null)
-                  _infoRow(AppLocalizations.of(context)!.clientTicketPrice, 'Ar ${_qrData!['prix']}'),
-                if (_qrData!['clientNom'] != null)
-                  _infoRow(AppLocalizations.of(context)!.clientTicketHolder, _qrData!['clientNom']),
-                const Divider(),
-                Text(
-                  _qrData!['codeTicket'] ?? '',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontFamily: 'monospace'),
-                ),
-              ],
+              ),
             ),
           ),
         ],

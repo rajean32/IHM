@@ -35,6 +35,6 @@ Widget _placeholder(double? height, double? width) {
     height: height ?? 160,
     width: width ?? double.infinity,
     color: const Color(0xFFF5F5F5),
-    child: const Icon(Icons.event, size: 64, color: Color(0xFF9E9E9E)),
+    child: Icon(Icons.event, size: 48, color: const Color(0xFF9E9E9E).withValues(alpha: 0.6)),
   );
 }

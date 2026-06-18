@@ -118,7 +118,7 @@ export default function MyReservations() {
                     <div className="ticket-info">
                       <h4>#{code}</h4>
                       <p>{ticket.eventTitre || ticket.evenement?.titre || '-'}</p>
-                      <p>{ticket.numeroPlace || ticket.place?.numeroPlace || '-'} · {ticket.prix || ticket.prixPlace || '-'} €</p>
+                      <p>{ticket.zoneNom ? `${t('client.reservations.zone')}: ${ticket.zoneNom}` : (ticket.numeroPlace || ticket.place?.numeroPlace || '-')} · {ticket.prix || ticket.prixPlace || '-'} €</p>
                       <span className={`badge badge-${(ticket.statut || 'actif').toLowerCase()}`}>
                         {ticket.statut || 'Actif'}
                       </span>

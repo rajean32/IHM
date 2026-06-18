@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -532,6 +533,57 @@ class _ReservationPageState extends State<ReservationPage> {
     );
   }
 
+  Widget _buildSectionDivider(String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.3),
+                    AppColors.primary.withValues(alpha: 0.05),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (label.isNotEmpty) ...[
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary, letterSpacing: 0.5),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.05),
+                      AppColors.primary.withValues(alpha: 0.3),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildMixedLayout() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -544,11 +596,11 @@ class _ReservationPageState extends State<ReservationPage> {
             _buildLegend(),
             const SizedBox(height: 16),
             if (_selectedBlockType != null) _buildSeatPickerForBlock(),
-            const Divider(height: 32),
+            const SizedBox(height: 16),
+            _buildSectionDivider(AppLocalizations.of(context)!.clientReservationStandingZones),
+            const SizedBox(height: 8),
           ],
           if (_standingZones.isNotEmpty) ...[
-            Text(AppLocalizations.of(context)!.clientReservationStandingZones, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-            const SizedBox(height: 10),
             ..._standingZones.map((zone) => _buildZoneCard(zone)).toList(),
           ],
         ],
@@ -562,87 +614,125 @@ class _ReservationPageState extends State<ReservationPage> {
     final progress = zone.capacite != null && zone.capacite! > 0
         ? ((zone.capacite! - (remaining ?? 0)) / zone.capacite!)
         : 0.0;
+    final jaugeColor = progress > 0.8 ? AppColors.error : AppColors.secondary;
+    final isNearFull = progress >= 0.8;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.ticketBorder),
+        border: Border.all(
+          color: isNearFull ? AppColors.error.withValues(alpha: 0.3) : AppColors.ticketBorder,
+          width: isNearFull ? 1.5 : 1,
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.accessibility_new, color: AppColors.primary, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(11),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.white,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(zone.nom, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                    if (zone.capacite != null)
-                      Text(
-                        '$remaining ${AppLocalizations.of(context)!.clientReservationRemainingSeats} ${zone.capacite}',
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                      )
-                    else
-                      Text(AppLocalizations.of(context)!.clientReservationUnlimitedSeats, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: jaugeColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.accessibility_new, color: jaugeColor, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(zone.nom,
+                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (isNearFull) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text('PRESQUE COMPLET',
+                                    style: TextStyle(fontSize: 7, fontWeight: FontWeight.w800, color: AppColors.error, letterSpacing: 0.5),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (zone.capacite != null)
+                            Text('$remaining/${zone.capacite} ${AppLocalizations.of(context)!.clientReservationRemainingSeats}',
+                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            )
+                          else
+                            Text(AppLocalizations.of(context)!.clientReservationUnlimitedSeats,
+                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '${AppConstants.currency}${zone.prix.toStringAsFixed(0)}',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: jaugeColor),
+                    ),
                   ],
                 ),
-              ),
-              Text(
-                '${AppConstants.currency}${zone.prix.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.primary),
-              ),
-            ],
-          ),
-          if (zone.capacite != null) ...[
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 5,
-                backgroundColor: AppColors.surface,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  progress > 0.8 ? AppColors.error : AppColors.secondary,
+                if (zone.capacite != null) ...[
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 6,
+                      backgroundColor: AppColors.surface,
+                      valueColor: AlwaysStoppedAnimation<Color>(jaugeColor),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: qty > 0 ? () => _onZoneQuantityChanged(zone.idZone!, -1) : null,
+                      icon: const Icon(Icons.remove_circle_outline),
+                      color: AppColors.primary,
+                    ),
+                    Container(
+                      width: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text('$qty',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _onZoneQuantityChanged(zone.idZone!, 1),
+                      icon: const Icon(Icons.add_circle_outline),
+                      color: AppColors.primary,
+                    ),
+                  ],
                 ),
-              ),
+              ],
             ),
-          ],
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                onPressed: qty > 0 ? () => _onZoneQuantityChanged(zone.idZone!, -1) : null,
-                icon: const Icon(Icons.remove_circle_outline),
-                color: AppColors.primary,
-              ),
-              Container(
-                width: 36,
-                alignment: Alignment.center,
-                child: Text('$qty', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-              ),
-              IconButton(
-                onPressed: () => _onZoneQuantityChanged(zone.idZone!, 1),
-                icon: const Icon(Icons.add_circle_outline),
-                color: AppColors.primary,
-              ),
-            ],
           ),
-        ],
+        ),
       ),
     );
   }

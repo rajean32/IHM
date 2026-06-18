@@ -29,6 +29,7 @@ public class PaiementRequestDTO {
         private String numeroPlace;
         private Integer idEvenement;
         private BigDecimal prix;
+        private Integer idZone;
 
         public String getCodeTicket() { return codeTicket; }
         public void setCodeTicket(String codeTicket) { this.codeTicket = codeTicket; }
@@ -38,6 +39,8 @@ public class PaiementRequestDTO {
         public void setIdEvenement(Integer idEvenement) { this.idEvenement = idEvenement; }
         public BigDecimal getPrix() { return prix; }
         public void setPrix(BigDecimal prix) { this.prix = prix; }
+        public Integer getIdZone() { return idZone; }
+        public void setIdZone(Integer idZone) { this.idZone = idZone; }
     }
 
     public static class CarteBancaireDTO {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/api/endpoints.dart';
@@ -186,6 +188,23 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
     }
   }
 
+  String _formatSimpleDate(String? date) {
+    if (date == null) return '';
+    try {
+      final dateOnly = date.contains('T') ? date.split('T').first : date;
+      final parts = dateOnly.split('-');
+      if (parts.length != 3) return date;
+      final d = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+      const months = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      ];
+      return '${d.day} ${months[d.month - 1]} ${d.year}';
+    } catch (_) {
+      return date ?? '';
+    }
+  }
+
   Widget _buildTicketCard(Ticket t) {
     final isActive = t.statut == 'VALID' || t.statut == 'DISPONIBLE' || t.statut == 'RESERVEE' || t.statut == 'EN_ATTENTE';
     final accentColor = _cardAccentColor(t.typePlace);
@@ -279,6 +298,32 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 8),
+                      if (t.dateReservation != null)
+                        Row(
+                          children: [
+                            Icon(Icons.receipt_long, size: 13, color: AppColors.textMuted),
+                            SizedBox(width: 5),
+                            Text(
+                              '${AppLocalizations.of(context)!.clientTicketBookedOn} ${_formatSimpleDate(t.dateReservation)}',
+                              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                            ),
+                          ],
+                        ),
+                      if (t.datePublication != null)
+                        Padding(
+                          padding: EdgeInsets.only(top: 3),
+                          child: Row(
+                            children: [
+                              Icon(Icons.new_releases, size: 13, color: AppColors.textMuted),
+                              SizedBox(width: 5),
+                              Text(
+                                '${AppLocalizations.of(context)!.clientTicketPublishedOn} ${_formatSimpleDate(t.datePublication)}',
+                                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                              ),
+                            ],
+                          ),
+                        ),
                       const SizedBox(height: 12),
                       // Placement grid
                       Container(
@@ -288,7 +333,7 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: t.zoneNom != null
-                            ? _placementItem(Icons.accessibility_new, 'Zone', t.zoneNom!)
+                            ? Row(children: [_placementItem(Icons.accessibility_new, 'Zone', t.zoneNom!)])
                             : Row(
                                 children: [
                                   _placementItem(Icons.meeting_room, AppLocalizations.of(context)!.clientTicketRoom, t.salleNom ?? '—'),
@@ -316,14 +361,26 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(Icons.qr_code, size: 28, color: _badgeColor(t.typePlace)),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: t.qrCodeBase64 != null
+                            ? Image.memory(
+                                base64Decode(t.qrCodeBase64!.contains(',')
+                                    ? t.qrCodeBase64!.split(',').last
+                                    : t.qrCodeBase64!),
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
+                              )
+                            : Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(Icons.qr_code, size: 28, color: _badgeColor(t.typePlace)),
+                              ),
                       ),
                       const SizedBox(width: 12),
                       Column(
@@ -351,28 +408,42 @@ class _MyTicketsPageState extends State<MyTicketsPage> {
               ],
             ),
           ),
-          // Expired overlay
+          // Expired overlay with glassmorphism
           if (!isActive)
             Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 6, sigmaY: 6),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.65),
-                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.black.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      AppLocalizations.of(context)!.clientTicketExpired,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        letterSpacing: 1.5,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.hourglass_empty, color: Colors.white.withValues(alpha: 0.7), size: 16),
+                            const SizedBox(width: 8),
+                            Text(
+                              AppLocalizations.of(context)!.clientTicketExpired,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

@@ -249,6 +249,7 @@ class EventDetail extends Evenement {
       statut: json['statut'],
       codeCategorie: json['codeCategorie'],
       codeLieu: json['codeLieu'],
+      typeAgencement: json['typeAgencement'],
       numeroSalle: json['numeroSalle'],
       nomSalle: json['nomSalle'],
       codeOrganisateur: json['codeOrganisateur'] ?? '',

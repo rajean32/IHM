@@ -565,6 +565,7 @@
   "clientHomeApply": "Appliquer",
   "clientHomeSearchHint": "Rechercher un événement...",
   "clientHomeNewEvents": "Nouveautés",
+  "clientHomePopularEvents": "Événements populaires",
   "clientHomeNewBadge": "NOUVEAU",
   "clientHomeFeatured": "Événements à la une",
   "clientHomeNoEvents": "Aucun événement trouvé",
@@ -583,6 +584,8 @@
   "clientHomeDetailVenueNotSpecified": "Lieu non spécifié",
   "clientHomeDetailAbout": "À propos de l'événement",
   "clientHomeDetailNoDescription": "Aucune description disponible.",
+  "clientHomeDetailOrganizer": "Organisateur",
+
   "clientHomeDetailCharacteristic": "Caractéristique",
   "clientHomeDetailAvailableZones": "Zones disponibles",
   "clientHomeDetailUnlimitedSeats": "Places illimitées",
@@ -844,5 +847,7 @@
   "clientHomeSubscribedSection": "Organisateurs suivis",
   "clientHomeSubscribe": "S'abonner",
   "clientHomeUnsubscribe": "Se désabonner",
-  "clientHomeNoSubscriptions": "Suivez des organisateurs pour voir leurs événements ici"
+  "clientHomeNoSubscriptions": "Suivez des organisateurs pour voir leurs événements ici",
+  "clientTicketBookedOn": "Réservé le ",
+  "clientTicketPublishedOn": "Publié le "
 }

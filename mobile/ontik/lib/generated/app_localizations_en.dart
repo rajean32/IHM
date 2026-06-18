@@ -1303,6 +1303,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientHomeNewEvents => 'New Events';
 
   @override
+  String get clientHomePopularEvents => 'Popular Events';
+
+  @override
   String get clientHomeNewBadge => 'NEW';
 
   @override
@@ -1355,6 +1358,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clientHomeDetailNoDescription => 'No description available.';
+
+  @override
+  String get clientHomeDetailOrganizer => 'Organizer';
 
   @override
   String get clientHomeDetailCharacteristic => 'Characteristic';
@@ -2687,4 +2693,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clientHomeNoSubscriptions =>
       'Follow organizers to see their events here';
+
+  @override
+  String get clientTicketBookedOn => 'Booked on ';
+
+  @override
+  String get clientTicketPublishedOn => 'Published on ';
 }

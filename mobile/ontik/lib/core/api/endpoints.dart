@@ -9,6 +9,7 @@ class Endpoints {
 
   static const events = '$base/evenements';
   static const eventsRecent = '$base/evenements/recent';
+  static const eventsPopular = '$base/evenements/popular';
   static String eventById(int id) => '$base/evenements/$id';
   static String eventValidate(int id) => '$base/evenements/$id/validate';
   static String eventAvailablePlaces(int id) => '$base/evenements/$id/places/available';

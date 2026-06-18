@@ -2432,6 +2432,12 @@ abstract class AppLocalizations {
   /// **'New Events'**
   String get clientHomeNewEvents;
 
+  /// No description provided for @clientHomePopularEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular Events'**
+  String get clientHomePopularEvents;
+
   /// No description provided for @clientHomeNewBadge.
   ///
   /// In en, this message translates to:
@@ -2539,6 +2545,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No description available.'**
   String get clientHomeDetailNoDescription;
+
+  /// No description provided for @clientHomeDetailOrganizer.
+  ///
+  /// In en, this message translates to:
+  /// **'Organizer'**
+  String get clientHomeDetailOrganizer;
 
   /// No description provided for @clientHomeDetailCharacteristic.
   ///
@@ -5161,6 +5173,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Follow organizers to see their events here'**
   String get clientHomeNoSubscriptions;
+
+  /// No description provided for @clientTicketBookedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked on '**
+  String get clientTicketBookedOn;
+
+  /// No description provided for @clientTicketPublishedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Published on '**
+  String get clientTicketPublishedOn;
 }
 
 class _AppLocalizationsDelegate

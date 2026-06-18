@@ -73,6 +73,11 @@ public class TicketService {
         return ticketRepository.findByCorrespondances_Reservation_Client_CodeUtilisateur(clientCode)
                 .stream()
                 .map(this::toDTO)
+                .sorted((a, b) -> {
+                    if (a.getDateReservation() == null) return 1;
+                    if (b.getDateReservation() == null) return -1;
+                    return b.getDateReservation().compareTo(a.getDateReservation());
+                })
                 .collect(Collectors.toList());
     }
 
@@ -88,11 +93,22 @@ public class TicketService {
     public TicketDTO.ValidationResponse validateTicket(String codeTicket) {
         log.debug("Validating ticket: {}", codeTicket);
         Ticket ticket = ticketRepository.findByCodeTicket(codeTicket)
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket", "codeTicket", codeTicket));
+                .orElse(null);
+        if (ticket == null) {
+            actionLogService.logFraud("STAFF", "TICKET_SCAN_FAILED", "Ticket", codeTicket,
+                    "Ticket not found in database");
+            TicketDTO.ValidationResponse response = new TicketDTO.ValidationResponse();
+            response.setValid(false);
+            response.setCodeTicket(codeTicket);
+            response.setMessage("Ticket not found");
+            return response;
+        }
 
         List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(codeTicket);
 
         if (correspondances.isEmpty()) {
+            actionLogService.logFraud("STAFF", "TICKET_SCAN_FAILED", "Ticket", codeTicket,
+                    "Ticket not linked to any reservation");
             TicketDTO.ValidationResponse response = new TicketDTO.ValidationResponse();
             response.setValid(false);
             response.setCodeTicket(codeTicket);
@@ -282,6 +298,8 @@ public class TicketService {
 
         Ticket ticket = ticketRepository.findByCodeTicket(qrToken).orElse(null);
         if (ticket == null) {
+            actionLogService.logFraud("STAFF", "TICKET_SCAN_FAILED", "Ticket", qrToken,
+                    "Ticket not found in database");
             TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
             r.setStatut("INVALID");
             r.setMessage("Ticket not found");
@@ -483,7 +501,38 @@ public class TicketService {
         dto.setStatut("VALID");
     }
 
+    // Enrich with dateReservation, datePublication, qrCodeBase64
+    enrichWithExtraFields(dto, ticket);
+
     return dto;
+    }
+
+    private void enrichWithExtraFields(TicketDTO dto, Ticket ticket) {
+        List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(ticket.getCodeTicket());
+        if (!correspondances.isEmpty()) {
+            Reservation reservation = correspondances.get(0).getReservation();
+            if (reservation.getDateReservation() != null) {
+                dto.setDateReservation(reservation.getDateReservation().toString());
+            }
+        }
+
+        if (dto.getDatePublication() == null) {
+            if (ticket.getEvenement() != null && ticket.getEvenement().getDatePublication() != null) {
+                dto.setDatePublication(ticket.getEvenement().getDatePublication().toString());
+            } else if (ticket.getZoneStanding() != null && ticket.getZoneStanding().getEvenement().getDatePublication() != null) {
+                dto.setDatePublication(ticket.getZoneStanding().getEvenement().getDatePublication().toString());
+            }
+        }
+
+        try {
+            String evenementTitre = dto.getEvenementTitre() != null ? dto.getEvenementTitre() : "";
+            String placeNumero = dto.getNumeroPlace() != null ? dto.getNumeroPlace() : "";
+            String ticketData = qrCodeService.generateTicketData(ticket.getCodeTicket(), evenementTitre, placeNumero);
+            String qrBase64 = qrCodeService.generateQRCodeBase64(ticketData);
+            dto.setQrCodeBase64(qrBase64);
+        } catch (Exception e) {
+            log.warn("Failed to generate QR for ticket {}: {}", ticket.getCodeTicket(), e.getMessage());
+        }
     }
 
     private void fillFromReservationFallback(TicketDTO dto, Ticket ticket) {

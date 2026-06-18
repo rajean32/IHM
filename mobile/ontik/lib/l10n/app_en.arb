@@ -388,6 +388,7 @@
   "clientHomeApply": "Apply",
   "clientHomeSearchHint": "Search events...",
   "clientHomeNewEvents": "New Events",
+  "clientHomePopularEvents": "Popular Events",
   "clientHomeNewBadge": "NEW",
   "clientHomeFeatured": "Featured events",
   "clientHomeNoEvents": "No events found",
@@ -406,6 +407,8 @@
   "clientHomeDetailVenueNotSpecified": "Venue not specified",
   "clientHomeDetailAbout": "About the event",
   "clientHomeDetailNoDescription": "No description available.",
+  "clientHomeDetailOrganizer": "Organizer",
+
   "clientHomeDetailCharacteristic": "Characteristic",
   "clientHomeDetailAvailableZones": "Available zones",
   "clientHomeDetailUnlimitedSeats": "Unlimited seats",
@@ -844,5 +847,7 @@
   "clientHomeSubscribedSection": "Followed Organizers",
   "clientHomeSubscribe": "Subscribe",
   "clientHomeUnsubscribe": "Unsubscribe",
-  "clientHomeNoSubscriptions": "Follow organizers to see their events here"
+  "clientHomeNoSubscriptions": "Follow organizers to see their events here",
+  "clientTicketBookedOn": "Booked on ",
+  "clientTicketPublishedOn": "Published on "
 }

@@ -62,84 +62,29 @@ class _CaracteristiquesPageState extends State<CaracteristiquesPage> {
 
   Future<void> _showForm({Caracteristique? item}) async {
     final nomCtrl = TextEditingController(text: item?.nom ?? '');
+    final ordreCtrl = TextEditingController(text: item?.ordreAffichage?.toString() ?? '');
     final optionsCtrl = TextEditingController(text: item?.options ?? '');
     bool obligatoire = item?.obligatoire ?? false;
-    int? ordre = item?.ordreAffichage;
-    String? selectedType = item?.typeDonnee ?? 'text';
+    String selectedType = item?.typeDonnee ?? 'text';
+    if (!_types.contains(selectedType)) selectedType = 'text';
 
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (ctx, scrollCtrl) => StatefulBuilder(
-          builder: (ctx, setSheetState) => SingleChildScrollView(
-            controller: scrollCtrl,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(child: Container(width: 32, height: 4, decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)))),
-                    const SizedBox(height: 16),
-                    Text(item == null ? 'Ajouter une caractéristique' : 'Modifier la caractéristique', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 16),
-                    TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nom *')),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: selectedType,
-                      decoration: const InputDecoration(labelText: 'Type de donnée'),
-                      items: _types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                      onChanged: (v) => setSheetState(() => selectedType = v),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(controller: TextEditingController(text: ordre?.toString() ?? ''), keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Ordre d'affichage")),
-                    if (selectedType == 'select') ...[
-                      const SizedBox(height: 12),
-                      TextField(controller: optionsCtrl, decoration: const InputDecoration(labelText: 'Options (séparées par virgule)'), maxLines: 2),
-                    ],
-                    const SizedBox(height: 12),
-                    SwitchListTile(
-                      title: const Text('Obligatoire'),
-                      value: obligatoire,
-                      onChanged: (v) => setSheetState(() => obligatoire = v),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
-                        const Spacer(),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (nomCtrl.text.trim().isEmpty) return;
-                            Navigator.pop(ctx, {
-                              'nom': nomCtrl.text.trim(),
-                              'typeDonnee': selectedType,
-                              'obligatoire': obligatoire,
-                              'ordreAffichage': int.tryParse(ordre?.toString() ?? ''),
-                              'options': selectedType == 'select' ? optionsCtrl.text.trim() : null,
-                              'codeCategorie': widget.categorie.codeCategorie,
-                            });
-                          },
-                          child: Text(item == null ? 'Ajouter' : 'Modifier'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+      builder: (_) => _CaracteristiqueFormSheet(
+        nomCtrl: nomCtrl,
+        ordreCtrl: ordreCtrl,
+        optionsCtrl: optionsCtrl,
+        obligatoire: obligatoire,
+        selectedType: selectedType,
+        types: _types,
+        item: item,
+        categorieCode: widget.categorie.codeCategorie,
       ),
     );
 
     nomCtrl.dispose();
+    ordreCtrl.dispose();
     optionsCtrl.dispose();
 
     if (result == null) return;
@@ -234,6 +179,114 @@ class _CaracteristiquesPageState extends State<CaracteristiquesPage> {
             IconButton(icon: const Icon(Icons.edit, size: 20), onPressed: () => _showForm(item: item)),
             IconButton(icon: const Icon(Icons.delete, size: 20, color: AppColors.error), onPressed: () => _delete(item)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CaracteristiqueFormSheet extends StatefulWidget {
+  final TextEditingController nomCtrl;
+  final TextEditingController ordreCtrl;
+  final TextEditingController optionsCtrl;
+  final bool obligatoire;
+  final String selectedType;
+  final List<String> types;
+  final Caracteristique? item;
+  final String categorieCode;
+
+  const _CaracteristiqueFormSheet({
+    required this.nomCtrl,
+    required this.ordreCtrl,
+    required this.optionsCtrl,
+    required this.obligatoire,
+    required this.selectedType,
+    required this.types,
+    required this.item,
+    required this.categorieCode,
+  });
+
+  @override
+  State<_CaracteristiqueFormSheet> createState() => _CaracteristiqueFormSheetState();
+}
+
+class _CaracteristiqueFormSheetState extends State<_CaracteristiqueFormSheet> {
+  late bool _obligatoire;
+  late String _selectedType;
+
+  @override
+  void initState() {
+    super.initState();
+    _obligatoire = widget.obligatoire;
+    _selectedType = widget.selectedType;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (ctx, scrollCtrl) => SingleChildScrollView(
+        controller: scrollCtrl,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 32, height: 4, decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 16),
+                Text(widget.item == null ? 'Ajouter une caractéristique' : 'Modifier la caractéristique', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 16),
+                TextField(controller: widget.nomCtrl, decoration: const InputDecoration(labelText: 'Nom *')),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _selectedType,
+                  decoration: const InputDecoration(labelText: 'Type de donnée'),
+                  items: widget.types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  onChanged: (v) {
+                    if (v != null) setState(() => _selectedType = v);
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(controller: widget.ordreCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Ordre d'affichage")),
+                if (_selectedType == 'select') ...[
+                  const SizedBox(height: 12),
+                  TextField(controller: widget.optionsCtrl, decoration: const InputDecoration(labelText: 'Options (séparées par virgule)'), maxLines: 2),
+                ],
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: const Text('Obligatoire'),
+                  value: _obligatoire,
+                  onChanged: (v) => setState(() => _obligatoire = v),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+                    const Spacer(),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (widget.nomCtrl.text.trim().isEmpty) return;
+                        Navigator.pop(ctx, {
+                          'nom': widget.nomCtrl.text.trim(),
+                          'typeDonnee': _selectedType,
+                          'obligatoire': _obligatoire,
+                          'ordreAffichage': int.tryParse(widget.ordreCtrl.text.trim()),
+                          'options': _selectedType == 'select' ? widget.optionsCtrl.text.trim() : null,
+                          'codeCategorie': widget.categorieCode,
+                        });
+                      },
+                      child: Text(widget.item == null ? 'Ajouter' : 'Modifier'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
