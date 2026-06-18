@@ -161,6 +161,33 @@ public class UtilisateurService {
         return toDTO(saved);
     }
 
+    @Transactional
+    public UtilisateurDTO updateProfile(String code, UtilisateurDTO dto) {
+        Utilisateur user = utilisateurRepository.findByCodeUtilisateur(code)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "codeUtilisateur", code));
+        if (dto.getBio() != null) user.setBio(dto.getBio());
+        if (dto.getSiteWeb() != null) user.setSiteWeb(dto.getSiteWeb());
+        if (dto.getReseauxSociaux() != null) user.setReseauxSociaux(dto.getReseauxSociaux());
+        if (dto.getVille() != null) user.setVille(dto.getVille());
+        if (dto.getTel() != null) user.setTel(dto.getTel());
+        Utilisateur saved = utilisateurRepository.save(user);
+        log.info("Profile updated for user: {}", code);
+        return toDTO(saved);
+    }
+
+    @Transactional
+    public void uploadPhoto(String code, org.springframework.web.multipart.MultipartFile file) {
+        Utilisateur user = utilisateurRepository.findByCodeUtilisateur(code)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "codeUtilisateur", code));
+        try {
+            user.setPhoto(file.getBytes());
+            utilisateurRepository.save(user);
+            log.info("Photo uploaded for user: {}", code);
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Failed to read uploaded photo file", e);
+        }
+    }
+
     // suppression d'un utilisateur
     @Transactional
     public void delete(String code) {
@@ -471,6 +498,10 @@ public class UtilisateurService {
         dto.setEmail(user.getEmail());
         dto.setTel(user.getTel());
         dto.setVille(user.getVille());
+        dto.setPhoto(com.ihm.util.ImageUtils.toDataUrl(user.getPhoto()));
+        dto.setBio(user.getBio());
+        dto.setSiteWeb(user.getSiteWeb());
+        dto.setReseauxSociaux(user.getReseauxSociaux());
         if (user.getAdministrateur() != null) {
             dto.setCodeAdministrateur(user.getAdministrateur().getCodeAdministrateur());
         }

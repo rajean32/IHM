@@ -8,6 +8,7 @@ class Endpoints {
   static const updateVille = '$base/auth/ville';
 
   static const events = '$base/evenements';
+  static const eventsRecent = '$base/evenements/recent';
   static String eventById(int id) => '$base/evenements/$id';
   static String eventValidate(int id) => '$base/evenements/$id/validate';
   static String eventAvailablePlaces(int id) => '$base/evenements/$id/places/available';
@@ -19,6 +20,7 @@ class Endpoints {
 
   static const reservations = '$base/reservations';
   static String reservationById(int id) => '$base/reservations/$id';
+  static String reservationHistory(String codeClient) => '$base/reservations/client/$codeClient/history';
 
   static const paiements = '$base/paiements';
   static const payments = '$base/achat';
@@ -84,5 +86,25 @@ class Endpoints {
   static const cinemaEvents = '$base/evenements/cinema';
 
   static const notifications = '$base/notifications';
+  static const notificationPreferences = '$base/notifications/preferences';
+  static String notificationPreferencesByUser(String userId) => '$base/notifications/preferences/$userId';
+  static const annonces = '$base/annonces';
+  static String annoncesByEvent(int idEvenement) => '$base/annonces/evenement/$idEvenement';
+  static const avis = '$base/avis';
+  static String avisByEvent(int idEvenement) => '$base/avis/evenement/$idEvenement';
+  static String avisMoyenne(int idEvenement) => '$base/avis/evenement/$idEvenement/moyenne';
+  static const abonnements = '$base/abonnements';
+  static String abonnementFeed(String codeClient) => '$base/abonnements/$codeClient/feed';
+  static const chatConversations = '$base/chat/conversations';
+  static String chatConversationsByUser(String userId) => '$base/chat/conversations/$userId';
+  static String chatMessages(int conversationId) => '$base/chat/messages/$conversationId';
+  static const chatSendMessage = '$base/chat/messages';
+  static String chatMarkRead(int conversationId) => '$base/chat/conversations/$conversationId/read';
+  static String chatUnread(String userId) => '$base/chat/unread/$userId';
   static const wsUrl = 'ws://192.168.50.1:8081/ws';
+
+  static String preferencesByUser(String codeClient) => '$base/preferences/$codeClient';
+  static String preferenceAdd(String codeClient) => '$base/preferences/$codeClient';
+  static String preferenceRemove(String codeClient, String codeCategorie) => '$base/preferences/$codeClient/$codeCategorie';
+  static String recommendedEvents(String codeClient) => '$base/preferences/$codeClient/recommended';
 }

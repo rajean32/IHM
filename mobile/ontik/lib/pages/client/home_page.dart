@@ -36,6 +36,8 @@ class _HomePageState extends State<HomePage> {
   bool _promoDismissed = false;
 
   List<Evenement> _events = [];
+  List<Evenement> _recentEvents = [];
+  List<Evenement> _recommendedEvents = [];
   bool _isLoading = true;
   String? _error;
 
@@ -44,6 +46,8 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadFilterData();
     _loadEvents();
+    _loadRecentEvents();
+    _loadRecommendedEvents();
   }
 
   @override
@@ -94,6 +98,27 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       setState(() { _error = apiErrorString(e); _isLoading = false; });
     }
+  }
+
+  Future<void> _loadRecentEvents() async {
+    try {
+      final resp = await dio.get(Endpoints.eventsRecent);
+      final data = resp.data['data'] as List? ?? [];
+      final events = data.map((e) => Evenement.fromJson(e as Map<String, dynamic>)).toList();
+      if (!mounted) return;
+      setState(() => _recentEvents = events);
+    } catch (_) {}
+  }
+
+  Future<void> _loadRecommendedEvents() async {
+    if (userCode == null || userCode!.isEmpty) return;
+    try {
+      final resp = await dio.get(Endpoints.recommendedEvents(userCode!));
+      final data = resp.data['data'] as List? ?? [];
+      final events = data.map((e) => Evenement.fromJson(e as Map<String, dynamic>)).toList();
+      if (!mounted) return;
+      setState(() => _recommendedEvents = events);
+    } catch (_) {}
   }
 
   void _applyFilters() => _loadEvents();
@@ -205,12 +230,66 @@ class _HomePageState extends State<HomePage> {
       ]));
     }
 
+    final hasRecent = _recentEvents.isNotEmpty;
+    final hasRecommended = _recommendedEvents.isNotEmpty && userCode != null;
     return RefreshIndicator(
       onRefresh: _loadEvents,
       child: ListView(
         controller: _scrollCtrl,
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 80),
         children: [
+          if (hasRecent) ...[
+            Text(AppLocalizations.of(context)!.clientHomeNewEvents, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 200,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _recentEvents.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, i) {
+                  final event = _recentEvents[i];
+                  return SizedBox(
+                    width: 260,
+                    child: EventCard(
+                      event: event,
+                      compact: false,
+                      onTap: event.idEvenement != null
+                          ? () => Navigator.pushNamed(context, ClientRoutes.homeDetail, arguments: {'id': event.idEvenement})
+                          : null,
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+          if (hasRecommended) ...[
+            Text('Recommandé pour vous', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 200,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _recommendedEvents.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, i) {
+                  final event = _recommendedEvents[i];
+                  return SizedBox(
+                    width: 260,
+                    child: EventCard(
+                      event: event,
+                      compact: false,
+                      onTap: event.idEvenement != null
+                          ? () => Navigator.pushNamed(context, ClientRoutes.homeDetail, arguments: {'id': event.idEvenement})
+                          : null,
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
           Text(AppLocalizations.of(context)!.clientHomeFeatured, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const SizedBox(height: 14),
           if (_events.isEmpty)

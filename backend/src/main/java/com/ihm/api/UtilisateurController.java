@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -64,6 +65,36 @@ public class UtilisateurController {
         log.info("PUT /api/utilisateurs/{}", code);
         UtilisateurDTO data = utilisateurService.update(code, dto);
         return ResponseEntity.ok(ApiResponse.success(200, "User updated successfully", data));
+    }
+
+    // extended profile update
+    @PutMapping("/utilisateurs/{code}/profile")
+    public ResponseEntity<ApiResponse<UtilisateurDTO>> updateProfile(@PathVariable String code,
+                                                                      @RequestBody UtilisateurDTO dto) {
+        log.info("PUT /api/utilisateurs/{}/profile", code);
+        UtilisateurDTO data = utilisateurService.updateProfile(code, dto);
+        return ResponseEntity.ok(ApiResponse.success(200, "Profile updated successfully", data));
+    }
+
+    // upload profile photo
+    @PostMapping("/utilisateurs/{code}/photo")
+    public ResponseEntity<ApiResponse<Void>> uploadPhoto(@PathVariable String code,
+                                                          @RequestParam("file") MultipartFile file) {
+        log.info("POST /api/utilisateurs/{}/photo", code);
+        utilisateurService.uploadPhoto(code, file);
+        return ResponseEntity.ok(ApiResponse.success(200, "Photo uploaded successfully"));
+    }
+
+    // serve profile photo
+    @GetMapping("/utilisateurs/{code}/photo")
+    public ResponseEntity<byte[]> getPhoto(@PathVariable String code) {
+        UtilisateurDTO user = utilisateurService.getById(code);
+        if (user.getPhoto() != null) {
+            byte[] bytes = java.util.Base64.getDecoder().decode(
+                user.getPhoto().contains(",") ? user.getPhoto().split(",")[1] : user.getPhoto());
+            return ResponseEntity.ok().contentType(org.springframework.http.MediaType.IMAGE_JPEG).body(bytes);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     // suppression d'utilisateur

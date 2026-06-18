@@ -29,6 +29,10 @@ public class UtilisateurDTO {
     public void setMotDePasse(String motDePasse) { this.motDePasse = motDePasse; }
     private String ville;
     private String codeAdministrateur;
+    private String photo;
+    private String bio;
+    private String siteWeb;
+    private String reseauxSociaux;
     public UtilisateurDTO() {}
     public String getCodeUtilisateur() { return codeUtilisateur; }
     public void setCodeUtilisateur(String codeUtilisateur) { this.codeUtilisateur = codeUtilisateur; }
@@ -48,6 +52,14 @@ public class UtilisateurDTO {
     public void setVille(String ville) { this.ville = ville; }
     public String getCodeAdministrateur() { return codeAdministrateur; }
     public void setCodeAdministrateur(String codeAdministrateur) { this.codeAdministrateur = codeAdministrateur; }
+    public String getPhoto() { return photo; }
+    public void setPhoto(String photo) { this.photo = photo; }
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+    public String getSiteWeb() { return siteWeb; }
+    public void setSiteWeb(String siteWeb) { this.siteWeb = siteWeb; }
+    public String getReseauxSociaux() { return reseauxSociaux; }
+    public void setReseauxSociaux(String reseauxSociaux) { this.reseauxSociaux = reseauxSociaux; }
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class AdministrateurDTO {
         private String codeAdministrateur;

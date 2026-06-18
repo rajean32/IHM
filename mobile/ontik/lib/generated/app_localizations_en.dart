@@ -1300,6 +1300,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientHomeSearchHint => 'Search events...';
 
   @override
+  String get clientHomeNewEvents => 'New Events';
+
+  @override
+  String get clientHomeNewBadge => 'NEW';
+
+  @override
   String get clientHomeFeatured => 'Featured events';
 
   @override
@@ -2668,4 +2674,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clientPaymentEventName => 'Event';
+
+  @override
+  String get clientHomeSubscribedSection => 'Followed Organizers';
+
+  @override
+  String get clientHomeSubscribe => 'Subscribe';
+
+  @override
+  String get clientHomeUnsubscribe => 'Unsubscribe';
+
+  @override
+  String get clientHomeNoSubscriptions =>
+      'Follow organizers to see their events here';
 }

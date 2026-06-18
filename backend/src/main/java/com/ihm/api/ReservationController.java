@@ -124,6 +124,24 @@ public class ReservationController {
         return ResponseEntity.ok(ApiResponse.success(200, "Reservation cancelled successfully", response));
     }
 
+    // Feature 15: Historique d'achat client complet (réservations + tickets)
+    @GetMapping("/reservations/client/{code}/history")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getClientHistory(@PathVariable String code) {
+        log.info("GET /api/reservations/client/{}/history", code);
+        List<Reservation> reservations = reservationRepository.findByClientWithTickets(code);
+        List<Map<String, Object>> history = reservations.stream().map(r -> {
+            List<TicketDTO> ticketDTOs = r.getCorrespondances().stream()
+                    .map(ca -> ticketService.toDTO(ca.getTicket()))
+                    .collect(Collectors.toList());
+            return Map.<String, Object>of(
+                    "idReservation", r.getIdReservation(),
+                    "dateReservation", r.getDateReservation() != null ? r.getDateReservation().toString() : null,
+                    "tickets", ticketDTOs
+            );
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success(200, "Client history fetched", history));
+    }
+
     // tickets d'une réservation
     @GetMapping("/reservations/{id}/tickets")
     public ResponseEntity<ApiResponse<List<TicketDTO>>> getReservationTickets(@PathVariable Integer id) {

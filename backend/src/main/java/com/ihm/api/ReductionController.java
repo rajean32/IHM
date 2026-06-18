@@ -61,7 +61,31 @@ public class ReductionController {
     @PostMapping("/verifier")
     public ResponseEntity<ApiResponse<Object>> verifierCodePromo(@RequestParam String code, @RequestParam Integer idEvenement) {
         log.info("POST /api/reductions/verifier - code: {}, event: {}", code, idEvenement);
-        // Implémentation de vérification
-        return ResponseEntity.ok(ApiResponse.success(200, "Code promo valide", null));
+        Reduction reduction = reductionService.getByCode(code);
+        if (reduction == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(404, "Code promo introuvable", "NOT_FOUND"));
+        }
+        if (Boolean.FALSE.equals(reduction.isActif())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(400, "Ce code promo n'est plus actif", "INACTIVE"));
+        }
+        if (reduction.getDateDebut() != null && reduction.getDateDebut().isAfter(java.time.LocalDateTime.now())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(400, "Ce code promo n'est pas encore valide", "NOT_YET_VALID"));
+        }
+        if (reduction.getDateFin() != null && reduction.getDateFin().isBefore(java.time.LocalDateTime.now())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(400, "Ce code promo a expiré", "EXPIRED"));
+        }
+        if (reduction.getUtilisationMax() != null && reduction.getUtilisationCount() >= reduction.getUtilisationMax()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(400, "Ce code promo a atteint sa limite d'utilisations", "LIMIT_REACHED"));
+        }
+        if (reduction.getEvenement() != null && !reduction.getEvenement().getIdEvenement().equals(idEvenement)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(400, "Ce code promo n'est pas valide pour cet événement", "WRONG_EVENT"));
+        }
+        return ResponseEntity.ok(ApiResponse.success(200, "Code promo valide", reduction));
     }
 }

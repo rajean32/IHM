@@ -7,6 +7,7 @@ class EvenementService {
   final _placeApi = PlaceApi();
 
   Future<List<dynamic>> getEvents({String? orgCode}) => _api.getEvents(orgCode: orgCode);
+  Future<List<dynamic>> getRecentEvents() => _api.getRecentEvents();
   Future<Map<String, dynamic>> getEventDetail(int id) => _api.getEventDetail(id);
   Future<List<dynamic>> getAvailablePlaces(int eventId) => _api.getAvailablePlaces(eventId);
   Future<Map<String, dynamic>> createEvent(Map<String, dynamic> data) => _api.createEvent(data);

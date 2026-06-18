@@ -564,6 +564,8 @@
   "clientHomeSelectDateRange": "Sélectionner une plage",
   "clientHomeApply": "Appliquer",
   "clientHomeSearchHint": "Rechercher un événement...",
+  "clientHomeNewEvents": "Nouveautés",
+  "clientHomeNewBadge": "NOUVEAU",
   "clientHomeFeatured": "Événements à la une",
   "clientHomeNoEvents": "Aucun événement trouvé",
   "clientHomeVenueNotSpecified": "Lieu non spécifié",
@@ -838,5 +840,9 @@
   "clientShareCopied": "Détails copiés dans le presse-papier",
   "clientPaymentShareText": "Commande en cours sur Ontik",
   "clientPaymentOrderCopied": "Informations de commande copiées",
-  "clientPaymentEventName": "Événement"
+  "clientPaymentEventName": "Événement",
+  "clientHomeSubscribedSection": "Organisateurs suivis",
+  "clientHomeSubscribe": "S'abonner",
+  "clientHomeUnsubscribe": "Se désabonner",
+  "clientHomeNoSubscriptions": "Suivez des organisateurs pour voir leurs événements ici"
 }

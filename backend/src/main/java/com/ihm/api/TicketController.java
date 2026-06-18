@@ -94,6 +94,14 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success(200, "Ticket validated successfully", result));
     }
 
+    // Feature 17: Liste des codes valides pour un événement (cache offline scanner)
+    @GetMapping("/event/{eventId}/valid-codes")
+    public ResponseEntity<ApiResponse<List<String>>> getValidCodesForEvent(@PathVariable Integer eventId) {
+        log.info("GET /api/tickets/event/{}/valid-codes", eventId);
+        List<String> codes = ticketService.getValidTicketCodesForEvent(eventId);
+        return ResponseEntity.ok(ApiResponse.success(200, "Valid ticket codes fetched", codes));
+    }
+
     // telechargement PDF
     @GetMapping("/{code}/pdf")
     public ResponseEntity<byte[]> downloadPDF(@PathVariable String code) {

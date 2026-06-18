@@ -92,6 +92,13 @@ public class EvenementController {
         return ResponseEntity.ok(ApiResponse.success(200, "Popular events fetched successfully", events));
     }
 
+    @GetMapping("/recent")
+    public ResponseEntity<ApiResponse<List<EvenementDTO>>> getRecentEvents() {
+        log.info("GET /api/evenements/recent");
+        List<EvenementDTO> events = evenementService.getRecentEvents();
+        return ResponseEntity.ok(ApiResponse.success(200, "Recent events fetched successfully", events));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<EvenementDTO>> getById(@PathVariable Integer id) {
         log.info("GET /api/evenements/{}", id);
@@ -111,6 +118,15 @@ public class EvenementController {
         log.info("GET /api/evenements/{}/places/available", id);
         List<SalleDTO.SeatingDTO> seats = evenementService.getAvailableSeats(id);
         return ResponseEntity.ok(ApiResponse.success(200, "Available seats fetched successfully", seats));
+    }
+
+    @GetMapping("/organisateur/{code}/portfolio")
+    public ResponseEntity<ApiResponse<List<EvenementDTO>>> getOrganizerPortfolio(@PathVariable String code) {
+        log.info("GET /api/evenements/organisateur/{}/portfolio", code);
+        List<EvenementDTO> events = evenementService.getByOrganisateur(code).stream()
+                .filter(e -> "termine".equals(e.getStatut()))
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success(200, "Portfolio fetched successfully", events));
     }
 
     @GetMapping("/cinema")

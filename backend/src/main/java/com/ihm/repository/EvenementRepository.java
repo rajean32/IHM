@@ -78,6 +78,12 @@ public interface EvenementRepository extends JpaRepository<Evenement, Integer> {
     @Query("SELECT e FROM Evenement e ORDER BY e.dateEvenement DESC")
     List<Evenement> findRecentEvents(org.springframework.data.domain.Pageable pageable);
 
+    @Query("SELECT e FROM Evenement e WHERE e.datePublication IS NOT NULL ORDER BY e.datePublication DESC")
+    List<Evenement> findRecentPublishedEvents(org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT e FROM Evenement e WHERE e.datePublication IS NOT NULL ORDER BY e.datePublication DESC")
+    List<Evenement> findAllByOrderByDatePublicationDesc();
+
     List<Evenement> findByDateEvenementBeforeAndStatutNot(LocalDate date, String statut);
 
     List<Evenement> findByDateEvenementAndStatut(LocalDate date, String statut);

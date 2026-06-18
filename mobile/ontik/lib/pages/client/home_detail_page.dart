@@ -1,9 +1,12 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/evenement_model.dart';
 import '../../core/services/evenement_service.dart';
+import '../../core/services/annonce_service.dart';
+import '../../core/services/avis_service.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/client_routes.dart';
 import '../../core/utils/error_helper.dart';
@@ -25,12 +28,17 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
   bool _isLoading = true;
   String? _error;
   bool _isFavorited = false;
+  List<dynamic> _annonces = [];
+  List<dynamic> _avis = [];
+  Map<String, dynamic> _avisMoyenne = {'moyenne': 0.0, 'nombreAvis': 0};
 
   @override
   void initState() {
     super.initState();
     _loadDetail();
     _checkFavorite();
+    _loadAnnonces();
+    _loadAvis();
   }
 
   Future<void> _checkFavorite() async {
@@ -66,6 +74,26 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
         '${AppConstants.currency}${event.prixMin?.toStringAsFixed(0) ?? ''} - ${AppConstants.currency}${event.prixMax?.toStringAsFixed(0) ?? ''}';
     Clipboard.setData(ClipboardData(text: text));
     AdminToast.show(context, message: AppLocalizations.of(context)!.clientShareCopied, isSuccess: true);
+  }
+
+  Future<void> _loadAnnonces() async {
+    try {
+      final data = await AnnonceService().getByEvenement(widget.eventId);
+      if (!mounted) return;
+      setState(() => _annonces = data);
+    } catch (_) {}
+  }
+
+  Future<void> _loadAvis() async {
+    try {
+      final data = await AvisService().getByEvenement(widget.eventId);
+      final moyenne = await AvisService().getMoyenne(widget.eventId);
+      if (!mounted) return;
+      setState(() {
+        _avis = data;
+        _avisMoyenne = moyenne;
+      });
+    } catch (_) {}
   }
 
   Future<void> _loadDetail() async {
@@ -145,13 +173,59 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
     return SingleChildScrollView(
       child: Column(
         children: [
+          if (event.statut == 'ANNULE' && event.motifAnnulation != null)
+            _buildCancellationBanner(event.motifAnnulation!),
           _buildHeroBanner(event),
           _buildLogisticsRow(event),
           _buildLocationCard(event),
           _buildAboutSection(event),
           if (event.standingZones != null && event.standingZones!.isNotEmpty) _buildStandingZones(event),
+          if (_annonces.isNotEmpty) _buildAnnoncesSection(),
+          _buildAvisSection(event),
           const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCancellationBanner(String motif) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(12),
+        bottomRight: Radius.circular(12),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.85),
+            border: Border.all(color: Colors.red.shade700, width: 1),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Événement annulé',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      motif,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -422,54 +496,168 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12),
-          ...event.standingZones!.map((zone) => Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.ticketBorder),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.accessibility_new, color: AppColors.primary, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          ...event.standingZones!.map((zone) {
+            final cap = zone.capacite;
+            final ratio = cap != null && cap > 0
+                ? ((cap - (zone.placesDisponibles ?? 0)) / cap).clamp(0.0, 1.0)
+                : 0.0;
+            final fillPercent = (ratio * 100).round();
+            final jaugeColor = ratio < 0.5
+                ? AppColors.secondary
+                : (ratio < 0.8 ? Colors.orange : Colors.red);
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.ticketBorder),
+              ),
+              child: Column(
+                children: [
+                  Row(
                     children: [
-                      Text(zone.nom, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary)),
-                      const SizedBox(height: 2),
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.accessibility_new, color: AppColors.primary, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(zone.nom, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary)),
+                            const SizedBox(height: 2),
+                            Text(
+                              zone.capacite != null
+                                  ? '${zone.placesDisponibles ?? 0}/${zone.capacite} ${AppLocalizations.of(context)!.clientHomeDetailPlacesAvailable}'
+                                  : AppLocalizations.of(context)!.clientHomeDetailUnlimitedSeats,
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
                       Text(
-                        zone.capacite != null
-                            ? '${zone.placesDisponibles ?? 0}/${zone.capacite} ${AppLocalizations.of(context)!.clientHomeDetailPlacesAvailable}'
-                            : AppLocalizations.of(context)!.clientHomeDetailUnlimitedSeats,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        '${AppConstants.currency}${zone.prix.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ],
                   ),
-                ),
-                Text(
-                  '${AppConstants.currency}${zone.prix.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-          )),
+                  if (cap != null && cap > 0) ...[
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: ratio,
+                        backgroundColor: AppColors.divider.withValues(alpha: 0.3),
+                        valueColor: AlwaysStoppedAnimation(jaugeColor),
+                        minHeight: 10,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '$fillPercent% rempli',
+                        style: TextStyle(fontSize: 11, color: jaugeColor, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }),
         ],
       ),
+    );
+  }
+
+  Widget _buildAnnoncesSection() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Annonces', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+        const SizedBox(height: 12),
+        ...(_annonces.take(3)).map((a) {
+          final annonce = a as Map<String, dynamic>;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.ticketBorder),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(annonce['titre'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              const SizedBox(height: 4),
+              Text(annonce['message'] ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+            ]),
+          );
+        }),
+      ]),
+    );
+  }
+
+  Widget _buildAvisSection(EventDetail event) {
+    final moyenne = (_avisMoyenne['moyenne'] as num?)?.toDouble() ?? 0.0;
+    final count = (_avisMoyenne['nombreAvis'] as num?)?.toInt() ?? 0;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Text('Avis', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+          const Spacer(),
+          if (count > 0) ...[
+            ...List.generate(5, (i) => Icon(
+              i < moyenne.round() ? Icons.star : Icons.star_border,
+              size: 18, color: Colors.amber,
+            )),
+            const SizedBox(width: 6),
+            Text('${moyenne.toStringAsFixed(1)} ($count)', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          ],
+        ]),
+        const SizedBox(height: 12),
+        if (_avis.isEmpty)
+          Text('Aucun avis pour le moment', style: TextStyle(color: AppColors.textMuted))
+        else
+          ...(_avis.take(5)).map((a) {
+            final avis = a as Map<String, dynamic>;
+            final note = (avis['note'] as num?)?.toInt() ?? 0;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.ticketBorder),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  ...List.generate(5, (i) => Icon(
+                    i < note ? Icons.star : Icons.star_border,
+                    size: 16, color: Colors.amber,
+                  )),
+                  const Spacer(),
+                  if (avis['dateCreation'] != null)
+                    Text(avis['dateCreation'].toString().substring(0, 10),
+                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                ]),
+                if (avis['commentaire'] != null && (avis['commentaire'] as String).isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(avis['commentaire'], style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                ],
+              ]),
+            );
+          }),
+      ]),
     );
   }
 

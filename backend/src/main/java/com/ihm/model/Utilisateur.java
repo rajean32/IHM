@@ -38,6 +38,14 @@ public class Utilisateur {
     private String tel;
     @Column(name = "Ville", length = 100)
     private String ville;
+    @Column(name = "photo", columnDefinition = "BYTEA")
+    private byte[] photo;
+    @Column(name = "bio", columnDefinition = "TEXT")
+    private String bio;
+    @Column(name = "siteWeb", length = 255)
+    private String siteWeb;
+    @Column(name = "reseauxSociaux", columnDefinition = "TEXT")
+    private String reseauxSociaux;
     @Column(name = "MotDePasse", length = 255, nullable = false)
     @NotBlank(message = "Password is required")
     private String motDePasse;
@@ -70,4 +78,12 @@ public class Utilisateur {
     public void setAdministrateur(Administrateur administrateur) { this.administrateur = administrateur; }
     public String getVille() { return ville; }
     public void setVille(String ville) { this.ville = ville; }
+    public byte[] getPhoto() { return photo; }
+    public void setPhoto(byte[] photo) { this.photo = photo; }
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+    public String getSiteWeb() { return siteWeb; }
+    public void setSiteWeb(String siteWeb) { this.siteWeb = siteWeb; }
+    public String getReseauxSociaux() { return reseauxSociaux; }
+    public void setReseauxSociaux(String reseauxSociaux) { this.reseauxSociaux = reseauxSociaux; }
 }

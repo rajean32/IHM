@@ -2426,6 +2426,18 @@ abstract class AppLocalizations {
   /// **'Search events...'**
   String get clientHomeSearchHint;
 
+  /// No description provided for @clientHomeNewEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'New Events'**
+  String get clientHomeNewEvents;
+
+  /// No description provided for @clientHomeNewBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW'**
+  String get clientHomeNewBadge;
+
   /// No description provided for @clientHomeFeatured.
   ///
   /// In en, this message translates to:
@@ -5125,6 +5137,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Event'**
   String get clientPaymentEventName;
+
+  /// No description provided for @clientHomeSubscribedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Followed Organizers'**
+  String get clientHomeSubscribedSection;
+
+  /// No description provided for @clientHomeSubscribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe'**
+  String get clientHomeSubscribe;
+
+  /// No description provided for @clientHomeUnsubscribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsubscribe'**
+  String get clientHomeUnsubscribe;
+
+  /// No description provided for @clientHomeNoSubscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow organizers to see their events here'**
+  String get clientHomeNoSubscriptions;
 }
 
 class _AppLocalizationsDelegate

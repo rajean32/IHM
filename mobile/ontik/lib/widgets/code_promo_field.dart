@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../core/api/dio_config.dart';
+import '../core/api/endpoints.dart';
 import '../core/assets/app_colors.dart';
+import '../core/utils/error_helper.dart';
 import '../generated/app_localizations.dart';
 
 class CodePromoField extends StatefulWidget {
@@ -46,17 +49,47 @@ class _CodePromoFieldState extends State<CodePromoField> {
       _message = null;
     });
 
-    // Simuler validation - dans la réalité, appeler l'API
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    widget.onCodeChanged(code);
-    widget.onValidate(true, code);
-
-    setState(() {
-      _isLoading = false;
-      _isValid = true;
-      _message = AppLocalizations.of(context)!.widgetsCodePromoApplied;
-    });
+    // Validation par API
+    try {
+      final resp = await dio.post(
+        Endpoints.verifierCodePromo(code, widget.eventId ?? 0),
+      );
+      // Succès
+      widget.onCodeChanged(code);
+      widget.onValidate(true, code);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _isValid = true;
+        _message = AppLocalizations.of(context)!.widgetsCodePromoApplied;
+      });
+    } catch (e) {
+      // Erreur API - Feature 20: colorer en rouge
+      String errMsg = 'Code invalide';
+      if (e.toString().contains('expiré')) {
+        errMsg = 'Ce code promo a expiré';
+      } else if (e.toString().contains('limite') || e.toString().contains('utilisation')) {
+        errMsg = 'Ce code promo a atteint sa limite d\'utilisations';
+      } else if (e.toString().contains('introuvable')) {
+        errMsg = 'Code promo introuvable';
+      } else if (e.toString().contains('pas encore valide')) {
+        errMsg = 'Ce code promo n\'est pas encore valide';
+      } else if (e.toString().contains('plus actif')) {
+        errMsg = 'Ce code promo n\'est plus actif';
+      } else if (e.toString().contains('pas valide pour cet événement')) {
+        errMsg = 'Ce code promo n\'est pas valide pour cet événement';
+      } else {
+        errMsg = apiErrorString(e);
+      }
+      widget.onCodeChanged(null);
+      widget.onValidate(false, null);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _isValid = false;
+        _message = errMsg;
+      });
+    }
   }
 
   @override
@@ -76,7 +109,15 @@ class _CodePromoFieldState extends State<CodePromoField> {
                 controller: _controller,
                 decoration: InputDecoration(
                   hintText: AppLocalizations.of(context)!.widgetsCodePromoHint,
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: (!_isValid && _message != null) ? Colors.red : Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: (!_isValid && _message != null) ? Colors.red : Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: (!_isValid && _message != null) ? Colors.red : AppColors.primary, width: 2),
+                  ),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   suffixIcon: _isLoading
@@ -90,8 +131,8 @@ class _CodePromoFieldState extends State<CodePromoField> {
                   )
                       : _controller.text.isNotEmpty
                       ? Icon(
-                    _isValid ? Icons.check_circle : Icons.info_outline,
-                    color: _isValid ? AppColors.secondary : AppColors.textSecondary,
+                    _isValid ? Icons.check_circle : Icons.cancel,
+                    color: _isValid ? AppColors.secondary : Colors.red,
                   )
                       : null,
                 ),
@@ -123,7 +164,7 @@ class _CodePromoFieldState extends State<CodePromoField> {
               _message!,
               style: TextStyle(
                 fontSize: 12,
-                color: _isValid ? AppColors.secondary : AppColors.textSecondary,
+                color: _isValid ? AppColors.secondary : Colors.red,
               ),
             ),
           ),

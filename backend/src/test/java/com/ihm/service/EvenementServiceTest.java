@@ -42,6 +42,8 @@ class EvenementServiceTest {
     @Mock private StandingZoneService standingZoneService;
     @Mock private PaiementService paiementService;
     @Mock private NotificationService notificationService;
+    @Mock private ActionLogService actionLogService;
+    @Mock private AbonnementRepository abonnementRepository;
     @Mock private EntityManager entityManager;
 
     private EvenementService evenementService;
@@ -53,7 +55,8 @@ class EvenementServiceTest {
                 placeRepository, ticketRepository, correspondARepository,
                 salleRepository, configRepository, caracteristiqueRepository,
                 valeurRepository, zoneStandingRepository, reservationRepository,
-                standingZoneService, paiementService, notificationService);
+                standingZoneService, paiementService, notificationService,
+                actionLogService, abonnementRepository);
         ReflectionTestUtils.setField(evenementService, "entityManager", entityManager);
     }
 

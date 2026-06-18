@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import com.ihm.model.TypeAgencement;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -36,6 +37,8 @@ public class EvenementDTO {
     private TypeAgencement typeAgencement;
     private String organisateurNom;
     private String lieuNom;
+    private LocalDateTime datePublication;
+    private Boolean isNew;
     private String categorieNom;
     private String lieuVille;
     private Long placesTotal;
@@ -43,6 +46,8 @@ public class EvenementDTO {
     private BigDecimal prixMin;
     private BigDecimal prixMax;
     private List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs;
+    private Double noteMoyenne;
+    private Long nombreAvis;
 
     public EvenementDTO() {}
 
@@ -86,6 +91,10 @@ public class EvenementDTO {
     public void setOrganisateurNom(String organisateurNom) { this.organisateurNom = organisateurNom; }
     public String getLieuNom() { return lieuNom; }
     public void setLieuNom(String lieuNom) { this.lieuNom = lieuNom; }
+    public LocalDateTime getDatePublication() { return datePublication; }
+    public void setDatePublication(LocalDateTime datePublication) { this.datePublication = datePublication; }
+    public Boolean getIsNew() { return isNew; }
+    public void setIsNew(Boolean isNew) { this.isNew = isNew; }
     public String getCategorieNom() { return categorieNom; }
     public void setCategorieNom(String categorieNom) { this.categorieNom = categorieNom; }
     public Long getPlacesTotal() { return placesTotal; }
@@ -98,6 +107,10 @@ public class EvenementDTO {
     public void setPrixMax(BigDecimal prixMax) { this.prixMax = prixMax; }
     public List<EvenementCaracteristiqueValeurDTO> getCaracteristiqueValeurs() { return caracteristiqueValeurs; }
     public void setCaracteristiqueValeurs(List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs) { this.caracteristiqueValeurs = caracteristiqueValeurs; }
+    public Double getNoteMoyenne() { return noteMoyenne; }
+    public void setNoteMoyenne(Double noteMoyenne) { this.noteMoyenne = noteMoyenne; }
+    public Long getNombreAvis() { return nombreAvis; }
+    public void setNombreAvis(Long nombreAvis) { this.nombreAvis = nombreAvis; }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class EventDetail {
@@ -127,6 +140,8 @@ public class EvenementDTO {
         private BigDecimal prixMax;
         private List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs;
         private TypeAgencement typeAgencement;
+        private LocalDateTime datePublication;
+        private Boolean isNew;
         private List<com.ihm.schema.SalleDTO.SeatingDTO> places;
         private List<ZoneStandingDTO> standingZones;
 
@@ -184,6 +199,10 @@ public class EvenementDTO {
         public void setCaracteristiqueValeurs(List<EvenementCaracteristiqueValeurDTO> caracteristiqueValeurs) { this.caracteristiqueValeurs = caracteristiqueValeurs; }
         public TypeAgencement getTypeAgencement() { return typeAgencement; }
         public void setTypeAgencement(TypeAgencement typeAgencement) { this.typeAgencement = typeAgencement; }
+        public LocalDateTime getDatePublication() { return datePublication; }
+        public void setDatePublication(LocalDateTime datePublication) { this.datePublication = datePublication; }
+        public Boolean getIsNew() { return isNew; }
+        public void setIsNew(Boolean isNew) { this.isNew = isNew; }
         public List<com.ihm.schema.SalleDTO.SeatingDTO> getPlaces() { return places; }
         public void setPlaces(List<com.ihm.schema.SalleDTO.SeatingDTO> places) { this.places = places; }
         public List<ZoneStandingDTO> getStandingZones() { return standingZones; }

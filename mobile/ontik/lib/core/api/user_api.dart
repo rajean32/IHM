@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'dio_config.dart';
 import 'endpoints.dart';
 
@@ -47,5 +49,12 @@ class UserApi {
     final data = resp.data['data'];
     if (data is List) return data;
     return [];
+  }
+
+  Future<void> uploadPhoto(String code, File file) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(file.path, filename: 'profile.jpg'),
+    });
+    await dio.post('${Endpoints.utilisateurs}/$code/photo', data: formData);
   }
 }

@@ -9,7 +9,10 @@ import '../../pages/client/reservation_page.dart';
 import '../../pages/client/payment_page.dart';
 import '../../pages/client/ticket_page.dart';
 import '../../pages/client/profile_page.dart';
+import '../../pages/client/historique_page.dart';
 import '../../pages/client/client_layout.dart';
+import '../../pages/chat/chat_list_page.dart';
+import '../../pages/chat/chat_conversation_page.dart';
 import '../../pages/organizer/organizer_layout.dart';
 import '../../pages/organizer/create_event_page.dart';
 import '../../pages/organizer/pricing_page.dart';
@@ -70,6 +73,13 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const TicketListPage());
       case ClientRoutes.profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage());
+      case ClientRoutes.historique:
+        return MaterialPageRoute(builder: (_) => const HistoriquePage());
+      case ClientRoutes.chatList:
+        return MaterialPageRoute(builder: (_) => const ChatListPage());
+      case ClientRoutes.chatConversation:
+        final a = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(builder: (_) => ChatConversationPage(conversation: a['conversation'] as dynamic));
       case OrganizerRoutes.layout:
         return MaterialPageRoute(builder: (_) => const OrganizerLayout());
       case OrganizerRoutes.createEvent:
@@ -115,6 +125,9 @@ class AppRouter {
       ClientRoutes.ticket,
       ClientRoutes.ticketList,
       ClientRoutes.profile,
+      ClientRoutes.historique,
+      ClientRoutes.chatList,
+      ClientRoutes.chatConversation,
       OrganizerRoutes.layout,
       OrganizerRoutes.createEvent,
       OrganizerRoutes.scan,

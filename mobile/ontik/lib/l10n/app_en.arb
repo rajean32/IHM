@@ -387,6 +387,8 @@
   "clientHomeSelectDateRange": "Select a range",
   "clientHomeApply": "Apply",
   "clientHomeSearchHint": "Search events...",
+  "clientHomeNewEvents": "New Events",
+  "clientHomeNewBadge": "NEW",
   "clientHomeFeatured": "Featured events",
   "clientHomeNoEvents": "No events found",
   "clientHomeVenueNotSpecified": "Venue not specified",
@@ -838,5 +840,9 @@
   "clientShareCopied": "Details copied to clipboard",
   "clientPaymentShareText": "Current order on Ontik",
   "clientPaymentOrderCopied": "Order information copied",
-  "clientPaymentEventName": "Event"
+  "clientPaymentEventName": "Event",
+  "clientHomeSubscribedSection": "Followed Organizers",
+  "clientHomeSubscribe": "Subscribe",
+  "clientHomeUnsubscribe": "Unsubscribe",
+  "clientHomeNoSubscriptions": "Follow organizers to see their events here"
 }

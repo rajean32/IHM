@@ -42,6 +42,14 @@ public class ActionLogService {
         log.debug("Action logged: {} by {} on {} {}", action, codeUtilisateur, entityType, entityId);
     }
 
+    // Feature 14: enregistrement d'une tentative frauduleuse (reverted = true)
+    public void logFraud(String codeUtilisateur, String action, String entityType, String entityId, String details) {
+        ActionLog al = new ActionLog(codeUtilisateur, action, entityType, entityId, details);
+        al.setReverted(true);
+        actionLogRepository.save(al);
+        log.warn("Fraud attempt logged: {} by {} on {} {} - {}", action, codeUtilisateur, entityType, entityId, details);
+    }
+
     // actions recentes
     public List<ActionLog> getRecentActions() {
         return actionLogRepository.findTop20ByOrderByDateActionDesc();

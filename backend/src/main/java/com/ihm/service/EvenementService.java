@@ -20,6 +20,8 @@ import java.math.BigDecimal;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,6 +60,8 @@ public class EvenementService {
     private final StandingZoneService standingZoneService;
     private final PaiementService paiementService;
     private final NotificationService notificationService;
+    private final ActionLogService actionLogService;
+    private final AbonnementRepository abonnementRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -78,7 +82,9 @@ public class EvenementService {
                             ReservationRepository reservationRepository,
                             StandingZoneService standingZoneService,
                             PaiementService paiementService,
-                            NotificationService notificationService) {
+                            NotificationService notificationService,
+                            ActionLogService actionLogService,
+                            AbonnementRepository abonnementRepository) {
         this.evenementRepository = evenementRepository;
         this.categorieRepository = categorieRepository;
         this.lieuRepository = lieuRepository;
@@ -96,6 +102,8 @@ public class EvenementService {
         this.standingZoneService = standingZoneService;
         this.paiementService = paiementService;
         this.notificationService = notificationService;
+        this.actionLogService = actionLogService;
+        this.abonnementRepository = abonnementRepository;
     }
 
     @Transactional(readOnly = true)
@@ -225,7 +233,44 @@ public class EvenementService {
             }
         }
 
+        event.setDatePublication(LocalDateTime.now());
         Evenement saved = evenementRepository.save(event);
+
+        // log PUBLISH_EVENT
+        try {
+            actionLogService.log(
+                saved.getOrganisateur().getCodeUtilisateur(),
+                "PUBLISH_EVENT",
+                "Evenement",
+                String.valueOf(saved.getIdEvenement()),
+                "Événement \"" + saved.getTitre() + "\" publié"
+            );
+        } catch (Exception ex) {
+            log.warn("Failed to log PUBLISH_EVENT: {}", ex.getMessage());
+        }
+
+        // notify subscribers (abonnés à l'organisateur)
+        try {
+            String orgCode = saved.getOrganisateur().getCodeUtilisateur();
+            String titre = saved.getTitre();
+            String msg = "Nouvel événement \"" + titre + "\" publié par " + saved.getOrganisateur().getPrenoms() + " " + saved.getOrganisateur().getNom();
+            List<Abonnement> abonnements = abonnementRepository.findByCodeOrganisateur(orgCode);
+            for (Abonnement ab : abonnements) {
+                try {
+                    notificationService.create(
+                        ab.getCodeClient(),
+                        "Nouvel événement",
+                        msg,
+                        "EVENT_PUBLISHED",
+                        String.valueOf(saved.getIdEvenement())
+                    );
+                } catch (Exception ex) {
+                    log.warn("Failed to notify subscriber {}: {}", ab.getCodeClient(), ex.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to send publication notifications for event {}: {}", saved.getIdEvenement(), e.getMessage());
+        }
 
         // save caracteristique values
         if (dto.getCaracteristiqueValeurs() != null) {
@@ -584,6 +629,15 @@ public class EvenementService {
     }
 
     @Transactional(readOnly = true)
+    public List<EvenementDTO> getRecentEvents() {
+        log.debug("Fetching recent published events");
+        return evenementRepository.findAllByOrderByDatePublicationDesc()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public EvenementDTO.EventDetail getEventDetail(Integer idEvent) {
         log.debug("Fetching event detail: {}", idEvent);
         Evenement event = evenementRepository.findByIdEvenement(idEvent)
@@ -802,6 +856,13 @@ public class EvenementService {
         dto.setCodeOrganisateur(event.getOrganisateur().getCodeUtilisateur());
         dto.setOrganisateurNom(event.getOrganisateur().getPrenoms() + " " + event.getOrganisateur().getNom());
         dto.setTypeAgencement(event.getTypeAgencement());
+        dto.setDatePublication(event.getDatePublication());
+        if (event.getDatePublication() != null) {
+            long hoursSince = ChronoUnit.HOURS.between(event.getDatePublication(), LocalDateTime.now());
+            dto.setIsNew(hoursSince < 48);
+        } else {
+            dto.setIsNew(false);
+        }
         if (event.getIdEvenement() != null && event.getLieu() != null) {
             TypeAgencement a = event.getTypeAgencement();
             if (a == TypeAgencement.DEBOUT_AVEC_LIMITE || a == TypeAgencement.DEBOUT_SANS_LIMITE) {

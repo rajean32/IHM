@@ -33,6 +33,7 @@ class TicketServiceTest {
     @Mock private StandingZoneService standingZoneService;
     @Mock private ZoneStandingRepository zoneStandingRepository;
     @Mock private NotificationService notificationService;
+    @Mock private ActionLogService actionLogService;
 
     private TicketService ticketService;
 
@@ -40,7 +41,8 @@ class TicketServiceTest {
     void setUp() {
         ticketService = new TicketService(ticketRepository, concernerRepository,
                 evenementRepository, placeRepository, correspondARepository,
-                qrCodeService, configRepository, standingZoneService, zoneStandingRepository, notificationService);
+                qrCodeService, configRepository, standingZoneService, zoneStandingRepository,
+                notificationService, actionLogService);
     }
 
     @Test

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../core/assets/app_colors.dart';
 import '../generated/app_localizations.dart';
@@ -32,6 +33,9 @@ class ProfileBody extends StatelessWidget {
   final List<ProfileMenuGroup> menuGroups;
   final VoidCallback? onLogout;
   final VoidCallback? onEditProfile;
+  final String? photoUrl;
+  final VoidCallback? onPhotoTap;
+  final Widget? extraWidget;
 
   const ProfileBody({
     super.key,
@@ -43,6 +47,9 @@ class ProfileBody extends StatelessWidget {
     this.menuGroups = const [],
     this.onLogout,
     this.onEditProfile,
+    this.photoUrl,
+    this.onPhotoTap,
+    this.extraWidget,
   });
 
   @override
@@ -60,6 +67,10 @@ class ProfileBody extends StatelessWidget {
             const SizedBox(height: 24),
           ],
           ...menuGroups.map(_buildMenuGroup),
+          if (extraWidget != null) ...[
+            const SizedBox(height: 8),
+            extraWidget!,
+          ],
           if (onLogout != null) ...[
             const SizedBox(height: 8),
             _buildLogoutButton(context),
@@ -87,16 +98,43 @@ class ProfileBody extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
+                GestureDetector(
+                  onTap: onPhotoTap,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                        backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
+                            ? (photoUrl!.startsWith('data:')
+                                ? MemoryImage(Base64Decoder().convert(photoUrl!.split(',').last))
+                                : NetworkImage(photoUrl!) as ImageProvider)
+                            : null,
+                        child: photoUrl == null || photoUrl!.isEmpty
+                            ? Text(
+                                initials,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              )
+                            : null,
+                      ),
+                      if (onPhotoTap != null)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 16),

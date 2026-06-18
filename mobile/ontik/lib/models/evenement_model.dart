@@ -62,6 +62,7 @@ class Evenement {
   final String? categorieNom;
   final int? placesTotal;
   final int? placesDisponibles;
+  final bool? isNew;
   final List<EvenementCaracteristiqueValeur>? caracteristiqueValeurs;
 
   Evenement({
@@ -89,6 +90,7 @@ class Evenement {
     this.categorieNom,
     this.placesTotal,
     this.placesDisponibles,
+    this.isNew,
     this.caracteristiqueValeurs,
   });
 
@@ -130,6 +132,7 @@ class Evenement {
       categorieNom: json['categorieNom'],
       placesTotal: json['placesTotal'],
       placesDisponibles: json['placesDisponibles'],
+      isNew: json['isNew'],
       caracteristiqueValeurs: json['caracteristiqueValeurs'] != null
           ? (json['caracteristiqueValeurs'] as List)
               .map((e) => EvenementCaracteristiqueValeur.fromJson(e as Map<String, dynamic>))

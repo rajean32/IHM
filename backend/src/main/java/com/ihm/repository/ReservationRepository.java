@@ -17,6 +17,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
 
     List<Reservation> findByClient_CodeUtilisateur(String codeClient);
 
+    @Query("SELECT r FROM Reservation r JOIN FETCH r.correspondances ca JOIN FETCH ca.ticket t WHERE r.client.codeUtilisateur = :codeClient ORDER BY r.dateReservation DESC")
+    List<Reservation> findByClientWithTickets(@Param("codeClient") String codeClient);
+
     boolean existsByIdReservation(Integer idReservation);
 
     @Query("SELECT COUNT(r) FROM Reservation r WHERE r.client.codeUtilisateur = :codeClient")

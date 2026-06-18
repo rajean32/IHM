@@ -100,6 +100,10 @@ public class ReductionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Reduction", "idReduction", id));
     }
 
+    public Reduction getByCode(String code) {
+        return reductionRepository.findByCode(code).orElse(null);
+    }
+
     @Transactional
     public Reduction create(Reduction reduction) {
         if (reduction.getCode() != null && reductionRepository.existsByCode(reduction.getCode())) {

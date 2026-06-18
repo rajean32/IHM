@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,9 @@ public class Evenement {
 
     @Column(name = "capacite")
     private Integer capacite;
+
+    @Column(name = "datePublication")
+    private LocalDateTime datePublication;
 
     @Column(name = "image", columnDefinition = "BYTEA")
     private byte[] image;
@@ -91,6 +95,8 @@ public class Evenement {
     public void setPrix(BigDecimal prix) { this.prix = prix; }
     public Integer getCapacite() { return capacite; }
     public void setCapacite(Integer capacite) { this.capacite = capacite; }
+    public LocalDateTime getDatePublication() { return datePublication; }
+    public void setDatePublication(LocalDateTime datePublication) { this.datePublication = datePublication; }
     public byte[] getImage() { return image; }
     public void setImage(byte[] image) { this.image = image; }
     public String getStatut() { return statut; }

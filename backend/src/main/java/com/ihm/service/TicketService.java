@@ -32,6 +32,7 @@ public class TicketService {
     private final StandingZoneService standingZoneService;
     private final ZoneStandingRepository zoneStandingRepository;
     private final NotificationService notificationService;
+    private final ActionLogService actionLogService;
 
     public TicketService(TicketRepository ticketRepository,
                          ConcernerRepository concernerRepository,
@@ -42,7 +43,8 @@ public class TicketService {
                          EvenementPlaceConfigurationRepository configRepository,
                          StandingZoneService standingZoneService,
                          ZoneStandingRepository zoneStandingRepository,
-                         NotificationService notificationService) {
+                         NotificationService notificationService,
+                         ActionLogService actionLogService) {
         this.ticketRepository = ticketRepository;
         this.concernerRepository = concernerRepository;
         this.evenementRepository = evenementRepository;
@@ -53,6 +55,7 @@ public class TicketService {
         this.standingZoneService = standingZoneService;
         this.zoneStandingRepository = zoneStandingRepository;
         this.notificationService = notificationService;
+        this.actionLogService = actionLogService;
     }
 
     @Transactional(readOnly = true)
@@ -289,6 +292,8 @@ public class TicketService {
         List<CorrespondA> correspondances = correspondARepository.findByTicket_CodeTicket(qrToken);
 
         if (ticket.getZoneStanding() == null && concerners.isEmpty()) {
+            actionLogService.logFraud("STAFF", "TICKET_SCAN_FAILED", "Ticket", qrToken,
+                    "Ticket not linked to any event or standing zone");
             TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
             r.setStatut("INVALID");
             r.setMessage("Ticket not linked to any event");
@@ -320,6 +325,8 @@ public class TicketService {
         }
 
         if (correspondances.isEmpty()) {
+            actionLogService.logFraud("STAFF", "TICKET_SCAN_FAILED", "Ticket", qrToken,
+                    "Ticket not linked to any reservation");
             TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
             r.setStatut("INVALID");
             r.setMessage("Ticket not linked to any reservation");
@@ -333,6 +340,8 @@ public class TicketService {
                 .orElse(null);
 
         if (config != null && "UTILISE".equals(config.getStatut())) {
+            actionLogService.logFraud("STAFF", "TICKET_SCAN_FAILED", "Ticket", qrToken,
+                    "Ticket already used for place " + concerner.getPlace().getNumeroPlace());
             String orgCode3 = concerner.getEvenement().getOrganisateur().getCodeUtilisateur();
             notificationService.create(
                     orgCode3,
@@ -351,7 +360,29 @@ public class TicketService {
             return r;
         }
 
-        if (config != null) {
+        // Feature 19: Double validation — verify place matches event config
+        if (config != null && concerner.getPlace() != null) {
+            String scannedPlace = concerner.getPlace().getNumeroPlace();
+            EvenementPlaceConfiguration matchedConfig = configRepository
+                    .findByEvenement_IdEvenementAndPlace_NumeroPlace(
+                            concerner.getEvenement().getIdEvenement(), scannedPlace)
+                    .orElse(null);
+            if (matchedConfig == null) {
+                actionLogService.logFraud("STAFF", "TICKET_SCAN_FAILED", "Ticket", qrToken,
+                        "Place " + scannedPlace + " not found in event config");
+                TicketDTO.GateScanResponse r = new TicketDTO.GateScanResponse();
+                r.setStatut("INVALID");
+                r.setMessage("Place " + scannedPlace + " does not match event configuration");
+                r.setCodeTicket(qrToken);
+                r.setPlaceNumero(scannedPlace);
+                return r;
+            }
+            if ("RESERVEE".equals(matchedConfig.getStatut()) || "DISPONIBLE".equals(matchedConfig.getStatut())) {
+                matchedConfig.setStatut("UTILISE");
+                configRepository.save(matchedConfig);
+                log.info("Ticket {} marked as UTILISE at gate (place: {})", qrToken, scannedPlace);
+            }
+        } else if (config != null) {
             config.setStatut("UTILISE");
             configRepository.save(config);
             log.info("Ticket {} marked as UTILISE at gate", qrToken);
@@ -377,6 +408,11 @@ public class TicketService {
         r.setPlaceNumero(concerner.getPlace().getNumeroPlace());
         r.setClientNom(clientNom);
         return r;
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getValidTicketCodesForEvent(Integer eventId) {
+        return ticketRepository.findValidCodesByEvent(eventId);
     }
 
     public TicketDTO toDTO(Ticket ticket) {

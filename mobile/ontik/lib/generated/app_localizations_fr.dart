@@ -1309,6 +1309,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get clientHomeSearchHint => 'Rechercher un événement...';
 
   @override
+  String get clientHomeNewEvents => 'Nouveautés';
+
+  @override
+  String get clientHomeNewBadge => 'NOUVEAU';
+
+  @override
   String get clientHomeFeatured => 'Événements à la une';
 
   @override
@@ -2684,4 +2690,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get clientPaymentEventName => 'Événement';
+
+  @override
+  String get clientHomeSubscribedSection => 'Organisateurs suivis';
+
+  @override
+  String get clientHomeSubscribe => 'S\'abonner';
+
+  @override
+  String get clientHomeUnsubscribe => 'Se désabonner';
+
+  @override
+  String get clientHomeNoSubscriptions =>
+      'Suivez des organisateurs pour voir leurs événements ici';
 }

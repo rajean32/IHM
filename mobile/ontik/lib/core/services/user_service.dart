@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../api/user_api.dart';
 
 class UserService {
@@ -13,4 +14,5 @@ class UserService {
   Future<void> updateUserProfile(String code, Map<String, dynamic> data) => _api.updateUserProfile(code, data);
   Future<List<dynamic>> getUserPayments(String code) => _api.getUserPayments(code);
   Future<void> deleteSelfAccount(String code) => _api.selfDelete(code);
+  Future<void> uploadPhoto(String code, File file) => _api.uploadPhoto(code, file);
 }

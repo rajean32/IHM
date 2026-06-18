@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/services/chat_service.dart';
 import '../../widgets/notification_bell.dart';
 import '../../generated/app_localizations.dart';
 import 'home_page.dart';
 import '../ticket/ticket_list_page.dart';
+import '../chat/chat_list_page.dart';
 import 'client_profile_page.dart';
 
 class ClientLayout extends StatefulWidget {
@@ -16,12 +18,15 @@ class ClientLayout extends StatefulWidget {
 
 class _ClientLayoutState extends State<ClientLayout> {
   int _currentIndex = 0;
+  int _chatUnread = 0;
+  final _chatService = ChatService();
 
   @override
   void initState() {
     super.initState();
     if (userCode != null) {
       NotificationManager.connect(userCode!, null);
+      _loadChatUnread();
     }
   }
 
@@ -31,8 +36,17 @@ class _ClientLayoutState extends State<ClientLayout> {
     super.dispose();
   }
 
+  Future<void> _loadChatUnread() async {
+    try {
+      final count = await _chatService.getUnreadCount(userCode!);
+      if (!mounted) return;
+      setState(() => _chatUnread = count);
+    } catch (_) {}
+  }
+
   final List<Widget> _pages = [
     const HomePage(),
+    const ChatListPage(),
     const TicketListPage(),
     const ClientProfilePage(),
   ];
@@ -69,14 +83,18 @@ class _ClientLayoutState extends State<ClientLayout> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          setState(() => _currentIndex = index);
+          if (index == 1) _loadChatUnread();
         },
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.event),
             label: AppLocalizations.of(context)!.clientHome,
+          ),
+          NavigationDestination(
+            icon: Badge(isLabelVisible: _chatUnread > 0, label: Text('$_chatUnread'),
+              child: const Icon(Icons.chat_bubble_outline)),
+            label: 'Messages',
           ),
           NavigationDestination(
             icon: const Icon(Icons.confirmation_number),

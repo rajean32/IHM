@@ -72,6 +72,11 @@ class EvenementApi {
     await dio.post(Endpoints.eventImage(eventId), data: formData);
   }
 
+  Future<List<dynamic>> getRecentEvents() async {
+    final resp = await dio.get(Endpoints.eventsRecent);
+    return (resp.data['data'] as List?) ?? [];
+  }
+
   // Événements cinéma
   Future<List<dynamic>> getCinemaEvents() async {
     final resp = await dio.get(Endpoints.cinemaEvents);

@@ -82,12 +82,30 @@ class EventCard extends StatelessWidget {
             borderRadius: const BorderRadius.horizontal(left: Radius.circular(11)),
             child: SizedBox(
               width: 100, height: 100,
-              child: event.image != null
-                  ? eventImageWidget(event.image!, fit: BoxFit.cover)
-                  : Container(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      child: Icon(Icons.event, color: AppColors.primary.withValues(alpha: 0.3)),
+              child: Stack(fit: StackFit.expand, children: [
+                event.image != null
+                    ? eventImageWidget(event.image!, fit: BoxFit.cover)
+                    : Container(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        child: Icon(Icons.event, color: AppColors.primary.withValues(alpha: 0.3)),
+                      ),
+                if (event.isNew == true)
+                  Positioned(
+                    top: 4, left: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFFFF6B35), Color(0xFFFF2E63)],
+                            begin: Alignment.topLeft, end: Alignment.bottomRight),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.clientHomeNewBadge,
+                        style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.5),
+                      ),
                     ),
+                  ),
+              ]),
             ),
           ),
           Expanded(
@@ -121,17 +139,36 @@ class EventCard extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: event.image != null
-                ? eventImageWidget(event.image!, fit: BoxFit.cover, width: double.infinity)
-                : Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.primary.withValues(alpha: 0.7), AppColors.primary.withValues(alpha: 0.3)],
-                        begin: Alignment.topLeft, end: Alignment.bottomRight,
+            child: Stack(fit: StackFit.expand, children: [
+              event.image != null
+                  ? eventImageWidget(event.image!, fit: BoxFit.cover, width: double.infinity)
+                  : Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppColors.primary.withValues(alpha: 0.7), AppColors.primary.withValues(alpha: 0.3)],
+                          begin: Alignment.topLeft, end: Alignment.bottomRight,
+                        ),
                       ),
+                      child: Center(child: Icon(Icons.event, size: 48, color: Colors.white.withValues(alpha: 0.4))),
                     ),
-                    child: Center(child: Icon(Icons.event, size: 48, color: Colors.white.withValues(alpha: 0.4))),
+              if (event.isNew == true)
+                Positioned(
+                  top: 8, right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFFFF6B35), Color(0xFFFF2E63)],
+                          begin: Alignment.topLeft, end: Alignment.bottomRight),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [BoxShadow(color: Color(0xFFFF2E63).withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 2))],
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.clientHomeNewBadge,
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 1),
+                    ),
                   ),
+                ),
+            ]),
           ),
           Padding(
             padding: const EdgeInsets.all(14),
