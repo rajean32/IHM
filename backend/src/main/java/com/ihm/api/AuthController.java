@@ -71,8 +71,8 @@ public class AuthController {
     @PutMapping("/ville")
     public ResponseEntity<ApiResponse<Map<String, String>>> updateVille(@Valid @RequestBody AuthDTO.UpdateVilleRequest request) {
         log.info("PUT /api/auth/ville - user: {}, ville: {}", request.getCodeUtilisateur(), request.getVille());
-        authService.updateVille(request.getCodeUtilisateur(), request.getVille());
-        Map<String, String> data = Map.of("message", "Ville updated successfully", "ville", request.getVille());
+        authService.updateVille(request.getCodeUtilisateur(), request.getVille(), request.getVilleCode());
+        Map<String, String> data = Map.of("message", "Ville updated successfully", "ville", request.getVille(), "villeCode", request.getVilleCode());
         return ResponseEntity.ok(ApiResponse.success(200, "Ville updated successfully", data));
     }
 

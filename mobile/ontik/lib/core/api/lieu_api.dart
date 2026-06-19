@@ -7,6 +7,16 @@ class LieuApi {
     return (resp.data['data'] as List?) ?? [];
   }
 
+  Future<Map<String, dynamic>> getLieuByCode(String code) async {
+    final resp = await dio.get('${Endpoints.lieux}/$code');
+    return resp.data['data'] as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getLieuxByVille(String villeNom) async {
+    final resp = await dio.get('${Endpoints.lieux}/by-ville/$villeNom');
+    return (resp.data['data'] as List?) ?? [];
+  }
+
   Future<Map<String, dynamic>> createLieu(Map<String, dynamic> data) async {
     final resp = await dio.post(Endpoints.lieux, data: data);
     return resp.data['data'] as Map<String, dynamic>;

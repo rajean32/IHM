@@ -51,6 +51,7 @@ public class UtilisateurService {
     private final EvenementPlaceConfigurationRepository configRepository;
     private final ActionLogService actionLogService;
     private final PasswordEncoder passwordEncoder;
+    private final VilleService villeService;
 
     public UtilisateurService(UtilisateurRepository utilisateurRepository,
                               AdministrateurRepository administrateurRepository,
@@ -65,7 +66,8 @@ public class UtilisateurService {
                               PaiementRepository paiementRepository,
                               EvenementPlaceConfigurationRepository configRepository,
                               ActionLogService actionLogService,
-                              PasswordEncoder passwordEncoder) {
+                              PasswordEncoder passwordEncoder,
+                              VilleService villeService) {
         this.utilisateurRepository = utilisateurRepository;
         this.administrateurRepository = administrateurRepository;
         this.clientRepository = clientRepository;
@@ -80,6 +82,7 @@ public class UtilisateurService {
         this.configRepository = configRepository;
         this.actionLogService = actionLogService;
         this.passwordEncoder = passwordEncoder;
+        this.villeService = villeService;
     }
 
     // ========== UtilisateurService methods ==========
@@ -149,7 +152,9 @@ public class UtilisateurService {
             user.setEmail(dto.getEmail());
         }
         if (dto.getTel() != null) user.setTel(dto.getTel());
-        if (dto.getVille() != null) user.setVille(dto.getVille());
+        if (dto.getVille() != null) {
+            user.setVille(villeService.resolveOrCreateVille(dto.getVilleCode(), dto.getVille()));
+        }
         if (dto.getMotDePasse() != null) user.setMotDePasse(passwordEncoder.encode(dto.getMotDePasse()));
         if (dto.getCodeAdministrateur() != null) {
             Administrateur admin = administrateurRepository.findByCodeAdministrateur(dto.getCodeAdministrateur())
@@ -168,7 +173,9 @@ public class UtilisateurService {
         if (dto.getBio() != null) user.setBio(dto.getBio());
         if (dto.getSiteWeb() != null) user.setSiteWeb(dto.getSiteWeb());
         if (dto.getReseauxSociaux() != null) user.setReseauxSociaux(dto.getReseauxSociaux());
-        if (dto.getVille() != null) user.setVille(dto.getVille());
+        if (dto.getVille() != null) {
+            user.setVille(villeService.resolveOrCreateVille(dto.getVilleCode(), dto.getVille()));
+        }
         if (dto.getTel() != null) user.setTel(dto.getTel());
         Utilisateur saved = utilisateurRepository.save(user);
         log.info("Profile updated for user: {}", code);
@@ -497,7 +504,8 @@ public class UtilisateurService {
         dto.setDateDeNaissance(user.getDateDeNaissance());
         dto.setEmail(user.getEmail());
         dto.setTel(user.getTel());
-        dto.setVille(user.getVille());
+        dto.setVille(user.getVilleNom());
+        dto.setVilleCode(user.getVilleCode());
         dto.setPhoto(com.ihm.util.ImageUtils.toDataUrl(user.getPhoto()));
         dto.setBio(user.getBio());
         dto.setSiteWeb(user.getSiteWeb());

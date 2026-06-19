@@ -75,12 +75,24 @@ Widget _placeTypeManager(BuildContext context, List<String> placeTypes, TextEdit
     Text(l10n.seatTypesDesc, style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
     const SizedBox(height: 8),
     Wrap(spacing: 8, runSpacing: 8, children: placeTypes.map((type) {
-      final isDefault = type == 'Standard' || type == 'VIP';
-      return Chip(
-        label: Text(type, style: TextStyle(fontSize: 12, color: isDefault ? Colors.white : null)),
-        backgroundColor: isDefault ? AppTheme.primaryColor : AppTheme.surfaceColor,
-        deleteIcon: isDefault ? null : const Icon(Icons.close, size: 16),
-        onDeleted: isDefault ? null : () => onRemovePlaceType(type),
+      return Container(
+        padding: const EdgeInsets.only(left: 12, right: 4),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppTheme.dividerColor),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Text(type, style: const TextStyle(fontSize: 12)),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => onRemovePlaceType(type),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              child: Icon(Icons.close, size: 14, color: AppTheme.textSecondary),
+            ),
+          ),
+        ]),
       );
     }).toList()),
     const SizedBox(height: 8),

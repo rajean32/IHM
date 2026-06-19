@@ -170,11 +170,11 @@ class _LieuxPageState extends State<LieuxPage> {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-          child: Text(lieu.code.isNotEmpty ? lieu.code[0].toUpperCase() : '?', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          child: Text(lieu.code.isNotEmpty ? lieu.code[0].toUpperCase() : '?', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
         ),
         title: Text(lieu.nomLieu, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-        subtitle: Text('${lieu.adresse ?? ""}${lieu.ville != null ? "  •  ${lieu.ville}" : ""}  •  ${salles.length} salle(s)', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        subtitle: Text('${lieu.adresse ?? ""}${lieu.ville != null ? "  •  ${lieu.ville}" : ""}  •  ${salles.length} salle(s)', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

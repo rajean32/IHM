@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ontik/models/lieu_model.dart';
-import 'package:ontik/core/assets/app_colors.dart';
+import 'package:ontik/core/services/ville_service.dart';
+import 'package:ontik/models/ville_model.dart';
 
 class LieuFormSheet extends StatefulWidget {
   final Lieu? lieu;
@@ -32,8 +33,13 @@ class _LieuFormSheetState extends State<LieuFormSheet> {
   late final TextEditingController _codeCtrl;
   late final TextEditingController _nomCtrl;
   late final TextEditingController _adresseCtrl;
-  late final TextEditingController _villeCtrl;
+  late final TextEditingController _descriptionCtrl;
   bool _isEditing = false;
+
+  List<Ville> _villes = [];
+  Ville? _selectedVille;
+  final _autreVilleCtrl = TextEditingController();
+  bool _isAutreVille = false;
 
   @override
   void initState() {
@@ -42,7 +48,33 @@ class _LieuFormSheetState extends State<LieuFormSheet> {
     _codeCtrl = TextEditingController(text: widget.lieu?.code ?? '');
     _nomCtrl = TextEditingController(text: widget.lieu?.nomLieu ?? '');
     _adresseCtrl = TextEditingController(text: widget.lieu?.adresse ?? '');
-    _villeCtrl = TextEditingController(text: widget.lieu?.ville ?? '');
+    _descriptionCtrl = TextEditingController(text: widget.lieu?.description ?? '');
+
+    if (widget.lieu?.ville != null && widget.lieu!.ville!.isNotEmpty) {
+      _autreVilleCtrl.text = widget.lieu!.ville!;
+    }
+    _loadVilles();
+  }
+
+  Future<void> _loadVilles() async {
+    try {
+      final villes = await VilleService().getVilles();
+      if (!mounted) return;
+      setState(() {
+        _villes = villes;
+        if (widget.lieu?.ville != null && widget.lieu!.ville!.isNotEmpty) {
+          final match = villes.where((v) =>
+            v.nom.toLowerCase() == widget.lieu!.ville!.toLowerCase() ||
+            v.code.toLowerCase() == widget.lieu!.ville!.toLowerCase()
+          ).firstOrNull;
+          if (match != null) {
+            _selectedVille = match;
+          } else {
+            _isAutreVille = true;
+          }
+        }
+      });
+    } catch (_) {}
   }
 
   @override
@@ -50,22 +82,34 @@ class _LieuFormSheetState extends State<LieuFormSheet> {
     _codeCtrl.dispose();
     _nomCtrl.dispose();
     _adresseCtrl.dispose();
-    _villeCtrl.dispose();
+    _descriptionCtrl.dispose();
+    _autreVilleCtrl.dispose();
     super.dispose();
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    String? villeNom;
+    String? villeCode;
+    if (_isAutreVille) {
+      villeNom = _autreVilleCtrl.text.trim().isEmpty ? null : _autreVilleCtrl.text.trim();
+    } else {
+      villeNom = _selectedVille?.nom;
+      villeCode = _selectedVille?.code;
+    }
     Navigator.pop(context, {
       'code': _codeCtrl.text.trim(),
       'nomLieu': _nomCtrl.text.trim(),
       'adresse': _adresseCtrl.text.trim().isEmpty ? null : _adresseCtrl.text.trim(),
-      'ville': _villeCtrl.text.trim().isEmpty ? null : _villeCtrl.text.trim(),
+      'description': _descriptionCtrl.text.trim().isEmpty ? null : _descriptionCtrl.text.trim(),
+      'ville': villeNom,
+      'villeCode': villeCode,
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Padding(
@@ -75,9 +119,9 @@ class _LieuFormSheetState extends State<LieuFormSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(width: 32, height: 4, decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)))),
+              Center(child: Container(width: 32, height: 4, decoration: BoxDecoration(color: theme.colorScheme.outline.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 16),
-              Text(_isEditing ? 'Modifier le lieu' : 'Ajouter un lieu', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(_isEditing ? 'Modifier le lieu' : 'Ajouter un lieu', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface)),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _codeCtrl,
@@ -101,10 +145,39 @@ class _LieuFormSheetState extends State<LieuFormSheet> {
               ),
               const SizedBox(height: 12),
               TextFormField(
-                controller: _villeCtrl,
-                decoration: const InputDecoration(labelText: 'Ville'),
-                maxLength: 100,
+                controller: _descriptionCtrl,
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLines: 4,
+                maxLength: 1000,
               ),
+              const SizedBox(height: 12),
+              _isAutreVille
+                  ? TextFormField(
+                      controller: _autreVilleCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Ville (autre)',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.list, size: 20),
+                          onPressed: () => setState(() { _isAutreVille = false; _autreVilleCtrl.clear(); }),
+                          tooltip: 'Choisir dans la liste',
+                        ),
+                      ),
+                      maxLength: 100,
+                    )
+                  : DropdownButtonFormField<Ville>(
+                      value: _villes.contains(_selectedVille) ? _selectedVille : null,
+                      decoration: InputDecoration(
+                        labelText: 'Ville',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.edit, size: 20),
+                          onPressed: () => setState(() { _isAutreVille = true; _selectedVille = null; }),
+                          tooltip: 'Saisir une autre ville',
+                        ),
+                      ),
+                      items: _villes.map((v) => DropdownMenuItem(value: v, child: Text('${v.nom} (${v.code})'))).toList(),
+                      onChanged: (v) => setState(() => _selectedVille = v),
+                      isExpanded: true,
+                    ),
               const SizedBox(height: 24),
               Row(
                 children: [

@@ -29,6 +29,7 @@ public class AuthDTO {
         private String role;
         private boolean isFirstLogin;
         private String ville;
+        private String villeCode;
         public LoginResponse() {}
         public LoginResponse(String token, String codeUtilisateur, String email, String nom, String prenoms, String role) {
             this.token = token; this.codeUtilisateur = codeUtilisateur; this.email = email;
@@ -39,6 +40,9 @@ public class AuthDTO {
         }
         public LoginResponse(String token, String codeUtilisateur, String email, String nom, String prenoms, String role, boolean isFirstLogin, String ville) {
             this(token, codeUtilisateur, email, nom, prenoms, role, isFirstLogin); this.ville = ville;
+        }
+        public LoginResponse(String token, String codeUtilisateur, String email, String nom, String prenoms, String role, boolean isFirstLogin, String ville, String villeCode) {
+            this(token, codeUtilisateur, email, nom, prenoms, role, isFirstLogin); this.ville = ville; this.villeCode = villeCode;
         }
         public String getToken() { return token; }
         public void setToken(String token) { this.token = token; }
@@ -56,6 +60,8 @@ public class AuthDTO {
         public void setFirstLogin(boolean isFirstLogin) { this.isFirstLogin = isFirstLogin; }
         public String getVille() { return ville; }
         public void setVille(String ville) { this.ville = ville; }
+        public String getVilleCode() { return villeCode; }
+        public void setVilleCode(String villeCode) { this.villeCode = villeCode; }
     }
 
     public static class RegisterRequest {
@@ -68,6 +74,8 @@ public class AuthDTO {
         @NotBlank private String motDePasse;
         private String codeUtilisateur;
         private String type;
+        private String ville;
+        private String villeCode;
         public RegisterRequest() {}
         public String getNom() { return nom; }
         public void setNom(String nom) { this.nom = nom; }
@@ -87,6 +95,10 @@ public class AuthDTO {
         public void setCodeUtilisateur(String codeUtilisateur) { this.codeUtilisateur = codeUtilisateur; }
         public String getType() { return type; }
         public void setType(String type) { this.type = type; }
+        public String getVille() { return ville; }
+        public void setVille(String ville) { this.ville = ville; }
+        public String getVilleCode() { return villeCode; }
+        public void setVilleCode(String villeCode) { this.villeCode = villeCode; }
     }
 
     public static class FirstLoginUpdateRequest {
@@ -94,6 +106,7 @@ public class AuthDTO {
         private String newPassword;
         private String newEmail;
         private String ville;
+        private String villeCode;
         public FirstLoginUpdateRequest() {}
         public String getCodeUtilisateur() { return codeUtilisateur; }
         public void setCodeUtilisateur(String codeUtilisateur) { this.codeUtilisateur = codeUtilisateur; }
@@ -103,15 +116,20 @@ public class AuthDTO {
         public void setNewEmail(String newEmail) { this.newEmail = newEmail; }
         public String getVille() { return ville; }
         public void setVille(String ville) { this.ville = ville; }
+        public String getVilleCode() { return villeCode; }
+        public void setVilleCode(String villeCode) { this.villeCode = villeCode; }
     }
 
     public static class UpdateVilleRequest {
         @NotBlank private String codeUtilisateur;
         @NotBlank private String ville;
+        private String villeCode;
         public UpdateVilleRequest() {}
         public String getCodeUtilisateur() { return codeUtilisateur; }
         public void setCodeUtilisateur(String codeUtilisateur) { this.codeUtilisateur = codeUtilisateur; }
         public String getVille() { return ville; }
         public void setVille(String ville) { this.ville = ville; }
+        public String getVilleCode() { return villeCode; }
+        public void setVilleCode(String villeCode) { this.villeCode = villeCode; }
     }
 }

@@ -2,17 +2,21 @@ class Lieu {
   final String code;
   final String nomLieu;
   final String? adresse;
+  final String? description;
   final String? ville;
+  final String? villeCode;
   final List<Salle>? salles;
 
-  Lieu({required this.code, required this.nomLieu, this.adresse, this.ville, this.salles});
+  Lieu({required this.code, required this.nomLieu, this.adresse, this.description, this.ville, this.villeCode, this.salles});
 
   factory Lieu.fromJson(Map<String, dynamic> json) {
     return Lieu(
       code: json['code'] ?? '',
       nomLieu: json['nomLieu'] ?? '',
       adresse: json['adresse'],
+      description: json['description'],
       ville: json['ville'],
+      villeCode: json['villeCode'],
       salles: json['salles'] != null
           ? (json['salles'] as List).map((e) => Salle.fromJson(e as Map<String, dynamic>)).toList()
           : null,
@@ -24,7 +28,9 @@ class Lieu {
       'code': code,
       'nomLieu': nomLieu,
       'adresse': adresse,
+      'description': description,
       'ville': ville,
+      'villeCode': villeCode,
     };
   }
 }

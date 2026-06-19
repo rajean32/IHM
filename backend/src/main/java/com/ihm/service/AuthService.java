@@ -12,6 +12,7 @@ import com.ihm.model.Administrateur;
 import com.ihm.model.Client;
 import com.ihm.model.Organisateur;
 import com.ihm.model.Utilisateur;
+import com.ihm.model.Ville;
 import com.ihm.security.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,19 +37,22 @@ public class AuthService {
     private final AdministrateurRepository administrateurRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final VilleService villeService;
 
     public AuthService(UtilisateurRepository utilisateurRepository,
                        OrganisateurRepository organisateurRepository,
                        ClientRepository clientRepository,
                        AdministrateurRepository administrateurRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil) {
+                       JwtUtil jwtUtil,
+                       VilleService villeService) {
         this.utilisateurRepository = utilisateurRepository;
         this.organisateurRepository = organisateurRepository;
         this.clientRepository = clientRepository;
         this.administrateurRepository = administrateurRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.villeService = villeService;
     }
 
     // connexion utilisateur
@@ -66,7 +70,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getCodeUtilisateur(), role);
 
         log.info("User logged in: {} (firstLogin: {})", user.getCodeUtilisateur(), user.isPremiereConnexion());
-        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, user.isPremiereConnexion(), user.getVille());
+        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, user.isPremiereConnexion(), user.getVilleNom(), user.getVilleCode());
     }
 
     // inscription utilisateur
@@ -107,7 +111,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getCodeUtilisateur(), role);
 
         log.info("User registered: {} as {}", user.getCodeUtilisateur(), role);
-        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, user.isPremiereConnexion(), user.getVille());
+        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, user.isPremiereConnexion(), user.getVilleNom(), user.getVilleCode());
     }
 
     // allocation
@@ -121,6 +125,10 @@ public class AuthService {
         user.setTel(request.getTel());
         user.setMotDePasse(passwordEncoder.encode(request.getMotDePasse()));
         user.setPremiereConnexion(true);
+        if (request.getVille() != null && !request.getVille().isBlank()) {
+            Ville ville = villeService.resolveOrCreateVille(request.getVilleCode(), request.getVille());
+            user.setVille(ville);
+        }
     }
 
     // mise a jour premiere connexion
@@ -152,7 +160,8 @@ public class AuthService {
         }
 
         if (request.getVille() != null && !request.getVille().isBlank()) {
-            user.setVille(request.getVille());
+            Ville ville = villeService.resolveOrCreateVille(request.getVilleCode(), request.getVille());
+            user.setVille(ville);
         }
 
         user.setPremiereConnexion(false);
@@ -162,16 +171,17 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getCodeUtilisateur(), role);
 
         log.info("First login update completed for: {}", user.getCodeUtilisateur());
-        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, false, user.getVille());
+        return new AuthDTO.LoginResponse(token, user.getCodeUtilisateur(), user.getEmail(), user.getNom(), user.getPrenoms(), role, false, user.getVilleNom(), user.getVilleCode());
     }
 
     @Transactional
-    public void updateVille(String codeUtilisateur, String ville) {
+    public void updateVille(String codeUtilisateur, String ville, String villeCode) {
         Utilisateur user = utilisateurRepository.findByCodeUtilisateur(codeUtilisateur)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "code", codeUtilisateur));
-        user.setVille(ville);
+        Ville v = villeService.resolveOrCreateVille(villeCode, ville);
+        user.setVille(v);
         utilisateurRepository.save(user);
-        log.info("Ville updated for user {}: {}", codeUtilisateur, ville);
+        log.info("Ville updated for user {}: {} ({})", codeUtilisateur, ville, villeCode);
     }
 
     // demande de reinitialisation mot de passe

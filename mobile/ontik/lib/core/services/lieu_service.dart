@@ -4,6 +4,8 @@ class LieuService {
   final _api = LieuApi();
 
   Future<List<dynamic>> getLieux() => _api.getLieux();
+  Future<Map<String, dynamic>> getLieuByCode(String code) => _api.getLieuByCode(code);
+  Future<List<dynamic>> getLieuxByVille(String villeNom) => _api.getLieuxByVille(villeNom);
   Future<Map<String, dynamic>> createLieu(Map<String, dynamic> data) => _api.createLieu(data);
   Future<void> deleteLieu(String code) => _api.deleteLieu(code);
   Future<List<dynamic>> getSalles() => _api.getSalles();

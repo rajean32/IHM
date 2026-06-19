@@ -23,6 +23,9 @@ public class OrganisateurDTO {
     @NotBlank(message = "Phone number is required")
     private String tel;
     private String codeAdministrateur;
+    private String ville;
+    private String villeCode;
+    private String photo;
     public OrganisateurDTO() {}
     public String getCodeOrganisateur() { return codeOrganisateur; }
     public void setCodeOrganisateur(String codeOrganisateur) { this.codeOrganisateur = codeOrganisateur; }
@@ -40,4 +43,10 @@ public class OrganisateurDTO {
     public void setTel(String tel) { this.tel = tel; }
     public String getCodeAdministrateur() { return codeAdministrateur; }
     public void setCodeAdministrateur(String codeAdministrateur) { this.codeAdministrateur = codeAdministrateur; }
+    public String getVille() { return ville; }
+    public void setVille(String ville) { this.ville = ville; }
+    public String getVilleCode() { return villeCode; }
+    public void setVilleCode(String villeCode) { this.villeCode = villeCode; }
+    public String getPhoto() { return photo; }
+    public void setPhoto(String photo) { this.photo = photo; }
 }

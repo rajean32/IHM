@@ -28,6 +28,7 @@ public class UtilisateurDTO {
     public String getMotDePasse() { return motDePasse; }
     public void setMotDePasse(String motDePasse) { this.motDePasse = motDePasse; }
     private String ville;
+    private String villeCode;
     private String codeAdministrateur;
     private String photo;
     private String bio;
@@ -50,6 +51,8 @@ public class UtilisateurDTO {
     public void setTel(String tel) { this.tel = tel; }
     public String getVille() { return ville; }
     public void setVille(String ville) { this.ville = ville; }
+    public String getVilleCode() { return villeCode; }
+    public void setVilleCode(String villeCode) { this.villeCode = villeCode; }
     public String getCodeAdministrateur() { return codeAdministrateur; }
     public void setCodeAdministrateur(String codeAdministrateur) { this.codeAdministrateur = codeAdministrateur; }
     public String getPhoto() { return photo; }

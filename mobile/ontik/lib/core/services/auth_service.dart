@@ -14,8 +14,8 @@ class AuthService {
     await _authApi.register(userData);
   }
 
-  Future<Map<String, dynamic>> firstLogin(String code, String email, String password, {String? ville}) async {
-    final data = await _authApi.firstLogin(code, email, password, ville: ville);
+  Future<Map<String, dynamic>> firstLogin(String code, String email, String password, {String? ville, String? villeCode}) async {
+    final data = await _authApi.firstLogin(code, email, password, ville: ville, villeCode: villeCode);
     await setToken(data['token'] as String?);
     await setUserInfo(data);
     return data;
@@ -25,13 +25,15 @@ class AuthService {
     await _authApi.changePassword(currentPassword, newPassword);
   }
 
-  Future<void> updateVille(String ville) async {
+  Future<void> updateVille(String ville, {String? villeCode}) async {
     final code = userCode;
     if (code == null) return;
-    await _authApi.updateVille(code, ville);
+    await _authApi.updateVille(code, ville, villeCode: villeCode);
     userVille = ville;
+    userVilleCode = villeCode;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('userVille', ville);
+    if (villeCode != null) await prefs.setString('userVilleCode', villeCode);
   }
 
   Future<void> logout() async {

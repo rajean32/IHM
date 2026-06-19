@@ -14,6 +14,9 @@ import '../../widgets/event_image_widget.dart';
 import '../../core/services/app_config.dart';
 import '../../generated/app_localizations.dart';
 import '../../widgets/admin/admin_toast.dart';
+import '../../core/services/lieu_service.dart';
+import '../../core/services/user_service.dart';
+import '../../models/lieu_model.dart';
 
 class HomeDetailPage extends StatefulWidget {
   final int eventId;
@@ -471,7 +474,8 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
           border: Border.all(color: AppColors.ticketBorder),
         ),
         child: InkWell(
-          onTap: () {},
+          onTap: () => _showLieuDetails(event),
+          borderRadius: BorderRadius.circular(12),
           child: Row(
             children: [
               Container(
@@ -537,72 +541,254 @@ class _HomeDetailPageState extends State<HomeDetailPage> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.ticketBorder),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: () => _showOrganisateurDetails(event),
+          borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.person,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
               ),
-              child: const Icon(
-                Icons.person,
-                color: AppColors.primary,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.clientHomeDetailOrganizer,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textMuted,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.clientHomeDetailOrganizer,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    event.organisateurNom ?? event.codeOrganisateur,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                    const SizedBox(height: 2),
+                    Text(
+                      event.organisateurNom ?? event.codeOrganisateur,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  if (label.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          label,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                            letterSpacing: 0.5,
+                    if (label.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            label,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
+              const Icon(Icons.chevron_right, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLieuDetails(EventDetail event) async {
+    if (event.codeLieu == null || event.codeLieu!.isEmpty) return;
+    try {
+      final data = await LieuService().getLieuByCode(event.codeLieu!);
+      if (!mounted) return;
+      final lieu = Lieu.fromJson(data);
+      _buildLieuBottomSheet(lieu);
+    } catch (_) {
+      if (!mounted) return;
+      AdminToast.show(context, message: 'Impossible de charger les détails du lieu', isSuccess: false);
+    }
+  }
+
+  void _buildLieuBottomSheet(Lieu lieu) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.35,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (ctx, scrollCtrl) => SingleChildScrollView(
+          controller: scrollCtrl,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Container(width: 40, height: 4,
+                decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
+              )),
+              const SizedBox(height: 20),
+              Row(children: [
+                Container(
+                  width: 48, height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.location_on, color: AppColors.primary, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(lieu.nomLieu, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  if (lieu.adresse != null || lieu.ville != null)
+                    Text(
+                      [lieu.adresse, lieu.ville].whereType<String>().where((s) => s.isNotEmpty).join(', '),
+                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    ),
+                ])),
+              ]),
+              if (lieu.description != null && lieu.description!.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                Text('Description', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                const SizedBox(height: 6),
+                Text(lieu.description!, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5)),
+              ],
+              if (lieu.salles != null && lieu.salles!.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                Text('Salles', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                const SizedBox(height: 8),
+                ...lieu.salles!.map((s) => Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.fieldFill,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(children: [
+                    const Icon(Icons.meeting_room, size: 18, color: AppColors.primary),
+                    const SizedBox(width: 10),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(s.nomSalle.isNotEmpty ? s.nomSalle : s.numeroSalle,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      if (s.capacite != null)
+                        Text('Capacité: ${s.capacite}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    ])),
+                  ]),
+                )),
+              ],
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showOrganisateurDetails(EventDetail event) async {
+    final codeOrg = event.codeOrganisateur;
+    if (codeOrg == null || codeOrg.isEmpty) return;
+    try {
+      final data = await UserService().getOrganizerProfile(codeOrg);
+      if (!mounted) return;
+      _buildOrganisateurBottomSheet(data);
+    } catch (_) {
+      if (!mounted) return;
+      AdminToast.show(context, message: 'Impossible de charger les détails', isSuccess: false);
+    }
+  }
+
+  void _buildOrganisateurBottomSheet(Map<String, dynamic> data) {
+    final nom = '${data['prenoms'] ?? ''} ${data['nom'] ?? ''}'.trim();
+    final email = data['email'] as String? ?? '';
+    final tel = data['tel'] as String? ?? '';
+    final ville = data['ville'] as String? ?? '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4,
+              decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
+            )),
+            const SizedBox(height: 20),
+            Row(children: [
+              Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.person, color: AppColors.primary, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(nom.isNotEmpty ? nom : 'Organisateur',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                const Text('Organisateur', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+              ])),
+            ]),
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+            if (email.isNotEmpty) ...[
+              _infoRow(Icons.email_outlined, 'Email', email),
+              const SizedBox(height: 12),
+            ],
+            if (tel.isNotEmpty) ...[
+              _infoRow(Icons.phone_outlined, 'Téléphone', tel),
+              const SizedBox(height: 12),
+            ],
+            if (ville.isNotEmpty)
+              _infoRow(Icons.location_city_outlined, 'Ville', ville),
+            const SizedBox(height: 16),
           ],
         ),
       ),
     );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Row(children: [
+      Icon(icon, size: 18, color: AppColors.textSecondary),
+      const SizedBox(width: 10),
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+      ]),
+    ]);
   }
 
   Widget _buildAboutSection(EventDetail event) {

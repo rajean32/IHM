@@ -15,8 +15,11 @@ public class Lieu {
     private String nomLieu;
     @Column(name = "adresse", length = 255)
     private String adresse;
-    @Column(name = "ville", length = 100)
-    private String ville;
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "code_ville")
+    private Ville ville;
     @OneToMany(mappedBy = "lieu", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Salle> salles = new ArrayList<>();
     @OneToMany(mappedBy = "lieu", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -28,8 +31,12 @@ public class Lieu {
     public void setNomLieu(String nomLieu) { this.nomLieu = nomLieu; }
     public String getAdresse() { return adresse; }
     public void setAdresse(String adresse) { this.adresse = adresse; }
-    public String getVille() { return ville; }
-    public void setVille(String ville) { this.ville = ville; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public Ville getVille() { return ville; }
+    public void setVille(Ville ville) { this.ville = ville; }
+    public String getVilleNom() { return ville != null ? ville.getNom() : null; }
+    public String getVilleCode() { return ville != null ? ville.getCode() : null; }
     public List<Salle> getSalles() { return salles; }
     public void setSalles(List<Salle> salles) { this.salles = salles; }
     public List<Evenement> getEvenements() { return evenements; }

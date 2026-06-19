@@ -32,6 +32,13 @@ public class LieuController {
         return ResponseEntity.ok(ApiResponse.success(200, "Locations fetched successfully", data));
     }
 
+    @GetMapping("/by-ville/{villeNom}")
+    public ResponseEntity<ApiResponse<List<LieuDTO>>> getByVille(@PathVariable String villeNom) {
+        log.info("GET /api/lieux/by-ville/{}", villeNom);
+        List<LieuDTO> data = lieuService.getByVille(villeNom);
+        return ResponseEntity.ok(ApiResponse.success(200, "Locations filtered by city", data));
+    }
+
     @GetMapping("/{code}")
     public ResponseEntity<ApiResponse<LieuDTO>> getByCode(@PathVariable String code) {
         log.info("GET /api/lieux/{}", code);

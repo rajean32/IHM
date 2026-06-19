@@ -56,6 +56,7 @@ public class OrganisateurService {
     private final ReservationRepository reservationRepository;
     private final CorrespondARepository correspondARepository;
     private final ConcernerRepository concernerRepository;
+    private final VilleService villeService;
 
     public OrganisateurService(OrganisateurRepository organisateurRepository,
                                 UtilisateurRepository utilisateurRepository,
@@ -68,7 +69,8 @@ public class OrganisateurService {
                                 TicketRepository ticketRepository,
                                 ReservationRepository reservationRepository,
                                 CorrespondARepository correspondARepository,
-                                ConcernerRepository concernerRepository) {
+                                ConcernerRepository concernerRepository,
+                                VilleService villeService) {
         this.organisateurRepository = organisateurRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.administrateurRepository = administrateurRepository;
@@ -81,6 +83,7 @@ public class OrganisateurService {
         this.reservationRepository = reservationRepository;
         this.correspondARepository = correspondARepository;
         this.concernerRepository = concernerRepository;
+        this.villeService = villeService;
     }
 
     // ========== Organisateur CRUD ==========
@@ -148,6 +151,9 @@ public class OrganisateurService {
             Administrateur admin = administrateurRepository.findByCodeAdministrateur(dto.getCodeAdministrateur())
                     .orElseThrow(() -> new ResourceNotFoundException("Administrateur", "codeAdministrateur", dto.getCodeAdministrateur()));
             org.setAdministrateur(admin);
+        }
+        if (dto.getVille() != null || dto.getVilleCode() != null) {
+            org.setVille(villeService.resolveOrCreateVille(dto.getVilleCode(), dto.getVille()));
         }
         Organisateur saved = organisateurRepository.save(org);
         log.info("Organisateur updated: {}", code);
@@ -470,6 +476,11 @@ public class OrganisateurService {
         dto.setTel(org.getTel());
         if (org.getAdministrateur() != null) {
             dto.setCodeAdministrateur(org.getAdministrateur().getCodeAdministrateur());
+        }
+        dto.setVille(org.getVilleNom());
+        dto.setVilleCode(org.getVilleCode());
+        if (org.getPhoto() != null) {
+            dto.setPhoto(java.util.Base64.getEncoder().encodeToString(org.getPhoto()));
         }
         return dto;
     }

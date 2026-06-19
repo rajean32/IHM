@@ -120,8 +120,8 @@ public class EvenementService {
         log.debug("Fetching all events prioritized by ville: {}", ville);
         return evenementRepository.findAll().stream()
                 .sorted((a, b) -> {
-                    String va = a.getLieu() != null ? a.getLieu().getVille() : "";
-                    String vb = b.getLieu() != null ? b.getLieu().getVille() : "";
+                    String va = a.getVilleNom();
+                    String vb = b.getVilleNom();
                     boolean matchA = ville.equalsIgnoreCase(va);
                     boolean matchB = ville.equalsIgnoreCase(vb);
                     if (matchA && !matchB) return -1;
@@ -203,6 +203,7 @@ public class EvenementService {
         Lieu lieu = lieuRepository.findById(dto.getCodeLieu())
                 .orElseThrow(() -> new ResourceNotFoundException("Lieu", "codeLieu", dto.getCodeLieu()));
         event.setLieu(lieu);
+        event.setVille(lieu.getVille());
 
         if (dto.getNumeroSalle() != null) {
             Salle salle = salleRepository.findByNumeroSalle(dto.getNumeroSalle())
@@ -353,6 +354,7 @@ public class EvenementService {
             Lieu lieu = lieuRepository.findById(dto.getCodeLieu())
                     .orElseThrow(() -> new ResourceNotFoundException("Lieu", "codeLieu", dto.getCodeLieu()));
             event.setLieu(lieu);
+            event.setVille(lieu.getVille());
         }
         if (dto.getNumeroSalle() != null) {
             Salle salle = salleRepository.findByNumeroSalle(dto.getNumeroSalle())
@@ -662,7 +664,8 @@ public class EvenementService {
         dto.setCodeLieu(event.getLieu() != null ? event.getLieu().getCode() : null);
         dto.setLieuNom(event.getLieu() != null ? event.getLieu().getNomLieu() : null);
         dto.setLieuAdresse(event.getLieu() != null ? event.getLieu().getAdresse() : null);
-        dto.setLieuVille(event.getLieu() != null ? event.getLieu().getVille() : null);
+        dto.setLieuVille(event.getVilleNom());
+        dto.setLieuVilleCode(event.getVilleCode());
         dto.setNumeroSalle(event.getSalle() != null ? event.getSalle().getNumeroSalle() : null);
         dto.setNomSalle(event.getSalle() != null ? event.getSalle().getNomSalle() : null);
         dto.setCodeOrganisateur(event.getOrganisateur().getCodeUtilisateur());
@@ -862,7 +865,8 @@ public class EvenementService {
         dto.setCategorieNom(event.getCategorie() != null ? event.getCategorie().getNomCategorie() : null);
         dto.setCodeLieu(event.getLieu() != null ? event.getLieu().getCode() : null);
         dto.setLieuNom(event.getLieu() != null ? event.getLieu().getNomLieu() : null);
-        dto.setLieuVille(event.getLieu() != null ? event.getLieu().getVille() : null);
+        dto.setLieuVille(event.getVilleNom());
+        dto.setLieuVilleCode(event.getVilleCode());
         dto.setNumeroSalle(event.getSalle() != null ? event.getSalle().getNumeroSalle() : null);
         dto.setNomSalle(event.getSalle() != null ? event.getSalle().getNomSalle() : null);
         dto.setCodeOrganisateur(event.getOrganisateur().getCodeUtilisateur());

@@ -13,6 +13,7 @@ import 'reservations/reservations_page.dart';
 import 'payments/payments_page.dart';
 import 'profile/profile_page.dart';
 import 'history/action_history_page.dart';
+import 'villes/villes_page.dart';
 
 class AdminLayout extends StatefulWidget {
   const AdminLayout({super.key});
@@ -65,6 +66,7 @@ class _AdminLayoutState extends State<AdminLayout> {
               Text(AppLocalizations.of(context)!.adminMoreOptions, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
               const Divider(height: 8),
               _sheetOption(ctx, Icons.location_city, AppLocalizations.of(context)!.adminVenues, () { Navigator.pop(ctx); setState(() => _selectedIndex = 5); }),
+              _sheetOption(ctx, Icons.map, 'Villes', () { Navigator.pop(ctx); setState(() => _selectedIndex = 12); }),
               _sheetOption(ctx, Icons.event_seat, AppLocalizations.of(context)!.adminPlaces, () { Navigator.pop(ctx); setState(() { _placesSalleFilter = null; _selectedIndex = 6; }); }),
               _sheetOption(ctx, Icons.confirmation_number, AppLocalizations.of(context)!.adminTickets, () { Navigator.pop(ctx); setState(() => _selectedIndex = 7); }),
               _sheetOption(ctx, Icons.book_online, AppLocalizations.of(context)!.adminReservations, () { Navigator.pop(ctx); setState(() => _selectedIndex = 8); }),
@@ -108,6 +110,7 @@ class _AdminLayoutState extends State<AdminLayout> {
       case 9: return const PaymentsPage();
       case 10: return const ProfilePage();
       case 11: return const ActionHistoryPage();
+      case 12: return const VillesPage();
       default: return const DashboardPage();
     }
   }

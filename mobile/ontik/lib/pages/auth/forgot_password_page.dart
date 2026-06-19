@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/ville_service.dart';
 import '../../core/api/dio_config.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/auth_routes.dart';
@@ -7,6 +8,7 @@ import '../../core/routes/client_routes.dart';
 import '../../core/routes/organizer_routes.dart';
 import '../../core/routes/admin_routes.dart';
 import '../../core/utils/error_helper.dart';
+import '../../models/ville_model.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -22,7 +24,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
   final _newPasswordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
   final _villeCtrl = TextEditingController();
+  final _autreVilleCtrl = TextEditingController();
   bool _obscurePassword = true;
+  List<Ville> _villes = [];
+  Ville? _selectedVille;
+  bool _isAutreVille = false;
   bool _obscureConfirm = true;
   bool _loading = false;
   String? _error;
@@ -54,6 +60,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
       curve: Curves.easeOutCubic,
     ));
     _animController.forward();
+    _loadVilles();
+  }
+
+  Future<void> _loadVilles() async {
+    try {
+      final villes = await VilleService().getVilles();
+      if (!mounted) return;
+      setState(() => _villes = villes);
+    } catch (_) {}
   }
 
   @override
@@ -63,6 +78,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
     _newPasswordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
     _villeCtrl.dispose();
+    _autreVilleCtrl.dispose();
     _animController.dispose();
     super.dispose();
   }
@@ -72,8 +88,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
     FocusScope.of(context).unfocus();
     setState(() { _loading = true; _error = null; });
     try {
-      final ville = _villeCtrl.text.trim();
-      await AuthService().firstLogin(_codeCtrl.text.trim(), _newEmailCtrl.text.trim(), _newPasswordCtrl.text, ville: ville.isNotEmpty ? ville : null);
+      final villeNom = _isAutreVille ? _autreVilleCtrl.text.trim() : _selectedVille?.nom;
+      final villeCode = _isAutreVille ? null : _selectedVille?.code;
+      await AuthService().firstLogin(
+        _codeCtrl.text.trim(), _newEmailCtrl.text.trim(), _newPasswordCtrl.text,
+        ville: villeNom?.isNotEmpty == true ? villeNom : null,
+        villeCode: villeCode,
+      );
       if (!mounted) return;
       final role = userRole;
       if (role == 'ADMINISTRATEUR') {
@@ -240,13 +261,37 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> with SingleTick
               const SizedBox(height: 16),
 
               // Ville
-              _buildTextField(
-                controller: _villeCtrl,
-                label: 'Your City',
-                hint: 'Antananarivo, Toamasina...',
-                icon: Icons.location_city_outlined,
-                validator: null,
-              ),
+              _isAutreVille
+                  ? TextFormField(
+                      controller: _autreVilleCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Ville (autre)',
+                        hintText: 'Antananarivo, Toamasina...',
+                        prefixIcon: const Icon(Icons.location_city_outlined),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.list, size: 20),
+                          onPressed: () => setState(() { _isAutreVille = false; _autreVilleCtrl.clear(); }),
+                          tooltip: 'Choisir dans la liste',
+                        ),
+                      ),
+                    )
+                  : DropdownButtonFormField<Ville>(
+                      value: _villes.contains(_selectedVille) ? _selectedVille : null,
+                      decoration: InputDecoration(
+                        labelText: 'Ville',
+                        prefixIcon: const Icon(Icons.location_city_outlined),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.edit, size: 20),
+                          onPressed: () => setState(() { _isAutreVille = true; _selectedVille = null; }),
+                          tooltip: 'Saisir une autre ville',
+                        ),
+                      ),
+                      items: _villes.map((v) => DropdownMenuItem(value: v, child: Text(v.nom))).toList(),
+                      onChanged: (v) => setState(() => _selectedVille = v),
+                      isExpanded: true,
+                    ),
               const SizedBox(height: 16),
 
               // New Email

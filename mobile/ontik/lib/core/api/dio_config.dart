@@ -6,6 +6,7 @@ String? userCode;
 String? userRole;
 String? userNom;
 String? userVille;
+String? userVilleCode;
 
 final Dio dio = Dio(BaseOptions(
   connectTimeout: const Duration(seconds: 10),
@@ -20,6 +21,7 @@ Future<void> init() async {
   userRole = prefs.getString('userRole');
   userNom = prefs.getString('userNom');
   userVille = prefs.getString('userVille');
+  userVilleCode = prefs.getString('userVilleCode');
   if (_token != null) {
     dio.options.headers['Authorization'] = 'Bearer $_token';
   }
@@ -66,11 +68,13 @@ Future<void> setUserInfo(Map<String, dynamic> data) async {
   userRole = data['role'] as String?;
   userNom = data['nom'] as String?;
   userVille = data['ville'] as String?;
+  userVilleCode = data['villeCode'] as String?;
   final prefs = await SharedPreferences.getInstance();
   if (userCode != null) await prefs.setString('userCode', userCode!);
   if (userRole != null) await prefs.setString('userRole', userRole!);
   if (userNom != null) await prefs.setString('userNom', userNom!);
   if (userVille != null) await prefs.setString('userVille', userVille!);
+  if (userVilleCode != null) await prefs.setString('userVilleCode', userVilleCode!);
 }
 
 bool get isLoggedInSync => _token != null && _token!.isNotEmpty;
@@ -82,8 +86,12 @@ Future<void> clearSession() async {
   userCode = null;
   userRole = null;
   userNom = null;
+  userVille = null;
+  userVilleCode = null;
   final prefs = await SharedPreferences.getInstance();
   await prefs.remove('userCode');
   await prefs.remove('userRole');
   await prefs.remove('userNom');
+  await prefs.remove('userVille');
+  await prefs.remove('userVilleCode');
 }

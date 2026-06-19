@@ -36,8 +36,9 @@ public class Utilisateur {
     @Column(name = "Tel", length = 20, nullable = false)
     @NotBlank(message = "Phone number is required")
     private String tel;
-    @Column(name = "Ville", length = 100)
-    private String ville;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "code_ville")
+    private Ville ville;
     @Column(name = "photo", columnDefinition = "BYTEA")
     private byte[] photo;
     @Column(name = "bio", columnDefinition = "TEXT")
@@ -76,8 +77,10 @@ public class Utilisateur {
     public void setPremiereConnexion(boolean premiereConnexion) { this.premiereConnexion = premiereConnexion; }
     public Administrateur getAdministrateur() { return administrateur; }
     public void setAdministrateur(Administrateur administrateur) { this.administrateur = administrateur; }
-    public String getVille() { return ville; }
-    public void setVille(String ville) { this.ville = ville; }
+    public Ville getVille() { return ville; }
+    public void setVille(Ville ville) { this.ville = ville; }
+    public String getVilleNom() { return ville != null ? ville.getNom() : null; }
+    public String getVilleCode() { return ville != null ? ville.getCode() : null; }
     public byte[] getPhoto() { return photo; }
     public void setPhoto(byte[] photo) { this.photo = photo; }
     public String getBio() { return bio; }

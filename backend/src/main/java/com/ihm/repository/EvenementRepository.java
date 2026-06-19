@@ -36,26 +36,20 @@ public interface EvenementRepository extends JpaRepository<Evenement, Integer> {
     @Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.categorie.codeCategorie = :categorie")
     List<Evenement> searchByTitleAndCategorie(@Param("query") String query, @Param("categorie") String categorie);
 
-    @Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.lieu.ville = :ville")
+@Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.ville.nom = :ville")
     List<Evenement> searchByTitleAndVille(@Param("query") String query, @Param("ville") String ville);
 
-    @Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.categorie.codeCategorie = :categorie AND e.lieu.ville = :ville")
+    @Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.categorie.codeCategorie = :categorie AND e.ville.nom = :ville")
     List<Evenement> searchByTitleCategorieVille(@Param("query") String query, @Param("categorie") String categorie, @Param("ville") String ville);
 
-    @Query("SELECT e FROM Evenement e WHERE e.dateEvenement >= :today AND LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%'))")
-    List<Evenement> searchUpcoming(@Param("today") LocalDate today, @Param("query") String query);
-
-    @Query("SELECT e FROM Evenement e WHERE e.dateEvenement >= :today AND LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.categorie.codeCategorie = :categorie")
-    List<Evenement> searchUpcomingByCategorie(@Param("today") LocalDate today, @Param("query") String query, @Param("categorie") String categorie);
-
-    @Query("SELECT e FROM Evenement e WHERE e.dateEvenement >= :today AND LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.lieu.ville = :ville")
+    @Query("SELECT e FROM Evenement e WHERE e.dateEvenement >= :today AND LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.ville.nom = :ville")
     List<Evenement> searchUpcomingByVille(@Param("today") LocalDate today, @Param("query") String query, @Param("ville") String ville);
-
-    @Query("SELECT e FROM Evenement e WHERE e.dateEvenement >= :today AND LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.categorie.codeCategorie = :categorie AND e.lieu.ville = :ville")
-    List<Evenement> searchUpcomingFull(@Param("today") LocalDate today, @Param("query") String query, @Param("categorie") String categorie, @Param("ville") String ville);
 
     @Query("SELECT e FROM Evenement e WHERE e.dateEvenement BETWEEN :dateFrom AND :dateTo")
     List<Evenement> findByDateRange(@Param("dateFrom") LocalDate dateFrom, @Param("dateTo") LocalDate dateTo);
+
+    @Query("SELECT e FROM Evenement e WHERE e.dateEvenement >= :today AND LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%'))")
+    List<Evenement> searchUpcoming(@Param("today") LocalDate today, @Param("query") String query);
 
     @Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.dateEvenement BETWEEN :dateFrom AND :dateTo")
     List<Evenement> searchByTitleAndDateRange(@Param("query") String query, @Param("dateFrom") LocalDate dateFrom, @Param("dateTo") LocalDate dateTo);
@@ -63,10 +57,16 @@ public interface EvenementRepository extends JpaRepository<Evenement, Integer> {
     @Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.categorie.codeCategorie = :categorie AND e.dateEvenement BETWEEN :dateFrom AND :dateTo")
     List<Evenement> searchByTitleCategorieDateRange(@Param("query") String query, @Param("categorie") String categorie, @Param("dateFrom") LocalDate dateFrom, @Param("dateTo") LocalDate dateTo);
 
-    @Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.lieu.ville = :ville AND e.dateEvenement BETWEEN :dateFrom AND :dateTo")
+    @Query("SELECT e FROM Evenement e WHERE e.dateEvenement >= :today AND LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.categorie.codeCategorie = :categorie")
+    List<Evenement> searchUpcomingByCategorie(@Param("today") LocalDate today, @Param("query") String query, @Param("categorie") String categorie);
+
+    @Query("SELECT e FROM Evenement e WHERE e.dateEvenement >= :today AND LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.categorie.codeCategorie = :categorie AND e.ville.nom = :ville")
+    List<Evenement> searchUpcomingFull(@Param("today") LocalDate today, @Param("query") String query, @Param("categorie") String categorie, @Param("ville") String ville);
+
+    @Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.ville.nom = :ville AND e.dateEvenement BETWEEN :dateFrom AND :dateTo")
     List<Evenement> searchByTitleVilleDateRange(@Param("query") String query, @Param("ville") String ville, @Param("dateFrom") LocalDate dateFrom, @Param("dateTo") LocalDate dateTo);
 
-    @Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.categorie.codeCategorie = :categorie AND e.lieu.ville = :ville AND e.dateEvenement BETWEEN :dateFrom AND :dateTo")
+    @Query("SELECT e FROM Evenement e WHERE LOWER(e.titre) LIKE LOWER(CONCAT('%', :query, '%')) AND e.categorie.codeCategorie = :categorie AND e.ville.nom = :ville AND e.dateEvenement BETWEEN :dateFrom AND :dateTo")
     List<Evenement> searchFullWithDates(@Param("query") String query, @Param("categorie") String categorie, @Param("ville") String ville, @Param("dateFrom") LocalDate dateFrom, @Param("dateTo") LocalDate dateTo);
 
     @Query("SELECT e.statut, COUNT(e) FROM Evenement e GROUP BY e.statut")

@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface LieuRepository extends JpaRepository<Lieu, String> {
 
-    List<Lieu> findByVille(String ville);
+    List<Lieu> findByVille_Nom(String nom);
 
     @Query("SELECT COUNT(l) FROM Lieu l")
     long countAllLieux();

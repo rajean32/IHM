@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/ville_service.dart';
+import '../../models/ville_model.dart';
 import '../../core/assets/app_colors.dart';
 import '../../core/routes/auth_routes.dart';
 import '../../core/utils/error_helper.dart';
@@ -20,12 +22,16 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
   final _emailCtrl = TextEditingController();
   final _telCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _autreVilleCtrl = TextEditingController();
   String _sexe = 'M';
   String _type = 'client';
   DateTime? _dateDeNaissance;
   bool _obscurePassword = true;
   bool _loading = false;
   String? _error;
+  List<Ville> _villes = [];
+  Ville? _selectedVille;
+  bool _isAutreVille = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
@@ -50,6 +56,18 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
       curve: Curves.easeOutCubic,
     ));
     _animController.forward();
+    _loadVilles();
+  }
+
+  Future<void> _loadVilles() async {
+    try {
+      final villes = await VilleService().getVilles();
+      if (!mounted) return;
+      setState(() { _villes = villes; _error = null; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'Impossible de charger les villes: ${apiErrorString(e)}');
+    }
   }
 
   @override
@@ -58,6 +76,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
     _emailCtrl.dispose();
     _telCtrl.dispose();
     _passwordCtrl.dispose();
+    _autreVilleCtrl.dispose();
     _animController.dispose();
     super.dispose();
   }
@@ -99,6 +118,8 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
       final parts = fullName.split(' ');
       final prenoms = parts.length >= 2 ? parts.first : '';
       final nom = parts.length >= 2 ? parts.sublist(1).join(' ') : fullName;
+      final villeNom = _isAutreVille ? _autreVilleCtrl.text.trim() : _selectedVille?.nom;
+      final villeCode = _isAutreVille ? null : _selectedVille?.code;
       await AuthService().register({
         'nom': nom,
         'prenoms': prenoms,
@@ -108,6 +129,8 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
         'tel': _telCtrl.text.trim(),
         'motDePasse': _passwordCtrl.text,
         'type': _type,
+        if (villeNom?.isNotEmpty == true) 'ville': villeNom,
+        if (villeCode != null) 'villeCode': villeCode,
       });
       if (!mounted) return;
       AdminToast.show(context, message: AppLocalizations.of(context)!.authRegisterSuccess, isSuccess: true);
@@ -232,7 +255,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                       onChanged: (v) => setState(() => _sexe = v!),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildDropdown(
                       label: 'Account Type',
@@ -269,6 +292,10 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
+
+              // Ville
+              _buildVilleField(),
               const SizedBox(height: 16),
 
               // Téléphone
@@ -380,6 +407,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
       items: items,
       onChanged: onChanged,
       dropdownColor: AppColors.card,
+      isExpanded: true,
     );
   }
 
@@ -405,7 +433,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
             borderRadius: BorderRadius.circular(14),
             borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
           floatingLabelStyle: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
         ),
@@ -481,6 +509,63 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
         return null;
       },
     );
+  }
+
+  Widget _buildVilleField() {
+    if (_villes.isEmpty) {
+      return Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: _autreVilleCtrl,
+              decoration: InputDecoration(
+                labelText: 'Ville',
+                hintText: 'Antananarivo, Toamasina...',
+                prefixIcon: const Icon(Icons.location_city_outlined),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.refresh, size: 20),
+            onPressed: _loadVilles,
+            tooltip: 'Recharger',
+          ),
+        ],
+      );
+    }
+    return _isAutreVille
+        ? TextFormField(
+            controller: _autreVilleCtrl,
+            decoration: InputDecoration(
+              labelText: 'Ville (autre)',
+              hintText: 'Antananarivo, Toamasina...',
+              prefixIcon: const Icon(Icons.location_city_outlined),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.list, size: 20),
+                onPressed: () => setState(() { _isAutreVille = false; _autreVilleCtrl.clear(); }),
+                tooltip: 'Choisir dans la liste',
+              ),
+            ),
+          )
+        : DropdownButtonFormField<Ville>(
+            value: _villes.contains(_selectedVille) ? _selectedVille : null,
+            decoration: InputDecoration(
+              labelText: 'Ville',
+              prefixIcon: const Icon(Icons.location_city_outlined),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.edit, size: 20),
+                onPressed: () => setState(() { _isAutreVille = true; _selectedVille = null; }),
+                tooltip: 'Saisir une autre ville',
+              ),
+            ),
+            items: _villes.map((v) => DropdownMenuItem(value: v, child: Text(v.nom))).toList(),
+            onChanged: (v) => setState(() => _selectedVille = v),
+            isExpanded: true,
+          );
   }
 
   Widget _buildErrorBanner() {

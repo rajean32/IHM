@@ -7,9 +7,11 @@ import '../../core/services/lieu_service.dart';
 import '../../core/services/place_service.dart';
 import '../../core/services/categorie_service.dart';
 import '../../core/services/caracteristique_service.dart';
+import '../../core/services/ville_service.dart';
 import '../../models/event_place_config_model.dart';
 import '../../models/evenement_model.dart';
 import '../../models/lieu_model.dart';
+import '../../models/ville_model.dart';
 import '../../models/categorie_model.dart';
 import '../../models/caracteristique_model.dart';
 import '../../core/assets/app_colors.dart';
@@ -63,6 +65,8 @@ class _CreateEventPageState extends State<CreateEventPage> {
   String? _selectedLieu;
   String? _selectedSalle;
   List<Categorie> _categories = [];
+  List<Ville> _villes = [];
+  String? _selectedVilleNom;
   List<Lieu> _lieux = [];
   List<Map<String, dynamic>> _salles = [];
   bool _loadingSalles = false;
@@ -105,6 +109,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   final _placeService = PlaceService();
   final _categorieService = CategorieService();
   final _caracService = CaracteristiqueService();
+  final _villeService = VilleService();
 
   @override
   void initState() {
@@ -132,13 +137,23 @@ class _CreateEventPageState extends State<CreateEventPage> {
     try {
       final categories = (await _categorieService.getCategories())
           .map((e) => Categorie.fromJson(e as Map<String, dynamic>)).toList();
+      final villes = await _villeService.getVilles();
       final lieux = (await _lieuService.getLieux())
           .map((e) => Lieu.fromJson(e as Map<String, dynamic>)).toList();
       if (!mounted) return;
-      setState(() { _categories = categories; _lieux = lieux; _dataLoading = false; });
+      setState(() { _categories = categories; _villes = villes; _lieux = lieux; _dataLoading = false; });
     } catch (_) {
       if (mounted) setState(() => _dataLoading = false);
     }
+  }
+
+  Future<void> _loadLieuxByVille(String villeNom) async {
+    try {
+      final lieux = (await _lieuService.getLieuxByVille(villeNom))
+          .map((e) => Lieu.fromJson(e as Map<String, dynamic>)).toList();
+      if (!mounted) return;
+      setState(() { _lieux = lieux; _selectedLieu = null; _selectedSalle = null; _salles = []; });
+    } catch (_) {}
   }
 
   void _populateFromEvent(Evenement event) {
@@ -282,7 +297,6 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }
 
   void _removePlaceType(String type) {
-    if (type == 'Standard' || type == 'VIP') return;
     setState(() {
       _placeTypes.remove(type);
       _typePriceCtrls.remove(type)?.dispose();
@@ -595,45 +609,60 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }
 
   Widget _buildStep3() {
-    return buildStep3(
-      context: context,
-      selectedLieu: _selectedLieu,
-      lieux: _lieux,
-      selectedSalle: _selectedSalle,
-      salles: _salles,
-      loadingSalles: _loadingSalles,
-      typePlacement: _typePlacement,
-      salleOptionnelle: _salleOptionnelle,
-      capaciteIllimitee: _capaciteIllimitee,
-      capaciteLibreCtrl: _capaciteLibreCtrl,
-      placeTypes: _placeTypes,
-      standingZones: _standingZones,
-      zoneNomCtrl: _zoneNomCtrl,
-      zoneCapaciteCtrl: _zoneCapaciteCtrl,
-      zoneCapaciteIllimitee: _zoneCapaciteIllimitee,
-      newPlaceTypeCtrl: _newPlaceTypeCtrl,
-      onLieuChanged: (v) {
-        setState(() => _selectedLieu = v);
-        if (v != null) _loadSalles(v);
-      },
-      onSalleChanged: (v) {
-        setState(() => _selectedSalle = v);
-        if (v != null) _loadPlaces();
-      },
-      onSalleOptionnelleChanged: (v) => setState(() => _salleOptionnelle = v),
-      onCapaciteIllimiteeChanged: (v) => setState(() => _capaciteIllimitee = v),
-      onAddPlaceType: _addPlaceType,
-      onRemovePlaceType: (t) => setState(() {
-        if (t != 'Standard' && t != 'VIP') {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      DropdownButtonFormField<String>(
+        value: _selectedVilleNom,
+        isExpanded: true,
+        decoration: const InputDecoration(
+          labelText: 'Ville',
+          prefixIcon: Icon(Icons.location_city_outlined),
+          border: OutlineInputBorder(),
+        ),
+        items: _villes.map((v) => DropdownMenuItem(value: v.nom, child: Text(v.nom))).toList(),
+        onChanged: (v) {
+          setState(() => _selectedVilleNom = v);
+          if (v != null) _loadLieuxByVille(v);
+        },
+      ),
+      const SizedBox(height: 16),
+      buildStep3(
+        context: context,
+        selectedLieu: _selectedLieu,
+        lieux: _lieux,
+        selectedSalle: _selectedSalle,
+        salles: _salles,
+        loadingSalles: _loadingSalles,
+        typePlacement: _typePlacement,
+        salleOptionnelle: _salleOptionnelle,
+        capaciteIllimitee: _capaciteIllimitee,
+        capaciteLibreCtrl: _capaciteLibreCtrl,
+        placeTypes: _placeTypes,
+        standingZones: _standingZones,
+        zoneNomCtrl: _zoneNomCtrl,
+        zoneCapaciteCtrl: _zoneCapaciteCtrl,
+        zoneCapaciteIllimitee: _zoneCapaciteIllimitee,
+        newPlaceTypeCtrl: _newPlaceTypeCtrl,
+        onLieuChanged: (v) {
+          setState(() => _selectedLieu = v);
+          if (v != null) _loadSalles(v);
+        },
+        onSalleChanged: (v) {
+          setState(() => _selectedSalle = v);
+          if (v != null) _loadPlaces();
+        },
+        onSalleOptionnelleChanged: (v) => setState(() => _salleOptionnelle = v),
+        onCapaciteIllimiteeChanged: (v) => setState(() => _capaciteIllimitee = v),
+        onAddPlaceType: _addPlaceType,
+        onRemovePlaceType: (t) => setState(() {
           _placeTypes.remove(t);
           _typePriceCtrls.remove(t)?.dispose();
-        }
-      }),
-      onAddStandingZone: _addStandingZone,
-      onRemoveStandingZone: (i) => setState(() => _standingZones.removeAt(i)),
-      onToggleCapaciteIllimitee: (v) => setState(() => _capaciteIllimitee = v),
-      onRefresh: () => setState(() {}),
-    );
+        }),
+        onAddStandingZone: _addStandingZone,
+        onRemoveStandingZone: (i) => setState(() => _standingZones.removeAt(i)),
+        onToggleCapaciteIllimitee: (v) => setState(() => _capaciteIllimitee = v),
+        onRefresh: () => setState(() {}),
+      ),
+    ]);
   }
 
   Widget _buildStep4() {

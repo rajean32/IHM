@@ -41,6 +41,7 @@ public class EvenementDTO {
     private Boolean isNew;
     private String categorieNom;
     private String lieuVille;
+    private String lieuVilleCode;
     private Long placesTotal;
     private Long placesDisponibles;
     private BigDecimal prixMin;
@@ -66,6 +67,8 @@ public class EvenementDTO {
     public BigDecimal getPrix() { return prix; }
     public String getLieuVille() { return lieuVille; }
     public void setLieuVille(String lieuVille) { this.lieuVille = lieuVille; }
+    public String getLieuVilleCode() { return lieuVilleCode; }
+    public void setLieuVilleCode(String lieuVilleCode) { this.lieuVilleCode = lieuVilleCode; }
     public void setPrix(BigDecimal prix) { this.prix = prix; }
     public Integer getCapacite() { return capacite; }
     public void setCapacite(Integer capacite) { this.capacite = capacite; }
@@ -130,6 +133,7 @@ public class EvenementDTO {
         private String lieuNom;
         private String lieuAdresse;
         private String lieuVille;
+        private String lieuVilleCode;
         private String numeroSalle;
         private String nomSalle;
         private String codeOrganisateur;
@@ -179,6 +183,8 @@ public class EvenementDTO {
         public void setLieuAdresse(String lieuAdresse) { this.lieuAdresse = lieuAdresse; }
         public String getLieuVille() { return lieuVille; }
         public void setLieuVille(String lieuVille) { this.lieuVille = lieuVille; }
+        public String getLieuVilleCode() { return lieuVilleCode; }
+        public void setLieuVilleCode(String lieuVilleCode) { this.lieuVilleCode = lieuVilleCode; }
         public String getNumeroSalle() { return numeroSalle; }
         public void setNumeroSalle(String numeroSalle) { this.numeroSalle = numeroSalle; }
         public String getNomSalle() { return nomSalle; }

@@ -9,7 +9,9 @@ public class LieuDTO {
     @NotBlank(message = "Location name is required")
     private String nomLieu;
     private String adresse;
+    private String description;
     private String ville;
+    private String villeCode;
     private List<com.ihm.schema.SalleDTO> salles;
     public LieuDTO() {}
     public String getCode() { return code; }
@@ -20,8 +22,12 @@ public class LieuDTO {
     public void setNomLieu(String nomLieu) { this.nomLieu = nomLieu; }
     public String getAdresse() { return adresse; }
     public void setAdresse(String adresse) { this.adresse = adresse; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
     public String getVille() { return ville; }
     public void setVille(String ville) { this.ville = ville; }
+    public String getVilleCode() { return villeCode; }
+    public void setVilleCode(String villeCode) { this.villeCode = villeCode; }
     public List<com.ihm.schema.SalleDTO> getSalles() { return salles; }
     public void setSalles(List<com.ihm.schema.SalleDTO> salles) { this.salles = salles; }
 }

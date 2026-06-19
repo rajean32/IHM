@@ -64,6 +64,10 @@ public class Evenement {
     private Lieu lieu;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "code_ville", foreignKey = @ForeignKey(name = "fk_evenement_ville"))
+    private Ville ville;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "numeroSalle", referencedColumnName = "numeroSalle")
     private Salle salle;
 
@@ -109,6 +113,10 @@ public class Evenement {
     public void setCategorie(Categorie categorie) { this.categorie = categorie; }
     public Lieu getLieu() { return lieu; }
     public void setLieu(Lieu lieu) { this.lieu = lieu; }
+    public Ville getVille() { return ville; }
+    public void setVille(Ville ville) { this.ville = ville; }
+    public String getVilleNom() { return ville != null ? ville.getNom() : (lieu != null ? lieu.getVilleNom() : null); }
+    public String getVilleCode() { return ville != null ? ville.getCode() : (lieu != null ? lieu.getVilleCode() : null); }
     public Salle getSalle() { return salle; }
     public void setSalle(Salle salle) { this.salle = salle; }
     public Organisateur getOrganisateur() { return organisateur; }

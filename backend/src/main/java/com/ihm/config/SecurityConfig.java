@@ -54,6 +54,7 @@ public class SecurityConfig {
                     "/api/salles/**",
                     "/api/places/**",
                     "/api/lieux/**",
+                    "/api/villes/**",
                     "/api/tickets/*/qrcode",
                     "/api/tickets/*/pdf"
                 ).permitAll()

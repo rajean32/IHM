@@ -125,10 +125,16 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildHeader() {
     return Column(
       children: [
-        Image.asset(
-          'lib/utils/logo_full.png',
-          height: 125,
-          fit: BoxFit.contain,
+        ColorFiltered(
+          colorFilter: const ColorFilter.mode(
+            AppColors.primary,
+            BlendMode.srcIn,
+          ),
+          child: Image.asset(
+            'lib/utils/logo_full.png',
+            height: 125,
+            fit: BoxFit.contain,
+          ),
         ),
         const SizedBox(height: 16),
         Text(
@@ -194,14 +200,14 @@ class _LoginPageState extends State<LoginPage>
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: Text(
-                    'Forgot password?',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                    child: Text(
+                      'Forgot password?',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
-                  ),
                 ),
               ),
               const SizedBox(height: 24),

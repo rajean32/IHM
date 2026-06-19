@@ -59,6 +59,8 @@ class Evenement {
   final String? motifAnnulation;
   final String? organisateurNom;
   final String? lieuNom;
+  final String? lieuVille;
+  final String? lieuVilleCode;
   final String? categorieNom;
   final int? placesTotal;
   final int? placesDisponibles;
@@ -87,6 +89,8 @@ class Evenement {
     this.motifAnnulation,
     this.organisateurNom,
     this.lieuNom,
+    this.lieuVille,
+    this.lieuVilleCode,
     this.categorieNom,
     this.placesTotal,
     this.placesDisponibles,
@@ -129,6 +133,8 @@ class Evenement {
       motifAnnulation: json['motifAnnulation'],
       organisateurNom: json['organisateurNom'],
       lieuNom: json['lieuNom'],
+      lieuVille: json['lieuVille'],
+      lieuVilleCode: json['lieuVilleCode'],
       categorieNom: json['categorieNom'],
       placesTotal: json['placesTotal'],
       placesDisponibles: json['placesDisponibles'],
@@ -168,6 +174,7 @@ class Evenement {
 class EventDetail extends Evenement {
   final String? lieuAdresse;
   final String? lieuVille;
+  final String? lieuVilleCode;
   final double? prixMin;
   final double? prixMax;
   final List<SeatingPlace>? places;
@@ -194,6 +201,7 @@ class EventDetail extends Evenement {
     String? lieuNom,
     this.lieuAdresse,
     this.lieuVille,
+    this.lieuVilleCode,
     String? organisateurNom,
     int? placesDisponibles,
     int? placesTotal,
@@ -257,6 +265,7 @@ class EventDetail extends Evenement {
       lieuNom: json['lieuNom'],
       lieuAdresse: json['lieuAdresse'],
       lieuVille: json['lieuVille'],
+      lieuVilleCode: json['lieuVilleCode'],
       organisateurNom: json['organisateurNom'],
       placesDisponibles: json['placesDisponibles'],
       placesTotal: json['placesTotal'],

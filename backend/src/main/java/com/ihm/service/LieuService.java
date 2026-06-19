@@ -7,6 +7,7 @@ import com.ihm.schema.SalleDTO;
 import com.ihm.repository.LieuRepository;
 import com.ihm.model.Lieu;
 import com.ihm.model.Salle;
+import com.ihm.model.Ville;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,9 +22,11 @@ public class LieuService {
     private static final Logger log = LoggerFactory.getLogger(LieuService.class);
 
     private final LieuRepository lieuRepository;
+    private final VilleService villeService;
 
-    public LieuService(LieuRepository lieuRepository) {
+    public LieuService(LieuRepository lieuRepository, VilleService villeService) {
         this.lieuRepository = lieuRepository;
+        this.villeService = villeService;
     }
 
     // recuperation de tous les lieux
@@ -31,6 +34,15 @@ public class LieuService {
     public List<LieuDTO> getAll() {
         log.debug("Fetching all locations");
         return lieuRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<LieuDTO> getByVille(String villeNom) {
+        log.debug("Fetching locations by city: {}", villeNom);
+        return lieuRepository.findByVille_Nom(villeNom)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
@@ -57,7 +69,9 @@ public class LieuService {
         lieu.setCode(dto.getCode());
         lieu.setNomLieu(dto.getNomLieu());
         lieu.setAdresse(dto.getAdresse());
-        lieu.setVille(dto.getVille());
+        if (dto.getVille() != null) {
+            lieu.setVille(villeService.resolveOrCreateVille(dto.getVilleCode(), dto.getVille()));
+        }
         Lieu saved = lieuRepository.save(lieu);
         log.info("Location created: code={}", saved.getCode());
         return toDTO(saved);
@@ -76,7 +90,9 @@ public class LieuService {
         }
         if (dto.getNomLieu() != null) lieu.setNomLieu(dto.getNomLieu());
         if (dto.getAdresse() != null) lieu.setAdresse(dto.getAdresse());
-        if (dto.getVille() != null) lieu.setVille(dto.getVille());
+        if (dto.getVille() != null) {
+            lieu.setVille(villeService.resolveOrCreateVille(dto.getVilleCode(), dto.getVille()));
+        }
         Lieu saved = lieuRepository.save(lieu);
         log.info("Location updated: code={}", code);
         return toDTO(saved);
@@ -97,7 +113,9 @@ public class LieuService {
         dto.setCode(lieu.getCode());
         dto.setNomLieu(lieu.getNomLieu());
         dto.setAdresse(lieu.getAdresse());
-        dto.setVille(lieu.getVille());
+        dto.setDescription(lieu.getDescription());
+        dto.setVille(lieu.getVilleNom());
+        dto.setVilleCode(lieu.getVilleCode());
         return dto;
     }
 

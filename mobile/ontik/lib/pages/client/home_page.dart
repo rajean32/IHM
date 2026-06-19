@@ -491,7 +491,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 200,
+              height: 280,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: _recommendedEvents.length,
@@ -499,7 +499,7 @@ class _HomePageState extends State<HomePage> {
                 itemBuilder: (context, i) {
                   final event = _recommendedEvents[i];
                   return SizedBox(
-                    width: 260,
+                    width: 200,
                     child: EventCard(
                       event: event,
                       compact: false,
@@ -515,7 +515,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
           ],
           Text(
             AppLocalizations.of(context)!.clientHomeFeatured,
